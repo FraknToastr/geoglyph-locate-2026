@@ -4,6 +4,8 @@
 
   const $ = id => document.getElementById(id);
   const PREVIEW_SIZE = 1024;
+  const FONT_ROW_HEIGHT = 39;
+  const LOGO_SIZE_MAX = 28;
   const SYMBOL_REFERENCE_SIZE = 512;
   const QR_LIMITS = Object.freeze({ L: 2953, M: 2331, Q: 1663, H: 1273 });
   // Exact dark-module geometry extracted from magic_eye_qr.svg (SHA-256 c37c798c8d7d660959810767765224f583c77d27d31b753510144c0394e742c6).
@@ -152,9 +154,42 @@
 
   function revealFontSelection() {
     const list=$('fontList'); if(list.querySelector('.font-row.is-active'))return;
-    const query=$('fontSearch').value.trim().toLowerCase();
-    const index=state.fonts.filter(f=>!query||f.name.toLowerCase().includes(query)||f.source.toLowerCase().includes(query)).findIndex(f=>f.id===state.selectedFontId);
-    if(index>=0) { list.scrollTop=index*39; renderFontList(); }
+    const index=filteredFonts().findIndex(f=>f.id===state.selectedFontId);
+    if(index>=0) { list.scrollTop=index*FONT_ROW_HEIGHT; renderFontList(); }
+  }
+
+  function handleExplorerKeydown(event) {
+    if(event.defaultPrevented||event.isComposing||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey)return;
+    if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)||!document.body.classList.contains('drawer-open'))return;
+    const target=event.target,drawer=$('explorerDrawer');
+    if(!(target instanceof Element)||(!drawer.contains(target)&&target!==document.body&&!target.closest('.workflow-font-btn')))return;
+    if(target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"],[role="combobox"],[role="slider"]'))return;
+    if(document.querySelector('dialog[open],.modal-backdrop:not([hidden]),.export-panel.is-open,.magic-eye-fullscreen:not([hidden])'))return;
+    event.preventDefault();event.stopPropagation();
+    if(event.key==='ArrowUp'||event.key==='ArrowDown') {
+      const fonts=filteredFonts();if(!fonts.length)return;
+      const direction=event.key==='ArrowDown'?1:-1;
+      const current=fonts.findIndex(font=>font.id===state.selectedFontId);
+      const index=current<0?(direction>0?0:fonts.length-1):Math.max(0,Math.min(fonts.length-1,current+direction));
+      if(index===current)return;
+      const font=fonts[index],list=$('fontList');
+      const top=index*FONT_ROW_HEIGHT;
+      if(top<list.scrollTop)list.scrollTop=top;
+      else if(top+FONT_ROW_HEIGHT>list.scrollTop+list.clientHeight)list.scrollTop=top+FONT_ROW_HEIGHT-list.clientHeight;
+      renderFontList();
+      // Use the same click path as pointer selection, including favourite
+      // ownership and asynchronous face preparation supplied by the UI layer.
+      [...list.querySelectorAll('[data-font-id]')].find(row=>row.dataset.fontId===font.id)?.click();
+      [...list.querySelectorAll('[data-font-id]')].find(row=>row.dataset.fontId===font.id)?.focus({preventScroll:true});
+    } else {
+      const grid=$('glyphGrid'),stride=grid._virtualStride,gridFocused=grid.contains(target);
+      if(!stride||!grid.clientHeight)return;
+      grid._pageNavigationVersion=(grid._pageNavigationVersion||0)+1;
+      const rows=Math.max(1,Math.floor(grid.clientHeight/stride));
+      grid.scrollTop=Math.max(0,Math.min(grid.scrollHeight-grid.clientHeight,grid.scrollTop+(event.key==='ArrowRight'?1:-1)*rows*stride));
+      renderGlyphGrid();
+      if(gridFocused)grid.focus({preventScroll:true});
+    }
   }
 
   function bindEvents() {
@@ -183,6 +218,7 @@
     $("closeDrawerBtn").addEventListener("click", () => setDrawer(false));
     $("drawerScrim").addEventListener("click", () => setDrawer(false));
     document.addEventListener("keydown", event => { if (event.key === "Escape") { setDrawer(false); closeAbout(); } });
+    document.addEventListener('keydown',handleExplorerKeydown,true);
     window.addEventListener("resize", syncDrawerEdge);
 
     document.querySelectorAll("button[data-preview]").forEach(btn => btn.addEventListener("click", () => {
@@ -340,7 +376,7 @@
     $("exportQrExperimentalSvgBtn").addEventListener("click", exportQrExperimentalSvg);
     $("exportSymbolPngBtn").addEventListener("click", exportSymbolPng);
     $("exportSymbolSvgBtn").addEventListener("click", exportSymbolSvg);
-    $("sendSymbolToQrBtn").addEventListener("click", () => { state.logoMode = "symbol"; state.logoName = "Font symbol"; state.preview = "combined"; syncControlsFromState(); renderPreview(); showToast("Symbol sent to QR"); });
+    $("sendSymbolToQrBtn").addEventListener("click", () => { Object.assign(state,getQartDefaults(),{zone:'logo'}); state.logoMode = "symbol"; state.logoName = "Font symbol"; state.preview = "combined"; syncControlsFromState(); renderPreview(); showToast("Symbol sent to QART"); });
     $("opaqueCanvasBtn").addEventListener("click", () => setSymbolCanvasTransparency(false));
     $("transparentCanvasBtn").addEventListener("click", () => setSymbolCanvasTransparency(true));
     $("saveSettingsBtn")?.addEventListener("click", saveSettings);
@@ -488,13 +524,19 @@
   }
 
 
+  function filteredFonts() {
+    const query=$('fontSearch').value.trim().toLowerCase();
+    return state.fonts.filter(font=>!query||font.name.toLowerCase().includes(query)||font.source.toLowerCase().includes(query));
+  }
+
   function renderFontList() {
-    const list = $('fontList'), query = $('fontSearch').value.trim().toLowerCase();
-    const fonts = state.fonts.filter(font => !query || font.name.toLowerCase().includes(query) || font.source.toLowerCase().includes(query));
-    const rowHeight = 39, count = Math.min(48, Math.ceil((list.clientHeight || 500) / rowHeight) * 3);
+    const list = $('fontList'), focusedId=list.contains(document.activeElement)?document.activeElement.closest('[data-font-id]')?.dataset.fontId:null;
+    const fonts = filteredFonts();
+    const rowHeight = FONT_ROW_HEIGHT, count = Math.min(48, Math.ceil((list.clientHeight || 500) / rowHeight) * 3);
     const start = Math.max(0, Math.min(Math.max(0, fonts.length - count), Math.floor(list.scrollTop / rowHeight) - Math.floor(count / 3)));
     list.dataset.virtualized = 'true';
     list.innerHTML = '<div aria-hidden="true" style="height:' + (start * rowHeight) + 'px"></div>' + fonts.slice(start, start + count).map(font => '<button class="font-row ' + (font.id === state.selectedFontId ? 'is-active' : '') + '" style="height:' + rowHeight + 'px;min-height:' + rowHeight + 'px" data-font-id="' + escapeAttr(font.id) + '"><strong style="font-family:' + escapeAttr(quoteFont(font.cssFamily)) + '">' + escapeHtml(font.name) + '</strong><span>' + escapeHtml(fontSourceLabel(font)) + '</span></button>').join('') + '<div aria-hidden="true" style="height:' + Math.max(0, (fonts.length - start - count) * rowHeight) + 'px"></div>';
+    if(focusedId)[...list.querySelectorAll('[data-font-id]')].find(row=>row.dataset.fontId===focusedId)?.focus({preventScroll:true});
     if (!list.dataset.fontEvents) {
       list.dataset.fontEvents = 'true';
       let frame = 0; list.addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; renderFontList(); }); }, { passive: true });
@@ -587,7 +629,7 @@
     // Scrolling inside the same window must not continually detach focused cells.
     const renderSignature=JSON.stringify([viewKey,font?.id,font?.cssFamily,font?.exactFace,columns,visibleCodes]);
     if(grid.dataset.renderSignature===renderSignature){
-      grid.querySelectorAll('[data-code]').forEach((cell,i)=>{const active=Number(cell.dataset.code)===Number(state.selectedCode);cell.classList.toggle('is-active',active);cell.tabIndex=active||(!visibleCodes.includes(Number(state.selectedCode))&&i===0)?0:-1;});
+      grid.querySelectorAll('[data-code]').forEach((cell,i)=>{const active=Number(cell.dataset.code)===Number(state.selectedCode);cell.classList.toggle('is-active',active);cell.setAttribute('aria-current',String(active));cell.tabIndex=active||(!visibleCodes.includes(Number(state.selectedCode))&&i===0)?0:-1;});
       return;
     }
     grid.dataset.renderSignature=renderSignature;
@@ -612,7 +654,7 @@
     $("glyphGrid").innerHTML = items.length
       ? spacer(start?firstRow*stride-gap:0)+items.join("")+spacer(Math.max(0,(Math.ceil(codes.length/columns)-Math.ceil(end/columns))*stride-gap))
       : `<div class="empty-favourites">${state.gridView === "favourites" ? "No favourite characters yet. Select a character and use Favourite." : "No characters match this filter."}</div>`;
-    grid.querySelectorAll('[data-code]').forEach((cell,i)=>{cell.style.height=size+'px';cell.tabIndex=Number(cell.dataset.code)===Number(state.selectedCode)||(!visibleCodes.includes(Number(state.selectedCode))&&i===0)?0:-1;});
+    grid.querySelectorAll('[data-code]').forEach((cell,i)=>{const active=Number(cell.dataset.code)===Number(state.selectedCode);cell.style.height=size+'px';cell.setAttribute('aria-current',String(active));cell.tabIndex=active||(!visibleCodes.includes(Number(state.selectedCode))&&i===0)?0:-1;});
     if(focusedCode!==null)grid.querySelector('[data-code="'+focusedCode+'"]')?.focus({preventScroll:true});
     drawLegacyGridGlyphs(font);
     if(!grid.dataset.delegated) {
@@ -628,7 +670,7 @@
       grid.addEventListener('click',event=>{const cell=event.target.closest('[data-code]');if(cell&&!cell.dataset.ownerFont)selectCode(Number(cell.dataset.code));});
       grid.addEventListener('keydown',event=>{
         const cell=event.target.closest('[data-code]');if(!cell||cell.dataset.ownerFont)return;
-        const steps={ArrowRight:1,ArrowLeft:-1,ArrowDown:grid._virtualColumns,ArrowUp:-grid._virtualColumns,PageDown:grid._virtualColumns*5,PageUp:-grid._virtualColumns*5};
+        const steps={PageDown:grid._virtualColumns*5,PageUp:-grid._virtualColumns*5};
         let index=grid._virtualCodes.indexOf(Number(cell.dataset.code));
         if(event.key==='Home')index=0;else if(event.key==='End')index=grid._virtualCodes.length-1;else if(steps[event.key])index+=steps[event.key];else return;
         event.preventDefault();index=Math.max(0,Math.min(grid._virtualCodes.length-1,index));
@@ -879,6 +921,10 @@
     return { used, limit, over };
   }
 
+  function getQartDefaults() {
+    return {logoSize:LOGO_SIZE_MAX,quietZone:Number($('quietSlider').min),bgScale:Number($('backdropSize').max)};
+  }
+
   function syncZoneControls() {
     const cropActive = isExternalLogoCropActive();
     document.querySelectorAll("[data-zone]").forEach(btn => {
@@ -889,7 +935,7 @@
     if (state.zone === "logo") {
       $("zoneSlider").disabled = false;
       $("zoneSlider").min = "10";
-      $("zoneSlider").max = "28";
+      $("zoneSlider").max = String(LOGO_SIZE_MAX);
       if (!rangeIsDragging("zoneSlider")) $("zoneSlider").value = state.logoSize;
       $("zoneLabel").textContent = "Logo size";
       $("zoneValue").textContent = `${state.logoSize}%`;
@@ -1973,6 +2019,7 @@
     prepareSelectedFont,
     getFontById: id => fontById.get(id),
     selectFont,
+    getQartDefaults,
     revealFontSelection,
     cancelFontImport: () => window.GeoGlyphFontService.cancelCatalog()
   });

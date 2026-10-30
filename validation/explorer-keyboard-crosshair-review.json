@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-30T08:34:10.983Z",
+  "scope": "Locate 2026 Font Explorer keyboard navigation and Symbol preview crosshair",
+  "keyboard": {
+    "ArrowUp": "Previous font in the current filtered list",
+    "ArrowDown": "Next font in the current filtered list",
+    "ArrowLeft": "Previous visible page of characters",
+    "ArrowRight": "Next visible page of characters",
+    "selection": "Paging preserves the selected character and Unicode range; font navigation uses the existing pointer-selection path.",
+    "boundaries": "Clamp at first/last font and top/bottom character page; empty filters are safe.",
+    "focus": "Preserve virtual font-row focus. Editable fields, modified arrows, other panels, modal dialogs and closed Explorer retain their normal behaviour.",
+    "reveal": "Selection reveal tracks selection changes, not virtual-cell recycling; explicit paging cancels older queued reveal callbacks."
+  },
+  "crosshair": {
+    "added": "Pale grey",
+    "hex": "#D3D3D3",
+    "default": "New sessions use pale grey; explicit session choices remain.",
+    "previewOnly": true
+  },
+  "validation": {
+    "browserChecks": 11,
+    "passed": 11,
+    "failed": 0,
+    "fullSuiteRerun": false,
+    "scenarios": [
+      "Modular and portable keyboard shortcuts",
+      "1000-entry filtered virtual font list, limits and no-match filter",
+      "Editable controls, modifiers, focus and closed drawer",
+      "Six crosshair swatches, pale grey default and saved choice",
+      "PNG/SVG export remains unchanged by crosshair colours",
+      "Responsive preview header and compact export layout",
+      "Large Unicode range, Find selected, Home/End and initial grid coverage"
+    ],
+    "whitespaceCheck": "git diff --check passed"
+  },
+  "artifacts": {
+    "checkedAt": "2026-10-30T08:34:10.983Z",
+    "bytes": 21149676,
+    "sha256": "43b171daf11a2bf7153522ca1c294bd8aae8bc68371b3ac3acc1f1c1adf54b5d",
+    "identical": true,
+    "fontFiles": 6
+  }
+}

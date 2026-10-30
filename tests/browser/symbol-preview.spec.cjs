@@ -20,14 +20,16 @@ async function download(page,selector){
 for(const standalone of [false,true])test(`crosshair colours remain preview-only and survive workflow changes (${standalone?'portable':'development'})`,async({page})=>{
   await openSymbol(page,standalone);
   const crosshair=page.getByRole('group',{name:'Crosshair colour',exact:true});
-  await expect(crosshair.getByRole('button')).toHaveCount(5);
+await expect(crosshair.getByRole('button')).toHaveCount(7);
+await expect(crosshair.getByRole('button',{name:'Pale grey crosshair'})).toHaveAttribute('aria-pressed','true');
+expect(await page.locator('#previewStage').evaluate(node=>getComputedStyle(node,'::before').backgroundColor)).toBe('rgb(211, 211, 211)');
   const before=await page.evaluate(()=>({canvas:document.getElementById('qrCanvas').toDataURL(),paints:JSON.stringify(GeoGlyphStudio.state.colourTargets)}));
   await page.locator('.header-export-btn').click();
   await page.locator('#symbolFileName').fill('crosshair-test');
   const png=await download(page,'#exportSymbolPngBtn');
   const svg=await download(page,'#exportSymbolSvgBtn');
   await page.locator('.export-close-btn').click();
-  for(const [name,expected] of [['White','rgb(255, 255, 255)'],['Black','rgb(0, 0, 0)'],['Orange','rgb(244, 125, 34)'],['Cyan','rgb(0, 255, 255)'],['Magenta','rgb(255, 0, 255)']]){
+for(const [name,expected] of [['Pale grey','rgb(211, 211, 211)'],['White','rgb(255, 255, 255)'],['Black','rgb(0, 0, 0)'],['Orange','rgb(244, 125, 34)'],['Cyan','rgb(0, 255, 255)'],['Magenta','rgb(255, 0, 255)']]){
     const button=crosshair.getByRole('button',{name:`${name} crosshair`,exact:true});
     await button.focus();await page.keyboard.press('Enter');
     await expect(button).toHaveAttribute('aria-pressed','true');
@@ -40,11 +42,25 @@ for(const standalone of [false,true])test(`crosshair colours remain preview-only
   expect((await download(page,'#exportSymbolSvgBtn')).bytes.equals(svg.bytes)).toBe(true);
   expect(png.name).toBe('crosshair-test.png');expect(svg.name).toBe('crosshair-test.svg');
   await page.locator('.export-close-btn').click();
+const off=crosshair.getByRole('button',{name:'Turn off crosshair',exact:true});
+await off.focus();await page.keyboard.press('Enter');
+await expect(off).toHaveAttribute('aria-pressed','true');
+await expect(crosshair.locator('[aria-pressed="true"]')).toHaveCount(1);
+for(const pseudo of ['::before','::after'])expect(await page.locator('#previewStage').evaluate((node,pseudo)=>getComputedStyle(node,pseudo).backgroundColor,pseudo)).toBe('rgba(0, 0, 0, 0)');
+expect(await page.evaluate(()=>({canvas:document.getElementById('qrCanvas').toDataURL(),paints:JSON.stringify(GeoGlyphStudio.state.colourTargets)}))).toEqual(before);
+await page.locator('.header-export-btn').click();
+expect((await download(page,'#exportSymbolPngBtn')).bytes.equals(png.bytes)).toBe(true);
+expect((await download(page,'#exportSymbolSvgBtn')).bytes.equals(svg.bytes)).toBe(true);
+await page.locator('.export-close-btn').click();
   await page.locator('.workflow-nav [data-workflow="qr"]').click();await expect(crosshair).toBeHidden();
   expect(await page.locator('#previewStage').evaluate(node=>getComputedStyle(node,'::before').backgroundColor)).toBe('rgba(185, 202, 209, 0.18)');
   await page.locator('.workflow-nav [data-workflow="symbol"]').click();
-  await expect(crosshair.getByRole('button',{name:'Magenta crosshair'})).toHaveAttribute('aria-pressed','true');
-  await page.reload();await page.waitForFunction(()=>document.querySelector('[data-crosshair-colour="#FF00FF"][aria-pressed="true"]'));
+await expect(off).toHaveAttribute('aria-pressed','true');
+await page.reload();await page.waitForFunction(()=>document.querySelector('[data-crosshair-colour="off"][aria-pressed="true"]'));
+expect(await page.locator('#previewStage').evaluate(node=>getComputedStyle(node,'::before').backgroundColor)).toBe('rgba(0, 0, 0, 0)');
+await crosshair.getByRole('button',{name:'Pale grey crosshair'}).click();
+expect(await page.locator('#previewStage').evaluate(node=>getComputedStyle(node,'::before').backgroundColor)).toBe('rgb(211, 211, 211)');
+await page.reload();await page.waitForFunction(()=>document.querySelector('[data-crosshair-colour="#D3D3D3"][aria-pressed="true"]'));
 });
 
 test('preview title and live font metadata wrap without hiding or overlapping actions',async({page})=>{

@@ -19,6 +19,39 @@ async function editHex(page,picker,value){
   await input.fill(value);await input.press('Tab');
 }
 
+for(const standalone of [false,true])test(`QART entry and resets use slider limits while edits and settings remain usable (${standalone?'portable':'development'})`,async({page})=>{
+  await open(page,standalone);
+  const nav=page.getByRole('button',{name:'QART',exact:true});
+  await expect(nav).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#studioControls>.panel-head .panel-title')).toContainText('QART');
+  const limits=await page.evaluate(()=>({logo:Number(document.getElementById('zoneSlider').max),quiet:Number(document.getElementById('quietSlider').min),backdrop:Number(document.getElementById('backdropSize').max)}));
+  expect(limits).toEqual({logo:28,quiet:1,backdrop:95});
+  const values=()=>page.evaluate(()=>({logo:GeoGlyphStudio.state.logoSize,quiet:GeoGlyphStudio.state.quietZone,backdrop:GeoGlyphStudio.state.bgScale}));
+  await expect.poll(values).toEqual(limits);
+  await expect(page.locator('#zoneValue')).toHaveText('28%');
+  await expect(page.locator('#quietValue')).toHaveText('1');
+  await expect(page.locator('#backdropValue')).toHaveText('95%');
+  await page.locator('#zoneSlider').fill('14');await page.locator('#quietSlider').fill('5');await page.locator('#backdropSize').fill('50');
+  await nav.click();await page.locator('#themeLightBtn').click();
+  expect(await values()).toEqual({logo:14,quiet:5,backdrop:50});
+  const pending=page.waitForEvent('download');await page.locator('#headerSaveBtn').click();
+  const saved=await fs.readFile(await(await pending).path());
+  await page.locator('.workflow-nav [data-workflow="symbol"]').click();
+  await nav.click();await expect.poll(values).toEqual(limits);
+  await page.locator('#zoneSlider').fill('14');await page.locator('#quietSlider').fill('5');await page.locator('#backdropSize').fill('50');
+  await page.locator('#qrControlModule .v1512-reset-btn').click();
+  expect(await values()).toEqual({...limits,backdrop:50});
+  await page.locator('#zoneSlider').fill('14');await page.locator('#quietSlider').fill('5');
+  await page.locator('#symbolControlModule .v1512-reset-btn').click();
+  expect(await values()).toEqual({logo:14,quiet:5,backdrop:95});
+  await page.locator('.workflow-nav [data-workflow="symbol"]').click();
+  await page.locator('#settingsFileInput').setInputFiles({name:'qart-settings.json',mimeType:'application/json',buffer:saved});
+  await expect(nav).toHaveAttribute('aria-pressed','true');
+  await expect.poll(values).toEqual({logo:14,quiet:5,backdrop:50});
+  await page.locator('.header-export-btn').click();
+  await expect(page.locator('.export-panel .panel-title')).toHaveText('Export QART');
+});
+
 test('QR sections share equal columns, remain independently collapsible and scroll naturally',async({page})=>{
   await open(page);
   for(const width of [1440,390])for(const theme of ['dark','light']){

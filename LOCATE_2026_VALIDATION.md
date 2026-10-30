@@ -4,6 +4,15 @@ This independent edition is in `Locate 2026 version`. The parent application rem
 
 ## Conference presentation behavior
 
+The QART rename/presets and crosshair Off option passed **11 focused browser
+checks** in the modular and portable editions, including editable values,
+section resets, settings restoration, session persistence, exports and header
+layout. See [QART/crosshair Off review](validation/qart-crosshair-off-review.json).
+
+Font Explorer arrow navigation and the pale grey default crosshair were verified
+separately with **11 focused browser checks**. The full suite was not rerun for
+these UI changes. See [keyboard/crosshair review](validation/explorer-keyboard-crosshair-review.json).
+
 The subsequent 30-second Begin timing adjustment was verified with a build and
 one real-duration flight check only; the full suite was not rerun for that
 change. See [duration review](validation/intro-duration-review.json).

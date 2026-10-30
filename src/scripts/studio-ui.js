@@ -5,11 +5,12 @@
   const extensions = new Map();
   const HISTORY_KEY = "geoglyph-locate2026.geoglyph-colour-history-v1";
   const CROSSHAIR_KEY = "geoglyph-locate2026.geoglyph-preview-crosshair-v1";
+  const DEFAULT_CROSSHAIR_COLOUR = "#D3D3D3";
   const MAP_MODEL_PRESETS = ["#F1F5F6", "#3FDE78", "#F47D22", "#429EFF", "#B978FF", "#FFDF3A", "#FF6288", "#0D0D0B"];
   const MAP_COLOUR_NAMES = ["White", "Green", "Orange", "Blue", "Violet", "Yellow", "Pink", "Black"];
   const COLOUR_NAMES = ["White", "Green", "Orange", "Blue", "Lilac", "Yellow", "Rose", "Black"];
   const TARGET_NAMES = { qrBg:"QR background", qrFg:"QR foreground", symbolBg:"Symbol backdrop", symbolEdge:"Backdrop edge", symbol:"Symbol fill" };
-  let studio, recent = [], mapTarget = "mapFill", queued = false, restoring = false, lastWorkflow='', inlinePicker, bufferPicker, gradientPickerStop='A', crosshairColour = null;
+  let studio, recent = [], mapTarget = "mapFill", queued = false, restoring = false, lastWorkflow='', inlinePicker, bufferPicker, gradientPickerStop='A', crosshairColour = DEFAULT_CROSSHAIR_COLOUR;
   const state = () => studio?.state;
   const mapEngine = () => window.GeoGlyphMapEngine;
   const finite = value => typeof value === "number" && Number.isFinite(value);
@@ -108,7 +109,7 @@
 
   function syncCrosshair() {
     const preview = $('previewStage');
-    if (crosshairColour && document.body.dataset.workflow === 'symbol') preview?.style.setProperty('--preview-crosshair-colour', crosshairColour);
+    if (crosshairColour && document.body.dataset.workflow === 'symbol') preview?.style.setProperty('--preview-crosshair-colour', crosshairColour === 'off' ? 'transparent' : crosshairColour);
     else preview?.style.removeProperty('--preview-crosshair-colour');
     document.querySelectorAll('[data-crosshair-colour]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.crosshairColour === crosshairColour));

@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-30T08:52:11.578Z",
+  "crosshair": {
+    "off": "Off option beside six colour swatches; transparent Symbol preview crosshair; selecting a colour re-enables it.",
+    "persistence": "Existing per-session choice key accepts Off as well as the existing colours.",
+    "default": "Pale grey remains the new-session default.",
+    "exports": "Preview-only; exported PNG/SVG and artwork colours remain unchanged.",
+    "layout": "Swatches wrap within the preview header at narrow widths."
+  },
+  "qart": {
+    "name": "QR design workflow renamed QART in navigation, controls, export and entry actions; QR section and QR format terminology retained.",
+    "internalWorkflow": "qr retained for settings compatibility",
+    "entryDefaults": {
+      "logoSize": 28,
+      "quietZone": 1,
+      "bgScale": 95,
+      "zone": "logo"
+    },
+    "behaviour": "Apply on entry from another workflow or Send to QART. Sliders remain editable; clicking the already-active workflow does not reset them.",
+    "resets": "QR section resets logo/quiet-zone defaults; Font Symbol resets Backdrop to its QART maximum. Section resets remain independent.",
+    "settings": "Explicit values restored from saved settings are retained."
+  },
+  "validation": {
+    "browserChecks": 11,
+    "passed": 11,
+    "failed": 0,
+    "fullSuiteRerun": false,
+    "scenarios": [
+      "Crosshair Off, colour re-enable and session reload in both builds",
+      "Unchanged PNG/SVG exports and artwork state",
+      "Responsive header layout and compact export",
+      "QART defaults, re-entry, editable values, reset isolation and settings restoration in both builds",
+      "Existing QR palette, Buffer edge, undo/redo, workflow switching and portable QR export"
+    ]
+  },
+  "artifacts": {
+    "checkedAt": "2026-10-30T08:52:11.578Z",
+    "bytes": 21150660,
+    "sha256": "e71fc5a1b22cb9d8c04d16190a5b9ed79a4264cbb9814daabebaace6e6bbfe0f",
+    "identical": true,
+    "fontFiles": 6
+  }
+}

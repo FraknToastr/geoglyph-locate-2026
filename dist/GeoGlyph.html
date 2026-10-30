@@ -10620,9 +10620,9 @@ html[data-theme="light"] .preview-stage[data-preview="symbol"]{background:
 .preview-header-status{display:flex;flex:0 1 auto;min-width:0;max-width:100%;border:1px solid #4b565b}
 .preview-header-status .status-box{height:auto;min-height:24px;min-width:0;padding:4px 8px;line-height:1.3;white-space:normal;overflow-wrap:anywhere}
 .preview-header-status #codeStatus{flex-shrink:0}
-.preview-crosshair-controls{display:flex;flex:0 0 auto;align-items:center;gap:6px}
-.preview-crosshair-swatches{display:flex;gap:4px}
-.preview-crosshair-controls .studio-swatch{width:24px;height:25px}
+.preview-crosshair-controls{display:flex;flex:0 1 auto;min-width:0;max-width:100%;align-items:center;gap:6px}
+.preview-crosshair-swatches{display:flex;flex-wrap:wrap;min-width:0;gap:4px}
+.preview-crosshair-controls .studio-swatch{flex:0 0 auto;width:24px;height:25px}
 body:not([data-workflow="symbol"]) .preview-crosshair-controls,body.geoglyph-map-preview .preview-crosshair-controls{display:none}
 .module-collapse-btn{appearance:none;display:inline-flex;align-items:center;gap:6px;min-width:0;height:22px;padding:0;border:0;background:transparent;color:var(--text);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;text-align:left;cursor:pointer}
 .module-collapse-btn:hover{color:var(--green-hi)}
@@ -11830,7 +11830,7 @@ html[data-theme="light"] .geoglyph-map-editor{--map-focus:#101416}
   align-items:center;
   margin:-9px -10px 0;
   padding:9px 10px;
-  background:var(--map-orange);
+  background:transparent;
   border-bottom:1px solid #10141666;
 }
 .geoglyph-map-editor .map-editor-titleblock strong,
@@ -11840,7 +11840,7 @@ html[data-theme="light"] .geoglyph-map-editor{--map-focus:#101416}
 .geoglyph-map-editor .map-editor-collapse{
   color:var(--map-ink);
   background:var(--map-orange);
-  border-color:#000;
+  border-color:transparent;
 }
 .geoglyph-map-editor .map-editor-head .map-collapsed-action:hover,
 .geoglyph-map-editor .map-editor-collapse:hover{background:#2b3337;color:#fff}
@@ -11934,13 +11934,13 @@ html[data-theme="light"] .geoglyph-map-editor{--map-focus:#101416}
 .geoglyph-map-editor.is-collapsed .map-editor-head{box-sizing:border-box;height:var(--map-mini-content-height);grid-template-rows:var(--map-mini-title-height) var(--map-mini-actions-height) var(--map-mini-font-height);gap:var(--map-mini-row-gap);padding:var(--map-mini-inset);border-bottom:0}
 .map-displayed-font{display:none}
 .geoglyph-map-editor.is-collapsed .map-displayed-font{display:block;min-width:0;margin:0;height:var(--map-mini-font-height);font-size:11px;line-height:var(--map-mini-font-height);color:var(--text,#edf2f4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.geoglyph-map-editor.is-collapsed .map-editor-title-row{align-items:center;min-height:0;height:var(--map-mini-title-height);margin:0;padding:0;border-bottom:0;gap:10px;background:#000}
+.geoglyph-map-editor.is-collapsed .map-editor-title-row{align-items:center;min-height:0;height:var(--map-mini-title-height);margin:0;padding:0;border-bottom:0;gap:10px;background:transparent}
 .geoglyph-map-editor.is-collapsed .map-editor-titleblock{min-width:0}
 .geoglyph-map-editor.is-collapsed .map-editor-titleblock strong{white-space:nowrap}
 .geoglyph-map-editor.is-collapsed .map-motion-action{height:var(--map-mini-actions-height);box-sizing:border-box}
 .geoglyph-map-editor .map-editor-head-actions,
-.geoglyph-map-editor .map-collapsed-actions{gap:4px;background:#000}
-.geoglyph-map-editor .map-editor-head :is(#mapCollapsedFitBtn,.map-collapsed-action,.map-editor-collapse){background:var(--map-orange);color:var(--map-ink);border:1px solid #000}
+.geoglyph-map-editor .map-collapsed-actions{gap:4px;background:transparent}
+.geoglyph-map-editor .map-editor-head :is(#mapCollapsedFitBtn,.map-collapsed-action,.map-editor-collapse){background:var(--map-orange);color:var(--map-ink);border:1px solid transparent}
 .geoglyph-map-editor .map-editor-head :is(#mapCollapsedFitBtn,.map-collapsed-action,.map-editor-collapse):hover{background:#ff963e;color:var(--map-ink)}
 .map-engine-status{margin:0;color:var(--muted,#b6c8cf);font-size:10px;line-height:1.4;overflow-wrap:anywhere}
 .map-status-announcement{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
@@ -13319,6 +13319,8 @@ THE SOFTWARE.
 <div class="preview-crosshair-controls" role="group" aria-label="Crosshair colour">
 <span class="control-label">Crosshair:</span>
 <div class="preview-crosshair-swatches">
+<button aria-label="Turn off crosshair" aria-pressed="false" class="studio-swatch" data-crosshair-colour="off" style="--swatch:var(--surface-input-deep)" title="Turn off crosshair" type="button">Off</button>
+<button aria-label="Pale grey crosshair" aria-pressed="true" class="studio-swatch" data-crosshair-colour="#D3D3D3" style="--swatch:#D3D3D3" title="Pale grey crosshair" type="button"></button>
 <button aria-label="White crosshair" aria-pressed="false" class="studio-swatch" data-crosshair-colour="#FFFFFF" style="--swatch:#FFFFFF" title="White crosshair" type="button"></button>
 <button aria-label="Black crosshair" aria-pressed="false" class="studio-swatch" data-crosshair-colour="#000000" style="--swatch:#000000" title="Black crosshair" type="button"></button>
 <button aria-label="Orange crosshair" aria-pressed="false" class="studio-swatch" data-crosshair-colour="#F47D22" style="--swatch:#F47D22" title="Orange crosshair" type="button"></button>
@@ -13368,7 +13370,7 @@ THE SOFTWARE.
 <div class="control-row"><span class="control-label">Output</span><div class="button-bar">
 <button class="square-btn is-active" id="exportSymbolPngBtn">Symbol PNG</button>
 <button class="square-btn" id="exportSymbolSvgBtn">Symbol SVG</button>
-<button class="square-btn" id="sendSymbolToQrBtn">Send to QR</button>
+<button class="square-btn" id="sendSymbolToQrBtn">Send to QART</button>
 </div></div>
 <div class="control-row"><span class="control-label">Canvas</span><div class="button-bar">
 <button aria-pressed="true" class="square-btn is-active" id="opaqueCanvasBtn">Opaque</button>
@@ -13523,7 +13525,7 @@ THE SOFTWARE.
 </aside>
 <section class="glyph-workspace">
 <div class="glyph-toolbar" data-drawer-pane="grid"><input class="text-input" id="glyphSearch" placeholder="Filter character / Unicode" type="search"/><div class="favourites-toolbar-row"><div class="button-bar"><button aria-pressed="true" class="square-btn is-active" id="codeGridBtn" type="button">Code grid</button><button aria-pressed="false" class="square-btn" id="favouritesBtn" type="button">Favourites</button></div><span aria-label="Favourite count" class="favourites-count" id="favouritesCount">0</span></div></div>
-<div class="glyph-grid" data-drawer-pane="grid" id="glyphGrid"></div>
+<div class="glyph-grid" data-drawer-pane="grid" id="glyphGrid" tabindex="0" role="region" aria-label="Font characters" aria-description="Up and Down choose the previous or next font. Left and Right move through character pages."></div>
 </section>
 </div>
 </section>
@@ -13937,6 +13939,8 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
 
   const $ = id => document.getElementById(id);
   const PREVIEW_SIZE = 1024;
+  const FONT_ROW_HEIGHT = 39;
+  const LOGO_SIZE_MAX = 28;
   const SYMBOL_REFERENCE_SIZE = 512;
   const QR_LIMITS = Object.freeze({ L: 2953, M: 2331, Q: 1663, H: 1273 });
   // Exact dark-module geometry extracted from magic_eye_qr.svg (SHA-256 c37c798c8d7d660959810767765224f583c77d27d31b753510144c0394e742c6).
@@ -14085,9 +14089,42 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
 
   function revealFontSelection() {
     const list=$('fontList'); if(list.querySelector('.font-row.is-active'))return;
-    const query=$('fontSearch').value.trim().toLowerCase();
-    const index=state.fonts.filter(f=>!query||f.name.toLowerCase().includes(query)||f.source.toLowerCase().includes(query)).findIndex(f=>f.id===state.selectedFontId);
-    if(index>=0) { list.scrollTop=index*39; renderFontList(); }
+    const index=filteredFonts().findIndex(f=>f.id===state.selectedFontId);
+    if(index>=0) { list.scrollTop=index*FONT_ROW_HEIGHT; renderFontList(); }
+  }
+
+  function handleExplorerKeydown(event) {
+    if(event.defaultPrevented||event.isComposing||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey)return;
+    if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)||!document.body.classList.contains('drawer-open'))return;
+    const target=event.target,drawer=$('explorerDrawer');
+    if(!(target instanceof Element)||(!drawer.contains(target)&&target!==document.body&&!target.closest('.workflow-font-btn')))return;
+    if(target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"],[role="combobox"],[role="slider"]'))return;
+    if(document.querySelector('dialog[open],.modal-backdrop:not([hidden]),.export-panel.is-open,.magic-eye-fullscreen:not([hidden])'))return;
+    event.preventDefault();event.stopPropagation();
+    if(event.key==='ArrowUp'||event.key==='ArrowDown') {
+      const fonts=filteredFonts();if(!fonts.length)return;
+      const direction=event.key==='ArrowDown'?1:-1;
+      const current=fonts.findIndex(font=>font.id===state.selectedFontId);
+      const index=current<0?(direction>0?0:fonts.length-1):Math.max(0,Math.min(fonts.length-1,current+direction));
+      if(index===current)return;
+      const font=fonts[index],list=$('fontList');
+      const top=index*FONT_ROW_HEIGHT;
+      if(top<list.scrollTop)list.scrollTop=top;
+      else if(top+FONT_ROW_HEIGHT>list.scrollTop+list.clientHeight)list.scrollTop=top+FONT_ROW_HEIGHT-list.clientHeight;
+      renderFontList();
+      // Use the same click path as pointer selection, including favourite
+      // ownership and asynchronous face preparation supplied by the UI layer.
+      [...list.querySelectorAll('[data-font-id]')].find(row=>row.dataset.fontId===font.id)?.click();
+      [...list.querySelectorAll('[data-font-id]')].find(row=>row.dataset.fontId===font.id)?.focus({preventScroll:true});
+    } else {
+      const grid=$('glyphGrid'),stride=grid._virtualStride,gridFocused=grid.contains(target);
+      if(!stride||!grid.clientHeight)return;
+      grid._pageNavigationVersion=(grid._pageNavigationVersion||0)+1;
+      const rows=Math.max(1,Math.floor(grid.clientHeight/stride));
+      grid.scrollTop=Math.max(0,Math.min(grid.scrollHeight-grid.clientHeight,grid.scrollTop+(event.key==='ArrowRight'?1:-1)*rows*stride));
+      renderGlyphGrid();
+      if(gridFocused)grid.focus({preventScroll:true});
+    }
   }
 
   function bindEvents() {
@@ -14116,6 +14153,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     $("closeDrawerBtn").addEventListener("click", () => setDrawer(false));
     $("drawerScrim").addEventListener("click", () => setDrawer(false));
     document.addEventListener("keydown", event => { if (event.key === "Escape") { setDrawer(false); closeAbout(); } });
+    document.addEventListener('keydown',handleExplorerKeydown,true);
     window.addEventListener("resize", syncDrawerEdge);
 
     document.querySelectorAll("button[data-preview]").forEach(btn => btn.addEventListener("click", () => {
@@ -14273,7 +14311,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     $("exportQrExperimentalSvgBtn").addEventListener("click", exportQrExperimentalSvg);
     $("exportSymbolPngBtn").addEventListener("click", exportSymbolPng);
     $("exportSymbolSvgBtn").addEventListener("click", exportSymbolSvg);
-    $("sendSymbolToQrBtn").addEventListener("click", () => { state.logoMode = "symbol"; state.logoName = "Font symbol"; state.preview = "combined"; syncControlsFromState(); renderPreview(); showToast("Symbol sent to QR"); });
+    $("sendSymbolToQrBtn").addEventListener("click", () => { Object.assign(state,getQartDefaults(),{zone:'logo'}); state.logoMode = "symbol"; state.logoName = "Font symbol"; state.preview = "combined"; syncControlsFromState(); renderPreview(); showToast("Symbol sent to QART"); });
     $("opaqueCanvasBtn").addEventListener("click", () => setSymbolCanvasTransparency(false));
     $("transparentCanvasBtn").addEventListener("click", () => setSymbolCanvasTransparency(true));
     $("saveSettingsBtn")?.addEventListener("click", saveSettings);
@@ -14421,13 +14459,19 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
   }
 
 
+  function filteredFonts() {
+    const query=$('fontSearch').value.trim().toLowerCase();
+    return state.fonts.filter(font=>!query||font.name.toLowerCase().includes(query)||font.source.toLowerCase().includes(query));
+  }
+
   function renderFontList() {
-    const list = $('fontList'), query = $('fontSearch').value.trim().toLowerCase();
-    const fonts = state.fonts.filter(font => !query || font.name.toLowerCase().includes(query) || font.source.toLowerCase().includes(query));
-    const rowHeight = 39, count = Math.min(48, Math.ceil((list.clientHeight || 500) / rowHeight) * 3);
+    const list = $('fontList'), focusedId=list.contains(document.activeElement)?document.activeElement.closest('[data-font-id]')?.dataset.fontId:null;
+    const fonts = filteredFonts();
+    const rowHeight = FONT_ROW_HEIGHT, count = Math.min(48, Math.ceil((list.clientHeight || 500) / rowHeight) * 3);
     const start = Math.max(0, Math.min(Math.max(0, fonts.length - count), Math.floor(list.scrollTop / rowHeight) - Math.floor(count / 3)));
     list.dataset.virtualized = 'true';
     list.innerHTML = '<div aria-hidden="true" style="height:' + (start * rowHeight) + 'px"></div>' + fonts.slice(start, start + count).map(font => '<button class="font-row ' + (font.id === state.selectedFontId ? 'is-active' : '') + '" style="height:' + rowHeight + 'px;min-height:' + rowHeight + 'px" data-font-id="' + escapeAttr(font.id) + '"><strong style="font-family:' + escapeAttr(quoteFont(font.cssFamily)) + '">' + escapeHtml(font.name) + '</strong><span>' + escapeHtml(fontSourceLabel(font)) + '</span></button>').join('') + '<div aria-hidden="true" style="height:' + Math.max(0, (fonts.length - start - count) * rowHeight) + 'px"></div>';
+    if(focusedId)[...list.querySelectorAll('[data-font-id]')].find(row=>row.dataset.fontId===focusedId)?.focus({preventScroll:true});
     if (!list.dataset.fontEvents) {
       list.dataset.fontEvents = 'true';
       let frame = 0; list.addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; renderFontList(); }); }, { passive: true });
@@ -14520,7 +14564,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     // Scrolling inside the same window must not continually detach focused cells.
     const renderSignature=JSON.stringify([viewKey,font?.id,font?.cssFamily,font?.exactFace,columns,visibleCodes]);
     if(grid.dataset.renderSignature===renderSignature){
-      grid.querySelectorAll('[data-code]').forEach((cell,i)=>{const active=Number(cell.dataset.code)===Number(state.selectedCode);cell.classList.toggle('is-active',active);cell.tabIndex=active||(!visibleCodes.includes(Number(state.selectedCode))&&i===0)?0:-1;});
+      grid.querySelectorAll('[data-code]').forEach((cell,i)=>{const active=Number(cell.dataset.code)===Number(state.selectedCode);cell.classList.toggle('is-active',active);cell.setAttribute('aria-current',String(active));cell.tabIndex=active||(!visibleCodes.includes(Number(state.selectedCode))&&i===0)?0:-1;});
       return;
     }
     grid.dataset.renderSignature=renderSignature;
@@ -14545,7 +14589,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     $("glyphGrid").innerHTML = items.length
       ? spacer(start?firstRow*stride-gap:0)+items.join("")+spacer(Math.max(0,(Math.ceil(codes.length/columns)-Math.ceil(end/columns))*stride-gap))
       : `<div class="empty-favourites">${state.gridView === "favourites" ? "No favourite characters yet. Select a character and use Favourite." : "No characters match this filter."}</div>`;
-    grid.querySelectorAll('[data-code]').forEach((cell,i)=>{cell.style.height=size+'px';cell.tabIndex=Number(cell.dataset.code)===Number(state.selectedCode)||(!visibleCodes.includes(Number(state.selectedCode))&&i===0)?0:-1;});
+    grid.querySelectorAll('[data-code]').forEach((cell,i)=>{const active=Number(cell.dataset.code)===Number(state.selectedCode);cell.style.height=size+'px';cell.setAttribute('aria-current',String(active));cell.tabIndex=active||(!visibleCodes.includes(Number(state.selectedCode))&&i===0)?0:-1;});
     if(focusedCode!==null)grid.querySelector('[data-code="'+focusedCode+'"]')?.focus({preventScroll:true});
     drawLegacyGridGlyphs(font);
     if(!grid.dataset.delegated) {
@@ -14561,7 +14605,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
       grid.addEventListener('click',event=>{const cell=event.target.closest('[data-code]');if(cell&&!cell.dataset.ownerFont)selectCode(Number(cell.dataset.code));});
       grid.addEventListener('keydown',event=>{
         const cell=event.target.closest('[data-code]');if(!cell||cell.dataset.ownerFont)return;
-        const steps={ArrowRight:1,ArrowLeft:-1,ArrowDown:grid._virtualColumns,ArrowUp:-grid._virtualColumns,PageDown:grid._virtualColumns*5,PageUp:-grid._virtualColumns*5};
+        const steps={PageDown:grid._virtualColumns*5,PageUp:-grid._virtualColumns*5};
         let index=grid._virtualCodes.indexOf(Number(cell.dataset.code));
         if(event.key==='Home')index=0;else if(event.key==='End')index=grid._virtualCodes.length-1;else if(steps[event.key])index+=steps[event.key];else return;
         event.preventDefault();index=Math.max(0,Math.min(grid._virtualCodes.length-1,index));
@@ -14812,6 +14856,10 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     return { used, limit, over };
   }
 
+  function getQartDefaults() {
+    return {logoSize:LOGO_SIZE_MAX,quietZone:Number($('quietSlider').min),bgScale:Number($('backdropSize').max)};
+  }
+
   function syncZoneControls() {
     const cropActive = isExternalLogoCropActive();
     document.querySelectorAll("[data-zone]").forEach(btn => {
@@ -14822,7 +14870,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     if (state.zone === "logo") {
       $("zoneSlider").disabled = false;
       $("zoneSlider").min = "10";
-      $("zoneSlider").max = "28";
+      $("zoneSlider").max = String(LOGO_SIZE_MAX);
       if (!rangeIsDragging("zoneSlider")) $("zoneSlider").value = state.logoSize;
       $("zoneLabel").textContent = "Logo size";
       $("zoneValue").textContent = `${state.logoSize}%`;
@@ -15906,6 +15954,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     prepareSelectedFont,
     getFontById: id => fontById.get(id),
     selectFont,
+    getQartDefaults,
     revealFontSelection,
     cancelFontImport: () => window.GeoGlyphFontService.cancelCatalog()
   });
@@ -16090,7 +16139,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     workflowNav.innerHTML = `
       <button class="square-btn" data-workflow="symbol" type="button">Symbol</button>
       <button class="square-btn" id="mapCanvasToggleBtn" type="button" aria-pressed="false" title="Show map preview">Map</button>
-      <button class="square-btn" data-workflow="qr" type="button">QR</button>
+      <button class="square-btn" data-workflow="qr" type="button">QART</button>
       <button class="square-btn" data-workflow="qreverse" type="button">Scan QRs</button>
       <button class="square-btn" data-workflow="magic-eye" type="button">Magic Eye</button>`;
     header.insertBefore(workflowNav, headerActions);
@@ -16186,6 +16235,10 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
 
     function switchWorkflow(mode) {
       setExportOpen(false);
+      if(mode==='qr'&&modeFromState()!=='qr'){
+        Object.assign(state,api.getQartDefaults(),{zone:'logo'});
+        api.syncControlsFromState();
+      }
       if (mode === "symbol") originalPreviewButtons.symbol?.click();
       else if (mode === "qr") originalPreviewButtons.combined?.click();
       else if (mode === "qreverse") originalPreviewButtons.qreverse?.click();
@@ -16206,7 +16259,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
         button.setAttribute("aria-pressed", String(active));
       });
       const title = controls.querySelector(".panel-title");
-      if (title) title.textContent = mode === "symbol" ? "Symbol controls" : mode === "magic-eye" ? "Magic Eye controls" : "QR controls";
+      if (title) title.textContent = mode === "symbol" ? "Symbol controls" : mode === "magic-eye" ? "Magic Eye controls" : "QART controls";
       exportButton.hidden = mode === "qreverse";
       if (mode !== "qreverse") sourceLayer.classList.remove("is-visible");
       else {
@@ -16247,7 +16300,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     secondary.className = "qreverse-secondary";
     secondary.innerHTML = `
       <button class="square-btn" id="v15ExportCsv" type="button">Export CSV</button>
-      <button class="square-btn" id="v15DesignQr" type="button">Design QR</button>
+      <button class="square-btn" id="v15DesignQr" type="button">Design QART</button>
       <details class="qreverse-menu qreverse-generate-menu">
         <summary class="square-btn is-active">Generate QRs ▾</summary>
         <div class="qreverse-menu-popover">
@@ -17213,6 +17266,13 @@ window.addEventListener("DOMContentLoaded",()=>{
   const selectedUnicode=document.getElementById("selectedUnicode");
   const drawer=document.getElementById("explorerDrawer");
   let revealQueued=false;
+  let lastSelectionKey='',pendingReveal;
+
+  function selectionKey(){
+    return JSON.stringify([api.state.selectedFontId,api.state.selectedCode,api.state.gridView,
+      api.state.rangeStart,api.state.rangeCount,document.getElementById('glyphSearch')?.value,
+      document.body.classList.contains('drawer-open')]);
+  }
 
   function revealCurrentSelection(){
     revealQueued=false;
@@ -17223,25 +17283,35 @@ window.addEventListener("DOMContentLoaded",()=>{
     grid.querySelectorAll(".glyph-cell.is-active").forEach(cell=>cell.classList.toggle("is-active",cell===active));
     active.classList.add("is-active");
     active.setAttribute("aria-current","true");
+    const pending=pendingReveal;
     window.requestAnimationFrame(()=>{
-      const cellTop=active.offsetTop;
-      const cellBottom=cellTop+active.offsetHeight;
+      // Paging must not be undone by a delayed selection reveal or by the
+      // mutations that recycle virtual cells during ordinary scrolling.
+      if(!pending||pending.key!==selectionKey()||pending.pageVersion!==(grid._pageNavigationVersion||0))return;
+      const current=grid.querySelector(`.glyph-cell[data-code="${code}"]`);
+      if(!current)return;
+      const cellTop=current.offsetTop;
+      const cellBottom=cellTop+current.offsetHeight;
       if(cellTop<grid.scrollTop)grid.scrollTop=cellTop;
       else if(cellBottom>grid.scrollTop+grid.clientHeight)grid.scrollTop=cellBottom-grid.clientHeight;
     });
   }
 
-  function queueReveal(){
+  function queueReveal(force=false){
+    const key=selectionKey();
+    if(!force&&key===lastSelectionKey)return;
+    lastSelectionKey=key;
+    pendingReveal={key,pageVersion:grid?._pageNavigationVersion||0};
     if(revealQueued)return;
     revealQueued=true;
     window.requestAnimationFrame(()=>window.requestAnimationFrame(revealCurrentSelection));
   }
 
-  if(grid)new MutationObserver(queueReveal).observe(grid,{childList:true,subtree:true});
-  if(selectedUnicode)new MutationObserver(queueReveal).observe(selectedUnicode,{childList:true,characterData:true,subtree:true});
-  new MutationObserver(queueReveal).observe(document.body,{attributes:true,attributeFilter:["class"]});
+  if(grid)new MutationObserver(()=>queueReveal()).observe(grid,{childList:true,subtree:true});
+  if(selectedUnicode)new MutationObserver(()=>queueReveal()).observe(selectedUnicode,{childList:true,characterData:true,subtree:true});
+  new MutationObserver(()=>queueReveal()).observe(document.body,{attributes:true,attributeFilter:["class"]});
   drawer?.addEventListener("click",event=>{
-    if(event.target.closest("[data-font-id],#codeGridBtn,#favouritesBtn,#applyRange,#resetRange,#emojiRange,[data-character-set]"))queueReveal();
+    if(event.target.closest("[data-font-id],#codeGridBtn,#favouritesBtn,#applyRange,#resetRange,#emojiRange,[data-character-set]"))queueReveal(true);
   });
   queueReveal();
 });
@@ -17725,12 +17795,12 @@ window.addEventListener("DOMContentLoaded",()=>{
     function syncContext() {
       const mode = workflow();
       const exportTitle = exportPanel?.querySelector('.panel-title');
-      if (exportTitle) exportTitle.textContent = mode === 'symbol' ? 'Export Symbol' : mode === 'magic-eye' ? 'Export Magic Eye' : 'Export QR';
+      if (exportTitle) exportTitle.textContent = mode === 'symbol' ? 'Export Symbol' : mode === 'magic-eye' ? 'Export Magic Eye' : 'Export QART';
       // The shared colour editor chooses an applicable destination without
       // resetting a user's still-valid selection on every workflow change.
       if (qrGroup) qrGroup.hidden = mode === "symbol";
       if (symbolGroup) symbolGroup.hidden = mode !== "symbol";
-      if (controlsTitle) controlsTitle.innerHTML = `Controls <span class="v1512-workflow-context">· ${mode === "symbol" ? "Font Symbol" : mode === "magic-eye" ? "Magic Eye" : mode === "qreverse" ? "QReverse" : "QR"}</span>`;
+      if (controlsTitle) controlsTitle.innerHTML = `Controls <span class="v1512-workflow-context">· ${mode === "symbol" ? "Font Symbol" : mode === "magic-eye" ? "Magic Eye" : mode === "qreverse" ? "QReverse" : "QART"}</span>`;
       updateQrName?.(); updateSymbolName?.(); updateCapacity(); updateWarning();
     }
 
@@ -17792,8 +17862,8 @@ window.addEventListener("DOMContentLoaded",()=>{
     const blurInput = $("magicEyeBlur");
     function resetMagicEyeBlur(){if(!blurInput)return;blurInput.value="0";blurInput.dispatchEvent(new Event("input",{bubbles:true}));}
     resetButton($("sharedColourModule"), "Palette", () => { state.colourTargets = JSON.parse(JSON.stringify(initial.colourTargets)); if(workflow()==="magic-eye")resetMagicEyeBlur(); });
-    resetButton($("qrControlModule"), "QR", () => { Object.assign(state,{qrMode:initial.qrMode,qrLevel:initial.qrLevel,quietZone:initial.quietZone,logoMode:initial.logoMode}); $("qrInput").value="https://uos.local/geoglyph"; if(workflow()==="magic-eye")resetMagicEyeBlur(); });
-    resetButton($("symbolControlModule"), "Font Symbol", () => { Object.assign(state,{symbolShape:initial.symbolShape,symbolBorder:initial.symbolBorder,borderWidth:initial.borderWidth,symbolScale:initial.symbolScale,bgScale:initial.bgScale,bgOffset:{...initial.bgOffset},symbolOffset:{...initial.symbolOffset}}); });
+    resetButton($("qrControlModule"), "QR", () => { Object.assign(state,{qrMode:initial.qrMode,qrLevel:initial.qrLevel,quietZone:initial.quietZone,logoMode:initial.logoMode}); if(workflow()==='qr'){const defaults=api.getQartDefaults();Object.assign(state,{zone:'logo',logoSize:defaults.logoSize,quietZone:defaults.quietZone});} $("qrInput").value="https://uos.local/geoglyph"; if(workflow()==="magic-eye")resetMagicEyeBlur(); });
+    resetButton($("symbolControlModule"), "Font Symbol", () => { Object.assign(state,{symbolShape:initial.symbolShape,symbolBorder:initial.symbolBorder,borderWidth:initial.borderWidth,symbolScale:initial.symbolScale,bgScale:workflow()==='qr'?api.getQartDefaults().bgScale:initial.bgScale,bgOffset:{...initial.bgOffset},symbolOffset:{...initial.symbolOffset}}); });
     if (blurInput) { const reset=document.createElement("button"); reset.type="button"; reset.className="square-btn v1512-blur-reset"; reset.textContent="Reset"; reset.dataset.hoverTip="Reset Magic Eye blur to 0 px"; blurInput.closest(".magic-eye-blur-row")?.append(reset); reset.addEventListener("click",resetMagicEyeBlur); }
 
     /* Font-family grouping and exact/fallback status. */
@@ -20968,11 +21038,12 @@ window.addEventListener("DOMContentLoaded",()=>{
   const extensions = new Map();
   const HISTORY_KEY = "geoglyph-locate2026.geoglyph-colour-history-v1";
   const CROSSHAIR_KEY = "geoglyph-locate2026.geoglyph-preview-crosshair-v1";
+  const DEFAULT_CROSSHAIR_COLOUR = "#D3D3D3";
   const MAP_MODEL_PRESETS = ["#F1F5F6", "#3FDE78", "#F47D22", "#429EFF", "#B978FF", "#FFDF3A", "#FF6288", "#0D0D0B"];
   const MAP_COLOUR_NAMES = ["White", "Green", "Orange", "Blue", "Violet", "Yellow", "Pink", "Black"];
   const COLOUR_NAMES = ["White", "Green", "Orange", "Blue", "Lilac", "Yellow", "Rose", "Black"];
   const TARGET_NAMES = { qrBg:"QR background", qrFg:"QR foreground", symbolBg:"Symbol backdrop", symbolEdge:"Backdrop edge", symbol:"Symbol fill" };
-  let studio, recent = [], mapTarget = "mapFill", queued = false, restoring = false, lastWorkflow='', inlinePicker, bufferPicker, gradientPickerStop='A', crosshairColour = null;
+  let studio, recent = [], mapTarget = "mapFill", queued = false, restoring = false, lastWorkflow='', inlinePicker, bufferPicker, gradientPickerStop='A', crosshairColour = DEFAULT_CROSSHAIR_COLOUR;
   const state = () => studio?.state;
   const mapEngine = () => window.GeoGlyphMapEngine;
   const finite = value => typeof value === "number" && Number.isFinite(value);
@@ -21071,7 +21142,7 @@ window.addEventListener("DOMContentLoaded",()=>{
 
   function syncCrosshair() {
     const preview = $('previewStage');
-    if (crosshairColour && document.body.dataset.workflow === 'symbol') preview?.style.setProperty('--preview-crosshair-colour', crosshairColour);
+    if (crosshairColour && document.body.dataset.workflow === 'symbol') preview?.style.setProperty('--preview-crosshair-colour', crosshairColour === 'off' ? 'transparent' : crosshairColour);
     else preview?.style.removeProperty('--preview-crosshair-colour');
     document.querySelectorAll('[data-crosshair-colour]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.crosshairColour === crosshairColour));

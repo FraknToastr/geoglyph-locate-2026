@@ -63,12 +63,12 @@
     function syncContext() {
       const mode = workflow();
       const exportTitle = exportPanel?.querySelector('.panel-title');
-      if (exportTitle) exportTitle.textContent = mode === 'symbol' ? 'Export Symbol' : mode === 'magic-eye' ? 'Export Magic Eye' : 'Export QR';
+      if (exportTitle) exportTitle.textContent = mode === 'symbol' ? 'Export Symbol' : mode === 'magic-eye' ? 'Export Magic Eye' : 'Export QART';
       // The shared colour editor chooses an applicable destination without
       // resetting a user's still-valid selection on every workflow change.
       if (qrGroup) qrGroup.hidden = mode === "symbol";
       if (symbolGroup) symbolGroup.hidden = mode !== "symbol";
-      if (controlsTitle) controlsTitle.innerHTML = `Controls <span class="v1512-workflow-context">· ${mode === "symbol" ? "Font Symbol" : mode === "magic-eye" ? "Magic Eye" : mode === "qreverse" ? "QReverse" : "QR"}</span>`;
+      if (controlsTitle) controlsTitle.innerHTML = `Controls <span class="v1512-workflow-context">· ${mode === "symbol" ? "Font Symbol" : mode === "magic-eye" ? "Magic Eye" : mode === "qreverse" ? "QReverse" : "QART"}</span>`;
       updateQrName?.(); updateSymbolName?.(); updateCapacity(); updateWarning();
     }
 
@@ -130,8 +130,8 @@
     const blurInput = $("magicEyeBlur");
     function resetMagicEyeBlur(){if(!blurInput)return;blurInput.value="0";blurInput.dispatchEvent(new Event("input",{bubbles:true}));}
     resetButton($("sharedColourModule"), "Palette", () => { state.colourTargets = JSON.parse(JSON.stringify(initial.colourTargets)); if(workflow()==="magic-eye")resetMagicEyeBlur(); });
-    resetButton($("qrControlModule"), "QR", () => { Object.assign(state,{qrMode:initial.qrMode,qrLevel:initial.qrLevel,quietZone:initial.quietZone,logoMode:initial.logoMode}); $("qrInput").value="https://uos.local/geoglyph"; if(workflow()==="magic-eye")resetMagicEyeBlur(); });
-    resetButton($("symbolControlModule"), "Font Symbol", () => { Object.assign(state,{symbolShape:initial.symbolShape,symbolBorder:initial.symbolBorder,borderWidth:initial.borderWidth,symbolScale:initial.symbolScale,bgScale:initial.bgScale,bgOffset:{...initial.bgOffset},symbolOffset:{...initial.symbolOffset}}); });
+    resetButton($("qrControlModule"), "QR", () => { Object.assign(state,{qrMode:initial.qrMode,qrLevel:initial.qrLevel,quietZone:initial.quietZone,logoMode:initial.logoMode}); if(workflow()==='qr'){const defaults=api.getQartDefaults();Object.assign(state,{zone:'logo',logoSize:defaults.logoSize,quietZone:defaults.quietZone});} $("qrInput").value="https://uos.local/geoglyph"; if(workflow()==="magic-eye")resetMagicEyeBlur(); });
+    resetButton($("symbolControlModule"), "Font Symbol", () => { Object.assign(state,{symbolShape:initial.symbolShape,symbolBorder:initial.symbolBorder,borderWidth:initial.borderWidth,symbolScale:initial.symbolScale,bgScale:workflow()==='qr'?api.getQartDefaults().bgScale:initial.bgScale,bgOffset:{...initial.bgOffset},symbolOffset:{...initial.symbolOffset}}); });
     if (blurInput) { const reset=document.createElement("button"); reset.type="button"; reset.className="square-btn v1512-blur-reset"; reset.textContent="Reset"; reset.dataset.hoverTip="Reset Magic Eye blur to 0 px"; blurInput.closest(".magic-eye-blur-row")?.append(reset); reset.addEventListener("click",resetMagicEyeBlur); }
 
     /* Font-family grouping and exact/fallback status. */

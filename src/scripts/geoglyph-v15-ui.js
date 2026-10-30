@@ -44,7 +44,7 @@
     workflowNav.innerHTML = `
       <button class="square-btn" data-workflow="symbol" type="button">Symbol</button>
       <button class="square-btn" id="mapCanvasToggleBtn" type="button" aria-pressed="false" title="Show map preview">Map</button>
-      <button class="square-btn" data-workflow="qr" type="button">QR</button>
+      <button class="square-btn" data-workflow="qr" type="button">QART</button>
       <button class="square-btn" data-workflow="qreverse" type="button">Scan QRs</button>
       <button class="square-btn" data-workflow="magic-eye" type="button">Magic Eye</button>`;
     header.insertBefore(workflowNav, headerActions);
@@ -140,6 +140,10 @@
 
     function switchWorkflow(mode) {
       setExportOpen(false);
+      if(mode==='qr'&&modeFromState()!=='qr'){
+        Object.assign(state,api.getQartDefaults(),{zone:'logo'});
+        api.syncControlsFromState();
+      }
       if (mode === "symbol") originalPreviewButtons.symbol?.click();
       else if (mode === "qr") originalPreviewButtons.combined?.click();
       else if (mode === "qreverse") originalPreviewButtons.qreverse?.click();
@@ -160,7 +164,7 @@
         button.setAttribute("aria-pressed", String(active));
       });
       const title = controls.querySelector(".panel-title");
-      if (title) title.textContent = mode === "symbol" ? "Symbol controls" : mode === "magic-eye" ? "Magic Eye controls" : "QR controls";
+      if (title) title.textContent = mode === "symbol" ? "Symbol controls" : mode === "magic-eye" ? "Magic Eye controls" : "QART controls";
       exportButton.hidden = mode === "qreverse";
       if (mode !== "qreverse") sourceLayer.classList.remove("is-visible");
       else {
@@ -201,7 +205,7 @@
     secondary.className = "qreverse-secondary";
     secondary.innerHTML = `
       <button class="square-btn" id="v15ExportCsv" type="button">Export CSV</button>
-      <button class="square-btn" id="v15DesignQr" type="button">Design QR</button>
+      <button class="square-btn" id="v15DesignQr" type="button">Design QART</button>
       <details class="qreverse-menu qreverse-generate-menu">
         <summary class="square-btn is-active">Generate QRs ▾</summary>
         <div class="qreverse-menu-popover">

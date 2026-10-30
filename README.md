@@ -60,6 +60,21 @@ Edit source files, then build. The root standalone HTML and `dist/` are generate
 
 ## Font behaviour
 
+The QR design workflow is named **QART**. Entering it from another workflow (or
+using Send to QART) sets Logo size to 28%, Quiet zone to 1 and Backdrop to 95%.
+These values use the current slider limits and remain editable. Section resets
+use the QART defaults for their own controls; loading saved settings restores
+their explicit values. The internal `qr` workflow identifier remains compatible
+with existing settings.
+
+In Font Explorer, Up/Down selects the previous/next font in the filtered list;
+Left/Right moves one visible page through the character grid without changing
+the selected character. These shortcuts leave editable fields and other panels
+alone. Home/End and Page Up/Page Down retain character selection navigation.
+The Symbol preview includes a pale grey crosshair option (`#D3D3D3`), selected by
+default in a new session. Off hides the Symbol preview crosshair; choosing a
+colour shows it again. Both colour and Off choices are retained for the session.
+
 Scanning catalogues metadata without reading or parsing every font. Selected faces load on demand; rescans reuse identities. Import progress includes Stop loading and failed-face retry. Font lists and large glyph grids render visible windows, retaining search, Find selected, keyboard navigation and favourites.
 
 Acquisition is limited to two simultaneous jobs. One embedded Blob worker handles parsing, character indexing and geometry. Source bytes, browser faces, glyph shapes and layouts use bounded caches; active faces remain pinned.
@@ -78,7 +93,7 @@ Magic Eye uses equal columns: QR Pixel Mode and blur on the left and the complet
 
 Scan QR has collapsible Scan actions and Results sections. **Clear Results** requeues imported images and removes their decoded values/errors while retaining image inputs, CSV/pasted values and current options. **Reset Module** clears all Scan QR inputs/results and restores its defaults without changing the QR designer. Both actions are disabled while importing, scanning or exporting; collapsing sections never stops these operations.
 
-Symbol Preview groups the live font name and Unicode metadata beside its title. Five labelled crosshair colour swatches retain the choice for the browser session and affect only the preview overlay, never exported artwork. Export Symbol uses a compact panel with File name and Logo source side by side on wider screens and a top-right close button; Escape also closes the panel and restores focus to Export.
+Symbol Preview groups the live font name and Unicode metadata beside its title. Six crosshair colour swatches and an Off option retain the choice for the browser session and affect only the preview overlay, never exported artwork. Export Symbol uses a compact panel with File name and Logo source side by side on wider screens and a top-right close button; Escape also closes the panel and restores focus to Export.
 
 ## Map placement and 3D
 

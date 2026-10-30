@@ -1180,6 +1180,8 @@ THE SOFTWARE.
 <div class="preview-crosshair-controls" role="group" aria-label="Crosshair colour">
 <span class="control-label">Crosshair:</span>
 <div class="preview-crosshair-swatches">
+<button aria-label="Turn off crosshair" aria-pressed="false" class="studio-swatch" data-crosshair-colour="off" style="--swatch:var(--surface-input-deep)" title="Turn off crosshair" type="button">Off</button>
+<button aria-label="Pale grey crosshair" aria-pressed="true" class="studio-swatch" data-crosshair-colour="#D3D3D3" style="--swatch:#D3D3D3" title="Pale grey crosshair" type="button"></button>
 <button aria-label="White crosshair" aria-pressed="false" class="studio-swatch" data-crosshair-colour="#FFFFFF" style="--swatch:#FFFFFF" title="White crosshair" type="button"></button>
 <button aria-label="Black crosshair" aria-pressed="false" class="studio-swatch" data-crosshair-colour="#000000" style="--swatch:#000000" title="Black crosshair" type="button"></button>
 <button aria-label="Orange crosshair" aria-pressed="false" class="studio-swatch" data-crosshair-colour="#F47D22" style="--swatch:#F47D22" title="Orange crosshair" type="button"></button>
@@ -1229,7 +1231,7 @@ THE SOFTWARE.
 <div class="control-row"><span class="control-label">Output</span><div class="button-bar">
 <button class="square-btn is-active" id="exportSymbolPngBtn">Symbol PNG</button>
 <button class="square-btn" id="exportSymbolSvgBtn">Symbol SVG</button>
-<button class="square-btn" id="sendSymbolToQrBtn">Send to QR</button>
+<button class="square-btn" id="sendSymbolToQrBtn">Send to QART</button>
 </div></div>
 <div class="control-row"><span class="control-label">Canvas</span><div class="button-bar">
 <button aria-pressed="true" class="square-btn is-active" id="opaqueCanvasBtn">Opaque</button>
@@ -1384,7 +1386,7 @@ THE SOFTWARE.
 </aside>
 <section class="glyph-workspace">
 <div class="glyph-toolbar" data-drawer-pane="grid"><input class="text-input" id="glyphSearch" placeholder="Filter character / Unicode" type="search"/><div class="favourites-toolbar-row"><div class="button-bar"><button aria-pressed="true" class="square-btn is-active" id="codeGridBtn" type="button">Code grid</button><button aria-pressed="false" class="square-btn" id="favouritesBtn" type="button">Favourites</button></div><span aria-label="Favourite count" class="favourites-count" id="favouritesCount">0</span></div></div>
-<div class="glyph-grid" data-drawer-pane="grid" id="glyphGrid"></div>
+<div class="glyph-grid" data-drawer-pane="grid" id="glyphGrid" tabindex="0" role="region" aria-label="Font characters" aria-description="Up and Down choose the previous or next font. Left and Right move through character pages."></div>
 </section>
 </div>
 </section>

@@ -481,9 +481,9 @@ html[data-theme="light"] .preview-stage[data-preview="symbol"]{background:
 .preview-header-status{display:flex;flex:0 1 auto;min-width:0;max-width:100%;border:1px solid #4b565b}
 .preview-header-status .status-box{height:auto;min-height:24px;min-width:0;padding:4px 8px;line-height:1.3;white-space:normal;overflow-wrap:anywhere}
 .preview-header-status #codeStatus{flex-shrink:0}
-.preview-crosshair-controls{display:flex;flex:0 0 auto;align-items:center;gap:6px}
-.preview-crosshair-swatches{display:flex;gap:4px}
-.preview-crosshair-controls .studio-swatch{width:24px;height:25px}
+.preview-crosshair-controls{display:flex;flex:0 1 auto;min-width:0;max-width:100%;align-items:center;gap:6px}
+.preview-crosshair-swatches{display:flex;flex-wrap:wrap;min-width:0;gap:4px}
+.preview-crosshair-controls .studio-swatch{flex:0 0 auto;width:24px;height:25px}
 body:not([data-workflow="symbol"]) .preview-crosshair-controls,body.geoglyph-map-preview .preview-crosshair-controls{display:none}
 .module-collapse-btn{appearance:none;display:inline-flex;align-items:center;gap:6px;min-width:0;height:22px;padding:0;border:0;background:transparent;color:var(--text);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;text-align:left;cursor:pointer}
 .module-collapse-btn:hover{color:var(--green-hi)}
@@ -1691,7 +1691,7 @@ html[data-theme="light"] .geoglyph-map-editor{--map-focus:#101416}
   align-items:center;
   margin:-9px -10px 0;
   padding:9px 10px;
-  background:var(--map-orange);
+  background:transparent;
   border-bottom:1px solid #10141666;
 }
 .geoglyph-map-editor .map-editor-titleblock strong,
@@ -1701,7 +1701,7 @@ html[data-theme="light"] .geoglyph-map-editor{--map-focus:#101416}
 .geoglyph-map-editor .map-editor-collapse{
   color:var(--map-ink);
   background:var(--map-orange);
-  border-color:#000;
+  border-color:transparent;
 }
 .geoglyph-map-editor .map-editor-head .map-collapsed-action:hover,
 .geoglyph-map-editor .map-editor-collapse:hover{background:#2b3337;color:#fff}
@@ -1795,13 +1795,13 @@ html[data-theme="light"] .geoglyph-map-editor{--map-focus:#101416}
 .geoglyph-map-editor.is-collapsed .map-editor-head{box-sizing:border-box;height:var(--map-mini-content-height);grid-template-rows:var(--map-mini-title-height) var(--map-mini-actions-height) var(--map-mini-font-height);gap:var(--map-mini-row-gap);padding:var(--map-mini-inset);border-bottom:0}
 .map-displayed-font{display:none}
 .geoglyph-map-editor.is-collapsed .map-displayed-font{display:block;min-width:0;margin:0;height:var(--map-mini-font-height);font-size:11px;line-height:var(--map-mini-font-height);color:var(--text,#edf2f4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.geoglyph-map-editor.is-collapsed .map-editor-title-row{align-items:center;min-height:0;height:var(--map-mini-title-height);margin:0;padding:0;border-bottom:0;gap:10px;background:#000}
+.geoglyph-map-editor.is-collapsed .map-editor-title-row{align-items:center;min-height:0;height:var(--map-mini-title-height);margin:0;padding:0;border-bottom:0;gap:10px;background:transparent}
 .geoglyph-map-editor.is-collapsed .map-editor-titleblock{min-width:0}
 .geoglyph-map-editor.is-collapsed .map-editor-titleblock strong{white-space:nowrap}
 .geoglyph-map-editor.is-collapsed .map-motion-action{height:var(--map-mini-actions-height);box-sizing:border-box}
 .geoglyph-map-editor .map-editor-head-actions,
-.geoglyph-map-editor .map-collapsed-actions{gap:4px;background:#000}
-.geoglyph-map-editor .map-editor-head :is(#mapCollapsedFitBtn,.map-collapsed-action,.map-editor-collapse){background:var(--map-orange);color:var(--map-ink);border:1px solid #000}
+.geoglyph-map-editor .map-collapsed-actions{gap:4px;background:transparent}
+.geoglyph-map-editor .map-editor-head :is(#mapCollapsedFitBtn,.map-collapsed-action,.map-editor-collapse){background:var(--map-orange);color:var(--map-ink);border:1px solid transparent}
 .geoglyph-map-editor .map-editor-head :is(#mapCollapsedFitBtn,.map-collapsed-action,.map-editor-collapse):hover{background:#ff963e;color:var(--map-ink)}
 .map-engine-status{margin:0;color:var(--muted,#b6c8cf);font-size:10px;line-height:1.4;overflow-wrap:anywhere}
 .map-status-announcement{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}

@@ -35,8 +35,9 @@ test('large glyph ranges keep bounded DOM and support Find and keyboard selectio
  await page.evaluate(()=>{GeoGlyphStudio.state.selectedCode=3500;GeoGlyphStudio.renderGridSelectionPreview();});
  await page.locator('#gridPreviewFindBtn').click();
  await expect(page.locator('#glyphGrid [data-code="3500"]')).toBeFocused();
- await page.locator('#glyphGrid [data-code="3500"]').press('ArrowRight');
- await expect.poll(()=>page.evaluate(()=>GeoGlyphStudio.state.selectedCode)).toBe(3501);
+ await page.locator('#glyphGrid [data-code="3500"]').press('End');
+ await expect.poll(()=>page.evaluate(()=>GeoGlyphStudio.state.selectedCode)).toBe(4127);
+ await expect(page.locator('#glyphGrid [data-code="4127"]')).toHaveAttribute('aria-current','true');
  expect(await page.locator('#glyphGrid [data-code]').count()).toBeLessThan(200);
 });
 
