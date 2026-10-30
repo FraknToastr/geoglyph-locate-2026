@@ -1,0 +1,14 @@
+node_modules/
+test-results/
+playwright-report/
+test-reports/
+*.log
+.env
+.env.*
+!.env.example
+.aws/
+.codex/
+.agents/
+*:Zone.Identifier
+.DS_Store
+Thumbs.db

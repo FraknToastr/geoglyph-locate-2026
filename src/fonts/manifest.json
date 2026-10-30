@@ -1,0 +1,8 @@
+[
+  {"key":"Segoe UI Emoji","name":"Segoe UI Emoji","family":"Segoe UI Emoji","style":"Regular","file":"src/fonts/seguiemj.ttf","emoji":true},
+  {"key":"Gill Sans","name":"Gill Sans Ultra Bold Condensed","family":"Gill Sans Ultra Bold Condensed","style":"Regular","file":"src/fonts/GILLUBCD.TTF"},
+  {"key":"Forte","name":"Forte","family":"Forte","style":"Regular","file":"src/fonts/FORTE.TTF"},
+  {"key":"Chiller","name":"Chiller","family":"Chiller","style":"Regular","file":"src/fonts/CHILLER.TTF"},
+  {"key":"Magneto","name":"Magneto Bold","family":"Magneto","style":"Bold","file":"src/fonts/MAGNETOB.TTF"},
+  {"key":"Showcard Gothic","name":"Showcard Gothic","family":"Showcard Gothic","style":"Regular","file":"src/fonts/SHOWG.TTF"}
+]

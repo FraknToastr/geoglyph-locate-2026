@@ -1,0 +1,226 @@
+{
+  "checkedAt": "2026-10-22T13:28:04.322Z",
+  "build": "dist/GeoGlyph.html",
+  "transport": "file:// portable build → live public ArcGIS view",
+  "readOnly": true,
+  "recordsCreatedOrEdited": false,
+  "credentialsUsed": false,
+  "metadata": {
+    "id": 0,
+    "capabilities": "Query,Extract",
+    "geometryType": "esriGeometryPoint",
+    "supportsOrderBy": true,
+    "supportsPagination": true,
+    "fieldNames": [
+      "objectid",
+      "globalid",
+      "whats_on_your_mind",
+      "CreationDate",
+      "Creator",
+      "EditDate",
+      "Editor",
+      "random_font",
+      "choose_a_colour_colour",
+      "choose_a_font_font",
+      "_size_size",
+      "emojis",
+      "geoglyph_speaks",
+      "_2d_or_3d",
+      "fit",
+      "animation"
+    ]
+  },
+  "startupState": {
+    "ready": true,
+    "collapsed": true,
+    "nativeColor": true,
+    "extrusionEnabled": false,
+    "selectedFontName": "Segoe UI Emoji",
+    "lastQueuedId": null,
+    "lastAppliedId": null
+  },
+  "state": {
+    "ready": true,
+    "mapReady": true,
+    "previewActive": true,
+    "mode": "arcgis",
+    "collapsed": true,
+    "nativeColor": false,
+    "extrusionEnabled": false,
+    "polling": true,
+    "lastQueuedId": 21,
+    "lastAppliedId": 21,
+    "applying": false,
+    "queueLength": 0,
+    "contentKind": "text",
+    "fontNames": [
+      "Segoe UI Emoji",
+      "Gill Sans",
+      "Forte",
+      "Chiller",
+      "Magneto",
+      "Showcard Gothic"
+    ],
+    "selectedFontName": "Gill Sans",
+    "displayedFontName": "Gill Sans",
+    "history": [
+      {
+        "objectId": 21,
+        "phase": "started"
+      },
+      {
+        "objectId": 21,
+        "phase": "drawn"
+      },
+      {
+        "objectId": 21,
+        "phase": "fit"
+      },
+      {
+        "objectId": 21,
+        "phase": "applied"
+      }
+    ],
+    "conferenceErrorPresent": false,
+    "layerId": 0
+  },
+  "requests": [
+    {
+      "relativePath": "/",
+      "method": "GET",
+      "authorizationHeaderPresent": false,
+      "cookieHeaderPresent": false,
+      "tokenParameterPresent": false,
+      "outFields": [],
+      "outSR": null,
+      "returnGeometry": null,
+      "orderByFields": null,
+      "afterId": null,
+      "atMs": 1300
+    },
+    {
+      "relativePath": "/0",
+      "method": "GET",
+      "authorizationHeaderPresent": false,
+      "cookieHeaderPresent": false,
+      "tokenParameterPresent": false,
+      "outFields": [],
+      "outSR": null,
+      "returnGeometry": null,
+      "orderByFields": null,
+      "afterId": null,
+      "atMs": 1674
+    },
+    {
+      "relativePath": "/0/query",
+      "method": "POST",
+      "authorizationHeaderPresent": false,
+      "cookieHeaderPresent": false,
+      "tokenParameterPresent": false,
+      "outFields": [
+        "whats_on_your_mind",
+        "objectid",
+        "CreationDate",
+        "emojis",
+        "geoglyph_speaks",
+        "random_font",
+        "choose_a_font_font",
+        "choose_a_colour_colour",
+        "_size_size",
+        "_2d_or_3d",
+        "fit",
+        "animation"
+      ],
+      "outSR": "4326",
+      "returnGeometry": "true",
+      "orderByFields": "CreationDate DESC,objectid DESC",
+      "afterId": null,
+      "atMs": 2031
+    },
+    {
+      "relativePath": "/0/query",
+      "method": "POST",
+      "authorizationHeaderPresent": false,
+      "cookieHeaderPresent": false,
+      "tokenParameterPresent": false,
+      "outFields": [
+        "whats_on_your_mind",
+        "objectid",
+        "CreationDate",
+        "emojis",
+        "geoglyph_speaks",
+        "random_font",
+        "choose_a_font_font",
+        "choose_a_colour_colour",
+        "_size_size",
+        "_2d_or_3d",
+        "fit",
+        "animation"
+      ],
+      "outSR": "4326",
+      "returnGeometry": "true",
+      "orderByFields": "objectid ASC",
+      "afterId": "21",
+      "atMs": 3882
+    },
+    {
+      "relativePath": "/0/query",
+      "method": "POST",
+      "authorizationHeaderPresent": false,
+      "cookieHeaderPresent": false,
+      "tokenParameterPresent": false,
+      "outFields": [
+        "whats_on_your_mind",
+        "objectid",
+        "CreationDate",
+        "emojis",
+        "geoglyph_speaks",
+        "random_font",
+        "choose_a_font_font",
+        "choose_a_colour_colour",
+        "_size_size",
+        "_2d_or_3d",
+        "fit",
+        "animation"
+      ],
+      "outSR": "4326",
+      "returnGeometry": "true",
+      "orderByFields": "objectid ASC",
+      "afterId": "21",
+      "atMs": 4896
+    },
+    {
+      "relativePath": "/0/query",
+      "method": "POST",
+      "authorizationHeaderPresent": false,
+      "cookieHeaderPresent": false,
+      "tokenParameterPresent": false,
+      "outFields": [
+        "whats_on_your_mind",
+        "objectid",
+        "CreationDate",
+        "emojis",
+        "geoglyph_speaks",
+        "random_font",
+        "choose_a_font_font",
+        "choose_a_colour_colour",
+        "_size_size",
+        "_2d_or_3d",
+        "fit",
+        "animation"
+      ],
+      "outSR": "4326",
+      "returnGeometry": "true",
+      "orderByFields": "objectid ASC",
+      "afterId": "21",
+      "atMs": 5899
+    }
+  ],
+  "timing": {
+    "readyMs": 1328,
+    "appliedMs": 4880,
+    "totalMs": 6083
+  },
+  "pageErrorCount": 0,
+  "failure": null
+}

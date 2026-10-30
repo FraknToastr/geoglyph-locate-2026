@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-10-30T07:36:57.037Z",
+  "change": "Begin introduction duration changed from 15000ms to 30000ms",
+  "cameraWait": "Introduction waits up to its configured duration plus 10000ms; other camera waits retain their 30000ms default",
+  "validation": {
+    "build": "passed",
+    "browserChecks": 1,
+    "passed": 1,
+    "failed": 0,
+    "test": "Begin draws sleeping Geo before a real 30-second flight and holds later cues until arrival",
+    "assertions": [
+      "Requested duration is 30000ms",
+      "Measured flight lasts at least 29500ms",
+      "Artwork draws before flight",
+      "Queued content waits for arrival",
+      "Duplicate Begin does not restart the flight",
+      "Anchor is preserved"
+    ],
+    "fullSuiteRerun": false
+  },
+  "artifacts": {
+    "checkedAt": "2026-10-30T07:36:57.037Z",
+    "bytes": 21145606,
+    "sha256": "372e8c054aa3065891d4d784ab821351656dfa34d1b97dfbfb14c6109a3b7007",
+    "identical": true,
+    "fontFiles": 6
+  }
+}

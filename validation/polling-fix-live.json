@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-10-21T10:24:05.296Z",
+  "transport": "Chromium, portable file:// build",
+  "before": {
+    "method": "GET",
+    "responseHeaders": [
+      "date: Wed, 21 Oct 2026 10:19:18 GMT",
+      "cache-control: public, max-age=30, s-maxage=30",
+      "x-cache: TCP_MISS"
+    ]
+  },
+  "after": {
+    "milliseconds": 829,
+    "objectId": 5,
+    "messageLength": 10,
+    "layer": 0,
+    "requests": [
+      {
+        "method": "POST",
+        "token": false,
+        "authorization": false,
+        "cookies": false
+      }
+    ],
+    "responseHeaders": {
+      "cache-control": "public, max-age=30, s-maxage=30",
+      "x-cache": "CONFIG_NOCACHE",
+      "date": "Wed, 21 Oct 2026 10:24:06 GMT"
+    }
+  },
+  "notes": "Read-only diagnostics. No records added or edited; response text omitted."
+}

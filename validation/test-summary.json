@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-10-30T07:31:59.658Z",
+  "exitCode": 0,
+  "build": "passed",
+  "unitFiles": 8,
+  "unitCases": 71,
+  "surveyClientCases": 15,
+  "cueRuleCases": 14,
+  "cameraLifecycleCases": 11,
+  "browserChecks": 147,
+  "presentationBrowserChecks": 34,
+  "existingConnectionBrowserChecks": 13,
+  "closerFramingBrowserChecks": 7,
+  "randomFitBrowserChecks": 10,
+  "browserFailures": 0,
+  "browserSkipped": 0,
+  "browserFlaky": 0,
+  "originalFilesUnchanged": 96,
+  "latestChange": "Opening raster artwork uses the destination Fit sampling scale for native colours, outlines and texture resolution throughout the Begin flight",
+  "browserReport": "validation/browser-results.json",
+  "reviewEvidence": "validation/intro-colour-review.json",
+  "priorLiveEvidence": "validation/conference-live.json",
+  "commands": [
+    "rtk node scripts/build.cjs",
+    "Unit files (8) and direct unit-case execution (71 cases)",
+    "rtk node node_modules/@playwright/test/cli.js test"
+  ],
+  "fontStartupBrowserChecks": 3,
+  "previousReviewEvidence": "validation/font-startup-review.json",
+  "introColourBrowserChecks": 1
+}

@@ -1,0 +1,62 @@
+{
+  "checkedAt": "2026-10-30T07:31:59.658Z",
+  "issue": "Sleeping Geo appeared white during Begin and corrected itself only after zoomend",
+  "cause": "The screen-pixel outline was converted to texture pixels using the Australia-wide camera scale. Its excessive radius overpainted the native-colour mask; zoomend later rebuilt it at the correct scale.",
+  "reproduction": {
+    "test": "Begin preserves native emoji colours before, during and after the flight",
+    "beforeFixColouredFraction": 0.0031981900199712305,
+    "requiredMinimum": 0.65
+  },
+  "fix": {
+    "framing": "Overview/introduction raster preparation measures the actual artwork footprint and uses the shared 2D Fit target for sampling.",
+    "resolution": "Prepare destination-resolution texture before the first flight frame, retaining the bounded raster cache and texture limits.",
+    "paint": "Outline and native-colour policy remain enabled; no font-specific exception, disabled outline or timing delay.",
+    "camera": "Read-only destination measurement; no intermediate camera jump or anchor change."
+  },
+  "results": {
+    "samples": {
+      "before": {
+        "coloured": 0.9362648101493923,
+        "white": 0.0164969210136917,
+        "width": 1355,
+        "height": 1055,
+        "samplingHeightPx": 615.5112727304114
+      },
+      "mid": {
+        "coloured": 0.9362648101493923,
+        "white": 0.0164969210136917,
+        "width": 1355,
+        "height": 1055,
+        "samplingHeightPx": 615.5112727304114,
+        "yellowPixels": 982,
+        "moving": true
+      },
+      "after": {
+        "coloured": 0.9362648101493923,
+        "white": 0.0164969210136917,
+        "width": 1355,
+        "height": 1055,
+        "samplingHeightPx": 616.0946957287864
+      }
+    },
+    "unitCases": 71,
+    "browserPassed": 147,
+    "browserFailed": 0,
+    "browserSkipped": 0,
+    "browserFlaky": 0,
+    "presentationChecks": 34,
+    "report": "validation/browser-results.json"
+  },
+  "artifacts": {
+    "checkedAt": "2026-10-30T07:31:59.658Z",
+    "bytes": 21145446,
+    "sha256": "e28cdd0c758fcf12b5fa40c3702f0a530b11c25a1f5e978a9f4de77d809a2790",
+    "identical": true,
+    "fontFiles": 6
+  },
+  "originalProject": {
+    "checked": 96,
+    "changed": [],
+    "missing": []
+  }
+}

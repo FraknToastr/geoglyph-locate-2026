@@ -1,0 +1,48 @@
+{
+  "checkedAt": "2026-10-30T07:06:57.762Z",
+  "reportedEntryPoint": "Locate 2026 version/index.html opened directly from file://wsl.localhost/Ubuntu/",
+  "reproduction": {
+    "browser": "Chromium",
+    "protocol": "file:",
+    "error": "Conference startup failed: Failed to fetch",
+    "diagnostic": "Fetch API cannot load file:///.../src/fonts/seguiemj.ttf. URL scheme \"file\" is not supported.",
+    "mapReady": true,
+    "conferenceReady": false,
+    "fontReads": 0,
+    "fontFaces": 0
+  },
+  "cause": "The modular manifest used fetch() to read font files from disk; browsers reject file-scheme fetch before conference fonts are registered or polling starts.",
+  "fix": {
+    "generatedAsset": "src/fonts/conference-font-data.js",
+    "directFile": "Load the generated font bytes using a classic script, then retain the existing acquisition and rendering pipeline.",
+    "http": "Continue fetching individual font files; no extra font-pack request.",
+    "portable": "Font data remains embedded; no companion files needed.",
+    "diagnostics": "Missing local font pack gives rebuild/portable instructions; HTTP failures identify the bundled font."
+  },
+  "tests": {
+    "browserPassed": 146,
+    "browserFailed": 0,
+    "browserSkipped": 0,
+    "browserFlaky": 0,
+    "presentationChecks": 33,
+    "unitCases": 71,
+    "report": "validation/browser-results.json",
+    "newChecks": [
+      "Direct-file modular startup without local font fetches",
+      "Missing local font pack gives actionable instructions",
+      "HTTP font failure names the affected bundled font"
+    ]
+  },
+  "artifacts": {
+    "checkedAt": "2026-10-30T07:06:57.762Z",
+    "bytes": 21144043,
+    "sha256": "82b4c002773a4953be7ae95aedfc1ece8f18f149de61c37a621ed8e61a1d2ae3",
+    "identical": true,
+    "fontFiles": 6
+  },
+  "originalProject": {
+    "checked": 96,
+    "changed": [],
+    "missing": []
+  }
+}

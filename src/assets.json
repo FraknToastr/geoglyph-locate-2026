@@ -1,0 +1,256 @@
+[
+  {
+    "key": "opentype",
+    "type": "script",
+    "attrs": "",
+    "path": "src/vendor/opentype.js",
+    "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"
+  },
+  {
+    "key": "qrious",
+    "type": "script",
+    "attrs": "",
+    "path": "src/vendor/qrious.js",
+    "originalUrl": "https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"
+  },
+  {
+    "key": "jsqr",
+    "type": "script",
+    "attrs": "",
+    "path": "src/vendor/jsqr.js"
+  },
+  {
+    "key": "jszip",
+    "type": "script",
+    "attrs": "",
+    "path": "src/vendor/jszip.js"
+  },
+  {
+    "key": "geoglyph-maplibre-v530-css",
+    "type": "style",
+    "attrs": " id=\"geoglyph-maplibre-v530-css\"",
+    "path": "src/vendor/geoglyph-maplibre-v530-css.css"
+  },
+  {
+    "key": "app-style",
+    "type": "style",
+    "attrs": "",
+    "path": "src/styles/app.css"
+  },
+  {
+    "key": "map-controls-style",
+    "type": "style",
+    "attrs": "",
+    "path": "src/styles/map-controls.css"
+  },
+  {
+    "key": "polygon-clipping",
+    "type": "script",
+    "attrs": "",
+    "path": "src/vendor/polygon-clipping.js"
+  },
+  {
+    "key": "ground-transform",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/ground-transform.js"
+  },
+  {
+    "key": "font-worker-source",
+    "type": "worker",
+    "attrs": "",
+    "path": "src/workers/font-geometry-worker.js"
+  },
+  {
+    "key": "font-service",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/font-service.js"
+  },
+  {
+    "key": "ground-geometry",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/ground-geometry.js"
+  },
+  {
+    "key": "version",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/version.js"
+  },
+  {
+    "key": "conference-config",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/conference-config.js"
+  },
+  {
+    "key": "core",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/core.js"
+  },
+  {
+    "key": "controls",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/controls.js"
+  },
+  {
+    "key": "geoglyph-v15-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v15-ui\"",
+    "path": "src/scripts/geoglyph-v15-ui.js"
+  },
+  {
+    "key": "geoglyph-v154-base-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v154-base-ui\"",
+    "path": "src/scripts/geoglyph-v154-base-ui.js"
+  },
+  {
+    "key": "geoglyph-v154-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v154-ui\"",
+    "path": "src/scripts/geoglyph-v154-ui.js"
+  },
+  {
+    "key": "geoglyph-v155-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v155-ui\"",
+    "path": "src/scripts/geoglyph-v155-ui.js"
+  },
+  {
+    "key": "geoglyph-v156-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v156-ui\"",
+    "path": "src/scripts/geoglyph-v156-ui.js"
+  },
+  {
+    "key": "geoglyph-v157-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v157-ui\"",
+    "path": "src/scripts/geoglyph-v157-ui.js"
+  },
+  {
+    "key": "geoglyph-v159-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v159-ui\"",
+    "path": "src/scripts/geoglyph-v159-ui.js"
+  },
+  {
+    "key": "geoglyph-v1510-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v1510-ui\"",
+    "path": "src/scripts/geoglyph-v1510-ui.js"
+  },
+  {
+    "key": "geoglyph-v1511-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v1511-ui\"",
+    "path": "src/scripts/geoglyph-v1511-ui.js"
+  },
+  {
+    "key": "geoglyph-v1511-magic-eye-fullscreen",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v1511-magic-eye-fullscreen\"",
+    "path": "src/scripts/geoglyph-v1511-magic-eye-fullscreen.js"
+  },
+  {
+    "key": "geoglyph-v1511-magic-eye-random-colours",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v1511-magic-eye-random-colours\"",
+    "path": "src/scripts/geoglyph-v1511-magic-eye-random-colours.js"
+  },
+  {
+    "key": "geoglyph-v1511-section-structure-repair-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v1511-section-structure-repair-ui\"",
+    "path": "src/scripts/geoglyph-v1511-section-structure-repair-ui.js"
+  },
+  {
+    "key": "geoglyph-v1511-accessible-hover-tips-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v1511-accessible-hover-tips-ui\"",
+    "path": "src/scripts/geoglyph-v1511-accessible-hover-tips-ui.js"
+  },
+  {
+    "key": "geoglyph-v1512-ux-ui",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v1512-ux-ui\"",
+    "path": "src/scripts/geoglyph-v1512-ux-ui.js"
+  },
+  {
+    "key": "geoglyph-maplibre-v530-vendor",
+    "type": "script",
+    "attrs": " id=\"geoglyph-maplibre-v530-vendor\"",
+    "path": "src/vendor/geoglyph-maplibre-v530-vendor.js"
+  },
+  {
+    "key": "basemap-coverage",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/basemap-coverage.js"
+  },
+  {
+    "attrs": "",
+    "key": "survey-results",
+    "path": "src/scripts/survey-results.js",
+    "type": "script"
+  },
+  {
+    "key": "conference-cues",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/conference-cues.js"
+  },
+  {
+    "key": "geoglyph-map-engine-inline",
+    "type": "script",
+    "attrs": " id=\"geoglyph-map-engine-inline\"",
+    "path": "src/scripts/geoglyph-map-engine-inline.js"
+  },
+  {
+    "key": "geoglyph-v164-version-marker",
+    "type": "script",
+    "attrs": " id=\"geoglyph-v164-version-marker\"",
+    "path": "src/scripts/geoglyph-v164-version-marker.js"
+  },
+  {
+    "key": "colour-picker",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/colour-picker.js"
+  },
+  {
+    "key": "studio-ui",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/studio-ui.js"
+  },
+  {
+    "key": "ground-3d",
+    "type": "script",
+    "attrs": "",
+    "path": "src/vendor/ground-3d.js"
+  },
+  {
+    "key": "map-controls-ui",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/map-controls-ui.js"
+  },
+  {
+    "key": "conference-fonts",
+    "type": "font-pack",
+    "attrs": "",
+    "path": "src/fonts/manifest.json"
+  },
+  {
+    "key": "conference-presentation",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/conference-presentation.js"
+  }
+]

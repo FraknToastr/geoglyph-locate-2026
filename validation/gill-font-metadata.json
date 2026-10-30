@@ -1,0 +1,10 @@
+{
+  "source": "Windows/Fonts/GILLUBCD.TTF",
+  "sourceSHA256": "9c96a89a866bcc0b36d1d80f61ebb6ba9251cf9708e0060ac94546be57dbd881",
+  "conferenceSHA256": "850cf06d039dd9d0831d2c8f61016b9623e77f6a4a9cd04c1c2bb2b386f7a796",
+  "correction": "Unicode cmap language 1 → 0; table checksums recalculated",
+  "fontToolsVersion": "4.46.0",
+  "glyphOutlinesIdentical": true,
+  "preparationScript": "scripts/prepare-conference-gill-font.py",
+  "browserFaceLoaded": true
+}

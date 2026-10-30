@@ -1,0 +1,5258 @@
+{
+  "config": {
+    "argv": [
+      "/home/n0rt/.nvm/versions/node/v22.23.2/bin/node",
+      "/home/n0rt/headroom-projects/geoglyph/Locate 2026 version/node_modules/@playwright/test/cli.js",
+      "test"
+    ],
+    "configFile": "/home/n0rt/headroom-projects/geoglyph/Locate 2026 version/playwright.config.js",
+    "rootDir": "/home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/browser",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 3
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/n0rt/headroom-projects/geoglyph/Locate 2026 version/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 3
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "validation/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.1",
+    "workers": 3,
+    "webServer": {
+      "command": "node scripts/dev-server.cjs",
+      "url": "http://127.0.0.1:4174",
+      "reuseExistingServer": false,
+      "timeout": 20000
+    }
+  },
+  "suites": [
+    {
+      "title": "basemap-coverage.spec.cjs",
+      "file": "basemap-coverage.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "ground raster covers elevated tilted cameras across bearings and wide exports",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13516,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:27:51.224Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e4ab4efded7f31d2d2db-8ba606c9a4ca015f2dc5",
+          "file": "basemap-coverage.spec.cjs",
+          "line": 9,
+          "column": 1
+        },
+        {
+          "title": "mini header buttons are orange with uniform black gaps in both themes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3299,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:04.820Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e4ab4efded7f31d2d2db-86d3fd0e1c580a577d38",
+          "file": "basemap-coverage.spec.cjs",
+          "line": 34,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "closer-framing.spec.cjs",
+      "file": "closer-framing.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Face orbit smoothly reframes from widescreen to portrait and back without changing its anchor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 8663,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:27:51.230Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "65a96cf80dbafa97f1da-2691388997d7c1a059d2",
+          "file": "closer-framing.spec.cjs",
+          "line": 16,
+          "column": 1
+        },
+        {
+          "title": "2D Fit fills widescreen for short, wide, multiline and colour emoji messages",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4884,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:27:59.972Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "65a96cf80dbafa97f1da-b238598bf6087872ac63",
+          "file": "closer-framing.spec.cjs",
+          "line": 191,
+          "column": 3
+        },
+        {
+          "title": "static 3D Fit includes depth and tilt in widescreen",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5887,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:04.865Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "65a96cf80dbafa97f1da-90b7c5845d4b75814195",
+          "file": "closer-framing.spec.cjs",
+          "line": 215,
+          "column": 3
+        },
+        {
+          "title": "all animation modes keep stable close framing through full rotations at every size in widescreen",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 25241,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "widescreen projected fit timings (ms): {\"cold\":{\"min\":13.299999999813735,\"median\":24.699999999254942,\"max\":48.40000000037253},\"cached\":{\"min\":0.39999999944120646,\"median\":0.5,\"max\":0.900000000372529}}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:10.761Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "projected-fit-timings.json",
+                      "contentType": "application/json",
+                      "body": "WwogIHsKICAgICJzaXplIjogIlNtYWxsIiwKICAgICJtb2RlIjogImZpeGVkIiwKICAgICJjb2xkIjogNDguNDAwMDAwMDAwMzcyNTMsCiAgICAiY2FjaGVkIjogMC45MDAwMDAwMDAzNzI1MjkKICB9LAogIHsKICAgICJzaXplIjogIlNtYWxsIiwKICAgICJtb2RlIjogInlhdyIsCiAgICAiY29sZCI6IDIyLjc5OTk5OTk5OTgxMzczNSwKICAgICJjYWNoZWQiOiAwLjQwMDAwMDAwMDM3MjUyOTAzCiAgfSwKICB7CiAgICAic2l6ZSI6ICJTbWFsbCIsCiAgICAibW9kZSI6ICJiaWxsYm9hcmQiLAogICAgImNvbGQiOiAyNC42OTk5OTk5OTkyNTQ5NDIsCiAgICAiY2FjaGVkIjogMC41CiAgfSwKICB7CiAgICAic2l6ZSI6ICJNZWRpdW0iLAogICAgIm1vZGUiOiAiZml4ZWQiLAogICAgImNvbGQiOiAyNC43OTk5OTk5OTk4MTM3MzUsCiAgICAiY2FjaGVkIjogMC40MDAwMDAwMDAzNzI1MjkwMwogIH0sCiAgewogICAgInNpemUiOiAiTWVkaXVtIiwKICAgICJtb2RlIjogInlhdyIsCiAgICAiY29sZCI6IDI3LjA5OTk5OTk5OTYyNzQ3LAogICAgImNhY2hlZCI6IDAuNTk5OTk5OTk5NjI3NDcxCiAgfSwKICB7CiAgICAic2l6ZSI6ICJNZWRpdW0iLAogICAgIm1vZGUiOiAiYmlsbGJvYXJkIiwKICAgICJjb2xkIjogMjQuNzAwMDAwMDAwMTg2MjY1LAogICAgImNhY2hlZCI6IDAuNQogIH0sCiAgewogICAgInNpemUiOiAiTGFyZ2UiLAogICAgIm1vZGUiOiAiZml4ZWQiLAogICAgImNvbGQiOiAyNS41LAogICAgImNhY2hlZCI6IDAuNQogIH0sCiAgewogICAgInNpemUiOiAiTGFyZ2UiLAogICAgIm1vZGUiOiAieWF3IiwKICAgICJjb2xkIjogMjYsCiAgICAiY2FjaGVkIjogMC4zOTk5OTk5OTk0NDEyMDY0NgogIH0sCiAgewogICAgInNpemUiOiAiTGFyZ2UiLAogICAgIm1vZGUiOiAiYmlsbGJvYXJkIiwKICAgICJjb2xkIjogMjYuNjAwMDAwMDAwNTU4Nzk0LAogICAgImNhY2hlZCI6IDAuNQogIH0sCiAgewogICAgInNpemUiOiAiSHVnZSIsCiAgICAibW9kZSI6ICJmaXhlZCIsCiAgICAiY29sZCI6IDE2LjU5OTk5OTk5OTYyNzQ3LAogICAgImNhY2hlZCI6IDAuNDAwMDAwMDAwMzcyNTI5MDMKICB9LAogIHsKICAgICJzaXplIjogIkh1Z2UiLAogICAgIm1vZGUiOiAieWF3IiwKICAgICJjb2xkIjogMTcsCiAgICAiY2FjaGVkIjogMC40MDAwMDAwMDAzNzI1MjkwMwogIH0sCiAgewogICAgInNpemUiOiAiSHVnZSIsCiAgICAibW9kZSI6ICJiaWxsYm9hcmQiLAogICAgImNvbGQiOiAxMy4yOTk5OTk5OTk4MTM3MzUsCiAgICAiY2FjaGVkIjogMC41CiAgfSwKICB7CiAgICAic2l6ZSI6ICJkZWVwIGV4dHJ1c2lvbiIsCiAgICAibW9kZSI6ICJmaXhlZCIsCiAgICAiY29sZCI6IDE4LjI5OTk5OTk5OTgxMzczNSwKICAgICJjYWNoZWQiOiAwLjUKICB9LAogIHsKICAgICJzaXplIjogImRlZXAgZXh0cnVzaW9uIiwKICAgICJtb2RlIjogInlhdyIsCiAgICAiY29sZCI6IDE5LjA5OTk5OTk5OTYyNzQ3LAogICAgImNhY2hlZCI6IDAuMzk5OTk5OTk5NDQxMjA2NDYKICB9LAogIHsKICAgICJzaXplIjogImRlZXAgZXh0cnVzaW9uIiwKICAgICJtb2RlIjogImJpbGxib2FyZCIsCiAgICAiY29sZCI6IDIxLjA5OTk5OTk5OTYyNzQ3LAogICAgImNhY2hlZCI6IDAuNDAwMDAwMDAwMzcyNTI5MDMKICB9Cl0="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "65a96cf80dbafa97f1da-13ce4b6d07748edcbafe",
+          "file": "closer-framing.spec.cjs",
+          "line": 236,
+          "column": 3
+        },
+        {
+          "title": "2D Fit fills portrait for short, wide, multiline and colour emoji messages",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3939,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:36.011Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "65a96cf80dbafa97f1da-e0d6f8a18eeedcc61704",
+          "file": "closer-framing.spec.cjs",
+          "line": 191,
+          "column": 3
+        },
+        {
+          "title": "static 3D Fit includes depth and tilt in portrait",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5088,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:39.959Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "65a96cf80dbafa97f1da-7626b7cef812f9f94e2e",
+          "file": "closer-framing.spec.cjs",
+          "line": 215,
+          "column": 3
+        },
+        {
+          "title": "all animation modes keep stable close framing through full rotations at every size in portrait",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 22743,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "portrait projected fit timings (ms): {\"cold\":{\"min\":11.899999999441206,\"median\":17.800000000745058,\"max\":49.799999999813735},\"cached\":{\"min\":0.2999999998137355,\"median\":0.5,\"max\":0.7999999998137355}}\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:45.054Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "projected-fit-timings.json",
+                      "contentType": "application/json",
+                      "body": "WwogIHsKICAgICJzaXplIjogIlNtYWxsIiwKICAgICJtb2RlIjogImZpeGVkIiwKICAgICJjb2xkIjogNDkuNzk5OTk5OTk5ODEzNzM1LAogICAgImNhY2hlZCI6IDAuNzk5OTk5OTk5ODEzNzM1NQogIH0sCiAgewogICAgInNpemUiOiAiU21hbGwiLAogICAgIm1vZGUiOiAieWF3IiwKICAgICJjb2xkIjogMjUuMTk5OTk5OTk5MjU0OTQyLAogICAgImNhY2hlZCI6IDAuNQogIH0sCiAgewogICAgInNpemUiOiAiU21hbGwiLAogICAgIm1vZGUiOiAiYmlsbGJvYXJkIiwKICAgICJjb2xkIjogMTEuODk5OTk5OTk5NDQxMjA2LAogICAgImNhY2hlZCI6IDAuNQogIH0sCiAgewogICAgInNpemUiOiAiTWVkaXVtIiwKICAgICJtb2RlIjogImZpeGVkIiwKICAgICJjb2xkIjogMTkuMjAwMDAwMDAwMTg2MjY1LAogICAgImNhY2hlZCI6IDAuNTk5OTk5OTk5NjI3NDcxCiAgfSwKICB7CiAgICAic2l6ZSI6ICJNZWRpdW0iLAogICAgIm1vZGUiOiAieWF3IiwKICAgICJjb2xkIjogMTcuMzk5OTk5OTk5NDQxMjA2LAogICAgImNhY2hlZCI6IDAuNQogIH0sCiAgewogICAgInNpemUiOiAiTWVkaXVtIiwKICAgICJtb2RlIjogImJpbGxib2FyZCIsCiAgICAiY29sZCI6IDE4LAogICAgImNhY2hlZCI6IDAuMjk5OTk5OTk5ODEzNzM1NQogIH0sCiAgewogICAgInNpemUiOiAiTGFyZ2UiLAogICAgIm1vZGUiOiAiZml4ZWQiLAogICAgImNvbGQiOiAxNy4wOTk5OTk5OTk2Mjc0NywKICAgICJjYWNoZWQiOiAwLjQwMDAwMDAwMDM3MjUyOTAzCiAgfSwKICB7CiAgICAic2l6ZSI6ICJMYXJnZSIsCiAgICAibW9kZSI6ICJ5YXciLAogICAgImNvbGQiOiAxNy43OTk5OTk5OTk4MTM3MzUsCiAgICAiY2FjaGVkIjogMC4yOTk5OTk5OTk4MTM3MzU1CiAgfSwKICB7CiAgICAic2l6ZSI6ICJMYXJnZSIsCiAgICAibW9kZSI6ICJiaWxsYm9hcmQiLAogICAgImNvbGQiOiAxOS4yMDAwMDAwMDAxODYyNjUsCiAgICAiY2FjaGVkIjogMC4yOTk5OTk5OTk4MTM3MzU1CiAgfSwKICB7CiAgICAic2l6ZSI6ICJIdWdlIiwKICAgICJtb2RlIjogImZpeGVkIiwKICAgICJjb2xkIjogMTcuODAwMDAwMDAwNzQ1MDU4LAogICAgImNhY2hlZCI6IDAuNQogIH0sCiAgewogICAgInNpemUiOiAiSHVnZSIsCiAgICAibW9kZSI6ICJ5YXciLAogICAgImNvbGQiOiAxNy4yOTk5OTk5OTk4MTM3MzUsCiAgICAiY2FjaGVkIjogMC41CiAgfSwKICB7CiAgICAic2l6ZSI6ICJIdWdlIiwKICAgICJtb2RlIjogImJpbGxib2FyZCIsCiAgICAiY29sZCI6IDE3LjQwMDAwMDAwMDM3MjUzLAogICAgImNhY2hlZCI6IDAuMzk5OTk5OTk5NDQxMjA2NDYKICB9LAogIHsKICAgICJzaXplIjogImRlZXAgZXh0cnVzaW9uIiwKICAgICJtb2RlIjogImZpeGVkIiwKICAgICJjb2xkIjogMjIuNSwKICAgICJjYWNoZWQiOiAwLjU5OTk5OTk5OTYyNzQ3MQogIH0sCiAgewogICAgInNpemUiOiAiZGVlcCBleHRydXNpb24iLAogICAgIm1vZGUiOiAieWF3IiwKICAgICJjb2xkIjogMTQuNSwKICAgICJjYWNoZWQiOiAwLjUKICB9LAogIHsKICAgICJzaXplIjogImRlZXAgZXh0cnVzaW9uIiwKICAgICJtb2RlIjogImJpbGxib2FyZCIsCiAgICAiY29sZCI6IDI0LjcwMDAwMDAwMDE4NjI2NSwKICAgICJjYWNoZWQiOiAwLjQwMDAwMDAwMDM3MjUyOTAzCiAgfQpd"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "65a96cf80dbafa97f1da-20cb8800b11ab91e2fa1",
+          "file": "closer-framing.spec.cjs",
+          "line": 236,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "title": "conference-presentation.spec.cjs",
+      "file": "conference-presentation.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Begin draws sleeping Geo before a real 15-second flight and holds later cues until arrival",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 17539,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:27:51.246Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-0e415f8ee7abd4db56bb",
+          "file": "conference-presentation.spec.cjs",
+          "line": 119,
+          "column": 1
+        },
+        {
+          "title": "Begin preserves native emoji colours before, during and after the flight",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 16678,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:08.865Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-301479c633d3aaf95d25",
+          "file": "conference-presentation.spec.cjs",
+          "line": 157,
+          "column": 1
+        },
+        {
+          "title": "Begin waits for a delayed sleeping-emoji draw before starting its flight",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1824,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:25.553Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-a5f706814c969a017ca9",
+          "file": "conference-presentation.spec.cjs",
+          "line": 214,
+          "column": 1
+        },
+        {
+          "title": "Reset interrupts a flight, drops preceding queued messages and prevents a late camera move",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1819,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:27.387Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-0423e602a4e6150ee0ed",
+          "file": "conference-presentation.spec.cjs",
+          "line": 238,
+          "column": 1
+        },
+        {
+          "title": "Reset does not wait for a superseded font model to load",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3197,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:29.218Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-9635c0315ae230befade",
+          "file": "conference-presentation.spec.cjs",
+          "line": 262,
+          "column": 1
+        },
+        {
+          "title": "leaving Map during Begin releases the introduction so it can be started again",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 2169,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:32.422Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-8eef0ecc5df0a2597f57",
+          "file": "conference-presentation.spec.cjs",
+          "line": 282,
+          "column": 1
+        },
+        {
+          "title": "Reset restores the opening after Orbit and keeps polling",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3261,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:34.598Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-d52d42c4692708322d76",
+          "file": "conference-presentation.spec.cjs",
+          "line": 296,
+          "column": 50
+        },
+        {
+          "title": "Reset restores the opening after Turn and keeps polling",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3413,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:37.867Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-7b630b09fba169e1136d",
+          "file": "conference-presentation.spec.cjs",
+          "line": 296,
+          "column": 50
+        },
+        {
+          "title": "Reset restores the opening after Face and keeps polling",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3524,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:41.287Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-a720300b39ee0a9261a4",
+          "file": "conference-presentation.spec.cjs",
+          "line": 296,
+          "column": 50
+        },
+        {
+          "title": "overview suppresses automatic Fit and animation; reduced-motion Begin restores the opening at its anchor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1376,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:44.819Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-d0cbea7c716ba24651e6",
+          "file": "conference-presentation.spec.cjs",
+          "line": 314,
+          "column": 1
+        },
+        {
+          "title": "modular startup opens a collapsed Map with emoji defaults and anonymous polling even with no responses",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1596,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:46.202Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-fc50cf0e5fa7ffe64d90",
+          "file": "conference-presentation.spec.cjs",
+          "line": 333,
+          "column": 1
+        },
+        {
+          "title": "modular file startup can load conference fonts without fetch access to local files",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1288,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:47.805Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-b1ae5dbadc4abc9dac01",
+          "file": "conference-presentation.spec.cjs",
+          "line": 357,
+          "column": 1
+        },
+        {
+          "title": "an unavailable local font pack explains how to open or rebuild the app",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 900,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:49.099Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-8083c081bf10c1255e38",
+          "file": "conference-presentation.spec.cjs",
+          "line": 368,
+          "column": 1
+        },
+        {
+          "title": "HTTP font acquisition failures identify the bundled font instead of only Failed to fetch",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 915,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:50.010Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-692231a07297c36db084",
+          "file": "conference-presentation.spec.cjs",
+          "line": 374,
+          "column": 1
+        },
+        {
+          "title": "portable startup holds Australia and ignores historical commands and content",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1666,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:50.934Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-634f862eb08787ef347c",
+          "file": "conference-presentation.spec.cjs",
+          "line": 380,
+          "column": 1
+        },
+        {
+          "title": "emoji cues override text styling, 3D and animation while still applying point, size and Fit",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 4772,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:52.606Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-6d555c8301d06aaba371",
+          "file": "conference-presentation.spec.cjs",
+          "line": 398,
+          "column": 1
+        },
+        {
+          "title": "text prioritises speech and restores the last text font after emoji while applying the bright fill",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 4453,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:57.386Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-d4cccb023f77cf77f6e6",
+          "file": "conference-presentation.spec.cjs",
+          "line": 418,
+          "column": 1
+        },
+        {
+          "title": "new submission IDs randomise only approved text fonts once, even for identical messages",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 5073,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:01.846Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-51c8b6b55a93b5d5615d",
+          "file": "conference-presentation.spec.cjs",
+          "line": 435,
+          "column": 1
+        },
+        {
+          "title": "controls-only cues retain content and an existing emoji keeps its drawing restrictions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 4156,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:06.925Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-251b06144ea8ce57f3c3",
+          "file": "conference-presentation.spec.cjs",
+          "line": 457,
+          "column": 1
+        },
+        {
+          "title": "a paginated burst is rendered in Object ID order without dropping or replaying cues",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 6214,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:11.093Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-117adff6ba1cd012c9d4",
+          "file": "conference-presentation.spec.cjs",
+          "line": 474,
+          "column": 1
+        },
+        {
+          "title": "2D and Fit wait for the requested font model to finish drawing",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3394,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:17.313Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-d6656c8727f5e1f3aa8a",
+          "file": "conference-presentation.spec.cjs",
+          "line": 489,
+          "column": 1
+        },
+        {
+          "title": "animation selections ensure the chosen mode runs, override 2D and continue through blank selections",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 8288,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:20.715Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-c9c550aae10d7bf5a89e",
+          "file": "conference-presentation.spec.cjs",
+          "line": 510,
+          "column": 1
+        },
+        {
+          "title": "all four size presets remain exact in 2D and 3D and Huge survives settings restoration",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 2878,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:29.010Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-b3c4eaa9329a8a4232c9",
+          "file": "conference-presentation.spec.cjs",
+          "line": 528,
+          "column": 1
+        },
+        {
+          "title": "manual placement survives repeated polls until a new cue supplies another survey point",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3777,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:31.895Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-69d2b3b7e34c867b56fc",
+          "file": "conference-presentation.spec.cjs",
+          "line": 554,
+          "column": 1
+        },
+        {
+          "title": "Stop lets an accepted cue finish and Resume drains queued submissions without replay",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 5461,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:35.678Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-ddf936707ed46686fdec",
+          "file": "conference-presentation.spec.cjs",
+          "line": 568,
+          "column": 1
+        },
+        {
+          "title": "an unsupported 3D outline preserves the previous display and does not block later cues",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3890,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:41.144Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-6320054f9d5a916f45f0",
+          "file": "conference-presentation.spec.cjs",
+          "line": 589,
+          "column": 1
+        },
+        {
+          "title": "random 3D selection skips incompatible outlines using the normal rendering policy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3364,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:45.041Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-7c7a0de5d275f285474e",
+          "file": "conference-presentation.spec.cjs",
+          "line": 604,
+          "column": 1
+        },
+        {
+          "title": "a failed opening Fit leaves the startup fit available for the next valid cue",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 2264,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:48.411Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-89499991bfecac512164",
+          "file": "conference-presentation.spec.cjs",
+          "line": 613,
+          "column": 1
+        },
+        {
+          "title": "unanswered Survey123 location retains Adelaide at startup and manual placement on later cues",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3892,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:50.682Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-958d03dfbbd72a7909c0",
+          "file": "conference-presentation.spec.cjs",
+          "line": 628,
+          "column": 1
+        },
+        {
+          "title": "every new content submission fits once, including identical text, but unchanged polls and controls do not",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 5256,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:54.581Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-23f0fdc0b154355ecbb0",
+          "file": "conference-presentation.spec.cjs",
+          "line": 642,
+          "column": 1
+        },
+        {
+          "title": "automatic Fit waits for a delayed new message after switching from 3D to 2D",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3558,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:59.845Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-43269d6583c7039b3ec3",
+          "file": "conference-presentation.spec.cjs",
+          "line": 659,
+          "column": 1
+        },
+        {
+          "title": "explicit controls-only Fit waits for the requested 3D mesh before fitting",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3422,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:03.410Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-ca35f2f7fdd53549a753",
+          "file": "conference-presentation.spec.cjs",
+          "line": 673,
+          "column": 1
+        },
+        {
+          "title": "automatic message fits preserve an active animation through framing, while explicit Fit stops it",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 4838,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:06.840Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-3aa1240fec933481c5b2",
+          "file": "conference-presentation.spec.cjs",
+          "line": 694,
+          "column": 1
+        },
+        {
+          "title": "slow basemap tiles do not block startup, polling or the first glyph Fit",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 2571,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:11.684Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "ffae5483d2e6732e27ff-75cf2f60e9b8cc9fd72a",
+          "file": "conference-presentation.spec.cjs",
+          "line": 716,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "fonts.spec.cjs",
+      "file": "fonts.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "standalone release boots without CDN dependencies and contains its worker",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 842,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:08.133Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "edcffebb5bc6f5047df6-d00bbd24752abc96c615",
+          "file": "fonts.spec.cjs",
+          "line": 20,
+          "column": 1
+        },
+        {
+          "title": "1000 local font records remain lazy and rescanning is idempotent",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 918,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:08.983Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "edcffebb5bc6f5047df6-4d7fbbb353982ba326bf",
+          "file": "fonts.spec.cjs",
+          "line": 34,
+          "column": 1
+        },
+        {
+          "title": "Stop loading ignores a late font-access result and keeps the app usable",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 954,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:09.908Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "edcffebb5bc6f5047df6-ff3dc4e458909c7b0d1e",
+          "file": "fonts.spec.cjs",
+          "line": 59,
+          "column": 1
+        },
+        {
+          "title": "real font parsing and repeated layout use the worker and its caches",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 790,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:10.871Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "edcffebb5bc6f5047df6-d0e954662dd4cd8f06e1",
+          "file": "fonts.spec.cjs",
+          "line": 73,
+          "column": 1
+        },
+        {
+          "title": "a pending unrelated font set does not stall the selected-symbol preview",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 775,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:11.668Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "edcffebb5bc6f5047df6-105bd44d2a9af5728b8a",
+          "file": "fonts.spec.cjs",
+          "line": 96,
+          "column": 1
+        },
+        {
+          "title": "Segoe UI Emoji letters and colour glyphs accept fill and outline",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2004,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:12.452Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "edcffebb5bc6f5047df6-c7294ac7a2f834809fdc",
+          "file": "fonts.spec.cjs",
+          "line": 106,
+          "column": 1
+        },
+        {
+          "title": "map publishes the final edit and paint changes do not rebuild outlines",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2474,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:14.465Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "edcffebb5bc6f5047df6-ba5371244e1cba6ed70c",
+          "file": "fonts.spec.cjs",
+          "line": 135,
+          "column": 1
+        },
+        {
+          "title": "an unreadable font reports failure instead of drawing a substituted map font",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1337,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:16.947Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "edcffebb5bc6f5047df6-6b798c110336012f9b3a",
+          "file": "fonts.spec.cjs",
+          "line": 161,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "map-mode-fixes.spec.cjs",
+      "file": "map-mode-fixes.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Random resolves catalogue aliases from granted local descriptors while the model keeps orbiting",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4326,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:18.305Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b0ef7a0037efd1c6e123-53101140279626826418",
+          "file": "map-mode-fixes.spec.cjs",
+          "line": 27,
+          "column": 1
+        },
+        {
+          "title": "Random reaches a compatible font beyond eight incompatible entries",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4066,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:22.640Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b0ef7a0037efd1c6e123-336afcf38676296bb906",
+          "file": "map-mode-fixes.spec.cjs",
+          "line": 49,
+          "column": 1
+        },
+        {
+          "title": "leaving Map cancels a Random search that is still reading a font",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3081,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:26.713Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b0ef7a0037efd1c6e123-eeff5f2488b24cd46183",
+          "file": "map-mode-fixes.spec.cjs",
+          "line": 75,
+          "column": 1
+        },
+        {
+          "title": "mini panel keeps two fixed rows and equal buffers through feedback and model changes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4559,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:29.801Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b0ef7a0037efd1c6e123-a1504415cbf68a0c1268",
+          "file": "map-mode-fixes.spec.cjs",
+          "line": 94,
+          "column": 1
+        },
+        {
+          "title": "every 3D Fit restores a readable framed view and 2D Fit restores a top-down view",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11745,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:34.368Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b0ef7a0037efd1c6e123-ad5446ae76ca4d7d1e9b",
+          "file": "map-mode-fixes.spec.cjs",
+          "line": 120,
+          "column": 1
+        },
+        {
+          "title": "Map model presets are vivid and preserve Canvas presets and panel accents",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3290,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:46.122Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b0ef7a0037efd1c6e123-0f6008932ee2a85b293e",
+          "file": "map-mode-fixes.spec.cjs",
+          "line": 154,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "map-panel-layout.spec.cjs",
+      "file": "map-panel-layout.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Map control rows share the panel width on desktop and mobile",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2064,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:49.422Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3bcb5063a3ce0a45684f-01b51adc266eca902974",
+          "file": "map-panel-layout.spec.cjs",
+          "line": 9,
+          "column": 1
+        },
+        {
+          "title": "MetroMap dialog saves, selects and removes the key with keyboard dismissal",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2964,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:51.494Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3bcb5063a3ce0a45684f-878261338bd38f121fb2",
+          "file": "map-panel-layout.spec.cjs",
+          "line": 27,
+          "column": 1
+        },
+        {
+          "title": "Esri path copy and font folder chooser have separate buttons",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2346,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:54.468Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "3bcb5063a3ce0a45684f-e8bbb8bfba5dfb8899aa",
+          "file": "map-panel-layout.spec.cjs",
+          "line": 37,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "map-section-controls.spec.cjs",
+      "file": "map-section-controls.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Map section actions target active panes and retain independent collapse preferences",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4089,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:28:56.828Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1f99b60e38c7b2019570-eebd6820fb64a367196f",
+          "file": "map-section-controls.spec.cjs",
+          "line": 13,
+          "column": 1
+        },
+        {
+          "title": "Map Controls stay inside expanded panels and never change mini panel dimensions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3830,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:00.926Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1f99b60e38c7b2019570-623a2fa6cec48f7f0af3",
+          "file": "map-section-controls.spec.cjs",
+          "line": 57,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "map-shortcuts.spec.cjs",
+      "file": "map-shortcuts.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "collapsed Map has five accessible shortcuts inside desktop and mobile panels in both themes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3249,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:04.771Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-2d0d1ab455131d15b2ac",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 64,
+          "column": 1
+        },
+        {
+          "title": "orbit shortcuts enable 3D and change live orientation without restarting the camera",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8041,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:08.026Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-d6ab021e4bffb8bfbe26",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 97,
+          "column": 1
+        },
+        {
+          "title": "font swaps retain the renderer, layer and orbit, and cached swaps avoid another worker mesh build",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6205,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:16.075Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-f0d329a302ac2d0fe1a3",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 127,
+          "column": 1
+        },
+        {
+          "title": "an unreadable requested font leaves the committed model and animation available",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4991,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:22.288Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-5e89fa94e11262984003",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 169,
+          "column": 1
+        },
+        {
+          "title": "the latest font wins when an earlier font is still reading bytes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5720,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:27.290Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-06737cd21e0caa443680",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 192,
+          "column": 1
+        },
+        {
+          "title": "dynamic zoom follows manual and cached Random font changes in fixed mode",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11899,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:33.019Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-14969f9d673263ffa276",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 221,
+          "column": 111
+        },
+        {
+          "title": "dynamic zoom follows manual and cached Random font changes in yaw mode",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11753,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:44.929Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-b4bc4b4ee42efd655876",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 221,
+          "column": 111
+        },
+        {
+          "title": "dynamic zoom follows manual and cached Random font changes in billboard mode",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11964,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:56.692Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-1a1e699bd38031c3c3f6",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 221,
+          "column": 111
+        },
+        {
+          "title": "Random selects an eligible catalogue font without changing text or stopping the orbit",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6420,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:08.663Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-4e4af6d4f6641d2703b9",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 257,
+          "column": 1
+        },
+        {
+          "title": "font commits participate in undo and redo without replaying the orbit",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5737,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:15.091Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-63e2574b889a650a2bdb",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 283,
+          "column": 1
+        },
+        {
+          "title": "manual navigation cancels an orbit queued while the first 3D font is reading",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3758,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:20.835Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-559ece8868b60adc547e",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 295,
+          "column": 1
+        },
+        {
+          "title": "a font missing the message glyph keeps the current 3D model and can be previewed in 2D",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5359,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:24.603Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d868e8bcf29685026489-f09ab2c33c8547c240c5",
+          "file": "map-shortcuts.spec.cjs",
+          "line": 320,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "orbit-solid.spec.cjs",
+      "file": "orbit-solid.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "solid 3D has opaque depth-tested faces and preserves 2D opacity",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3660,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:07.813Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4f791b757d88d2398844-b2b20dcc72d8e782fd99",
+          "file": "orbit-solid.spec.cjs",
+          "line": 25,
+          "column": 1
+        },
+        {
+          "title": "continuous orbit locks the elevated centre in all orientation modes without rebuilding",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5206,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:11.481Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4f791b757d88d2398844-b5accddcfcb7037e3b69",
+          "file": "orbit-solid.spec.cjs",
+          "line": 42,
+          "column": 1
+        },
+        {
+          "title": "navigation, edits and leaving Map stop the orbit and restore the ground camera",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6551,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:16.694Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4f791b757d88d2398844-19ababb3fcd47842789d",
+          "file": "orbit-solid.spec.cjs",
+          "line": 62,
+          "column": 1
+        },
+        {
+          "title": "settings save preferences and camera elevation without restarting animation or changing legacy transparency",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5015,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:23.254Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4f791b757d88d2398844-797c023e82e9e7d93f0d",
+          "file": "orbit-solid.spec.cjs",
+          "line": 75,
+          "column": 1
+        },
+        {
+          "title": "exports freeze and resume orbit and automatic facing also works with manual camera changes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4466,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:28.277Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4f791b757d88d2398844-200febfe072c0068331f",
+          "file": "orbit-solid.spec.cjs",
+          "line": 86,
+          "column": 1
+        },
+        {
+          "title": "undo changes solid rendering once without replaying intervening orbit frames",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4497,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:32.750Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4f791b757d88d2398844-219017a6f7dbe6e1faa0",
+          "file": "orbit-solid.spec.cjs",
+          "line": 97,
+          "column": 1
+        },
+        {
+          "title": "reduced-motion preference never auto-starts orbit and explicit Start remains available",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3341,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:37.256Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "4f791b757d88d2398844-cfdc822bf1225a75b1b4",
+          "file": "orbit-solid.spec.cjs",
+          "line": 104,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "outline-policy.spec.cjs",
+      "file": "outline-policy.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "synthetic overlapping font keeps its crossbar and counter in vector 2D, GeoJSON and 3D",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2522,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:40.625Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8e727547b6cc555a22d5-cfab3372ce3a4a199a88",
+          "file": "outline-policy.spec.cjs",
+          "line": 62,
+          "column": 31
+        },
+        {
+          "title": "portable synthetic overlapping font keeps its crossbar and counter in vector 2D, GeoJSON and 3D",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2403,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:43.156Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8e727547b6cc555a22d5-5c1a2c281b2342cd1027",
+          "file": "outline-policy.spec.cjs",
+          "line": 62,
+          "column": 31
+        },
+        {
+          "title": "SitkaVF.ttf keeps its crossbar and counter in vector 2D, GeoJSON and 3D",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2473,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:45.566Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8e727547b6cc555a22d5-fee7783a8b8006d21840",
+          "file": "outline-policy.spec.cjs",
+          "line": 62,
+          "column": 31
+        },
+        {
+          "title": "SitkaVF-Italic.ttf keeps its crossbar and counter in vector 2D, GeoJSON and 3D",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2469,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:48.048Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8e727547b6cc555a22d5-63405d9c3b3088b12336",
+          "file": "outline-policy.spec.cjs",
+          "line": 62,
+          "column": 31
+        }
+      ]
+    },
+    {
+      "title": "placement-3d.spec.cjs",
+      "file": "placement-3d.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "first Map entry fits once and camera changes never move vector or raster anchors",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5561,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:50.529Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1055f3d537fb1250b513-8ad2637a644c8e438818",
+          "file": "placement-3d.spec.cjs",
+          "line": 22,
+          "column": 1
+        },
+        {
+          "title": "first fit survives an empty initial character and deliberate navigation cancels it",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3585,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:56.097Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1055f3d537fb1250b513-8b877c8240499018018f",
+          "file": "placement-3d.spec.cjs",
+          "line": 42,
+          "column": 1
+        },
+        {
+          "title": "3D depth, tilt, paint, camera and size edits reuse the mesh and preserve its anchor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4928,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:29:59.689Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1055f3d537fb1250b513-9f82c63090f8ea4904e4",
+          "file": "placement-3d.spec.cjs",
+          "line": 56,
+          "column": 1
+        },
+        {
+          "title": "saved 3D settings restore their anchor and camera and older settings restore 2D",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3875,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:04.626Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1055f3d537fb1250b513-a8edf08f22f341cfbceb",
+          "file": "placement-3d.spec.cjs",
+          "line": 81,
+          "column": 1
+        },
+        {
+          "title": "standalone 3D supports multiline text, exports, persistent resources and cleanup",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 6932,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:08.509Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1055f3d537fb1250b513-d8967ae0e61ac3f9a4bb",
+          "file": "placement-3d.spec.cjs",
+          "line": 95,
+          "column": 1
+        },
+        {
+          "title": "colour fonts remain styled in 2D with an explicit extrusion explanation",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 4375,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:15.449Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1055f3d537fb1250b513-354b8903219def151ac7",
+          "file": "placement-3d.spec.cjs",
+          "line": 117,
+          "column": 1
+        },
+        {
+          "title": "3D depth participates in undo and controls fit smaller dark and light viewports",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3451,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:19.831Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1055f3d537fb1250b513-bbe4387d4d65013ff7f5",
+          "file": "placement-3d.spec.cjs",
+          "line": 126,
+          "column": 1
+        },
+        {
+          "title": "settings loaded before first Map entry retain their camera and anchor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 1639,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:23.288Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "1055f3d537fb1250b513-ebda9ef2476937357d43",
+          "file": "placement-3d.spec.cjs",
+          "line": 141,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "qr-controls.spec.cjs",
+      "file": "qr-controls.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "QR sections share equal columns, remain independently collapsible and scroll naturally",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1251,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:14.269Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "43f261dae882a7d1fe6c-147817b759148947770f",
+          "file": "qr-controls.spec.cjs",
+          "line": 22,
+          "column": 1
+        },
+        {
+          "title": "QR palette and gradient picker stays independent from the Buffer edge editor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1654,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:15.526Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "43f261dae882a7d1fe6c-2e3a6cbf6dec4f0c7b3b",
+          "file": "qr-controls.spec.cjs",
+          "line": 50,
+          "column": 1
+        },
+        {
+          "title": "Buffer edge changes support undo, redo and settings restoration",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1297,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:17.190Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "43f261dae882a7d1fe6c-9719a66415786ebbdedb",
+          "file": "qr-controls.spec.cjs",
+          "line": 80,
+          "column": 1
+        },
+        {
+          "title": "QR Font Symbol controls and Magic Eye mode survive workflow changes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1269,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:18.493Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "43f261dae882a7d1fe6c-4efc14bb317d161b6a05",
+          "file": "qr-controls.spec.cjs",
+          "line": 95,
+          "column": 1
+        },
+        {
+          "title": "portable QR exports retain embedded content and the new Buffer edge colour",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1435,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:19.770Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "43f261dae882a7d1fe6c-fb814fbb71625d5c6126",
+          "file": "qr-controls.spec.cjs",
+          "line": 111,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "random-fit.spec.cjs",
+      "file": "random-fit.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Map Random fits larger and smaller fonts after drawing in 2D, including warm caches",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 2758,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:21.216Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-0a20c66443b494c67211",
+          "file": "random-fit.spec.cjs",
+          "line": 98,
+          "column": 3
+        },
+        {
+          "title": "Map Random fits larger and smaller fonts after drawing in static3D, including warm caches",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 3584,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:23.980Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-d87e1e55f2c6168ae65a",
+          "file": "random-fit.spec.cjs",
+          "line": 98,
+          "column": 3
+        },
+        {
+          "title": "Map Random fits larger and smaller fonts after drawing in fixed, including warm caches",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 5032,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:27.572Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-048f2b1116ea22438752",
+          "file": "random-fit.spec.cjs",
+          "line": 98,
+          "column": 3
+        },
+        {
+          "title": "Map Random fits larger and smaller fonts after drawing in yaw, including warm caches",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 4859,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:32.611Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-de459eb4f2cefda5f3fd",
+          "file": "random-fit.spec.cjs",
+          "line": 98,
+          "column": 3
+        },
+        {
+          "title": "Map Random fits larger and smaller fonts after drawing in billboard, including warm caches",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 4681,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:37.478Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-8f2a26f57db02bc8e717",
+          "file": "random-fit.spec.cjs",
+          "line": 98,
+          "column": 3
+        },
+        {
+          "title": "a Fit clicked while Random waits for its new 3D draw performs one post-draw Fit",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 4432,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:42.167Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-4d7553d25679a8c6150c",
+          "file": "random-fit.spec.cjs",
+          "line": 127,
+          "column": 1
+        },
+        {
+          "title": "rapid Random requests let only the latest font request draw and Fit",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 2132,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:46.605Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-3769f3223f2c852b0d73",
+          "file": "random-fit.spec.cjs",
+          "line": 168,
+          "column": 1
+        },
+        {
+          "title": "leaving Map cancels a pending Random without fitting previous artwork",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 1963,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:48.744Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-bbe47b5ae63564dccab9",
+          "file": "random-fit.spec.cjs",
+          "line": 179,
+          "column": 1
+        },
+        {
+          "title": "no compatible Random candidates keep the old display and never Fit it",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 2185,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:50.712Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-acf6b46c763f4b4ebdc9",
+          "file": "random-fit.spec.cjs",
+          "line": 193,
+          "column": 1
+        },
+        {
+          "title": "Survey controls-only Random fits once and preserves animation while explicit Fit keeps its established rule",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 2,
+                  "status": "passed",
+                  "duration": 8819,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:52.904Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c6f9a9fce3a714e4673c-6d5510f9097ee2be1a81",
+          "file": "random-fit.spec.cjs",
+          "line": 253,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "survey-results.spec.cjs",
+      "file": "survey-results.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "modular public connection handles an empty table without login",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2809,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:24.940Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-6d7f9cfa49a12159c0d6",
+          "file": "survey-results.spec.cjs",
+          "line": 47,
+          "column": 3
+        },
+        {
+          "title": "portable public connection handles an empty table without login",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3000,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:27.755Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-b3c1599110d31f86f24d",
+          "file": "survey-results.spec.cjs",
+          "line": 47,
+          "column": 3
+        },
+        {
+          "title": "ordered fetch skips whitespace pages and duplicate messages do not rebuild",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3181,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:30.762Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-cbaf3cc4918df6481740",
+          "file": "survey-results.spec.cjs",
+          "line": 70,
+          "column": 1
+        },
+        {
+          "title": "live messages use the fresh POST query when a public GET would return cached data",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3239,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:33.950Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-600a878acb531dd1c199",
+          "file": "survey-results.spec.cjs",
+          "line": 89,
+          "column": 1
+        },
+        {
+          "title": "lowering and raising the interval changes the running schedule without restarting",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2906,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:37.196Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-b5bc30a5692eb9421be4",
+          "file": "survey-results.spec.cjs",
+          "line": 106,
+          "column": 1
+        },
+        {
+          "title": "interval changes during a slow response preserve it and poll again without an extra wait",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3324,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:40.108Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-54501a48b4db85f84aca",
+          "file": "survey-results.spec.cjs",
+          "line": 133,
+          "column": 1
+        },
+        {
+          "title": "polling waits for the first response and Stop prevents further requests",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 7430,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:43.440Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-3557de4127a2c75d5014",
+          "file": "survey-results.spec.cjs",
+          "line": 153,
+          "column": 1
+        },
+        {
+          "title": "access failures stop polling, preserve the displayed message and explain permissions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2782,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:50.876Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-3fa77b08d308856f955d",
+          "file": "survey-results.spec.cjs",
+          "line": 169,
+          "column": 1
+        },
+        {
+          "title": "temporary network failures retain the model and live polling recovers",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5633,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:53.664Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-36c47b55e87dc0aec84d",
+          "file": "survey-results.spec.cjs",
+          "line": 181,
+          "column": 1
+        },
+        {
+          "title": "Stop cancels an in-flight fetch and discards even an uncancellable late response",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 3243,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:59.306Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-751f64221961396d0314",
+          "file": "survey-results.spec.cjs",
+          "line": 211,
+          "column": 1
+        },
+        {
+          "title": "multiple matching layers require a choice and changing it invalidates old requests",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 2701,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:31:02.557Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-41cb755e1acdf067daf1",
+          "file": "survey-results.spec.cjs",
+          "line": 225,
+          "column": 1
+        },
+        {
+          "title": "new responses preserve the anchor, style, renderer and active 3D orbit",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 5078,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:31:05.264Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-1ec7893a076210c85230",
+          "file": "survey-results.spec.cjs",
+          "line": 243,
+          "column": 1
+        },
+        {
+          "title": "conference settings do not overwrite original application storage",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "passed",
+                  "duration": 720,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:31:10.349Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "bb2426e718e5d8ce3621-9498ff9c69d82cf9e5a8",
+          "file": "survey-results.spec.cjs",
+          "line": 277,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "symbol-controls.spec.cjs",
+      "file": "symbol-controls.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Symbol panels split evenly and group the enlarged joystick beneath its heading",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1250,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:29.972Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "02b98f4376f845d0a940-6b08fd9478670c07a827",
+          "file": "symbol-controls.spec.cjs",
+          "line": 7,
+          "column": 1
+        },
+        {
+          "title": "inline colour picker supports pointer and keyboard updates without altering other targets",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1332,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:31.232Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "02b98f4376f845d0a940-d110983a68056a2ecada",
+          "file": "symbol-controls.spec.cjs",
+          "line": 29,
+          "column": 1
+        },
+        {
+          "title": "inline picker edits the selected gradient stop and follows presets and hex edits",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1112,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:32.572Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "02b98f4376f845d0a940-ba08e2bc5610ba3f6cad",
+          "file": "symbol-controls.spec.cjs",
+          "line": 44,
+          "column": 1
+        },
+        {
+          "title": "joystick target and step buttons continue to move and reset the correct layers",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1091,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:33.694Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "02b98f4376f845d0a940-5ac87a1f2fc87b8f90c4",
+          "file": "symbol-controls.spec.cjs",
+          "line": 57,
+          "column": 1
+        },
+        {
+          "title": "expanded gradient and symbol sections fit desktop heights without internal scrolling",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1677,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:34.792Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "02b98f4376f845d0a940-bddecfb0718cf9c7ee0d",
+          "file": "symbol-controls.spec.cjs",
+          "line": 67,
+          "column": 1
+        },
+        {
+          "title": "RGB HEX and HSL picker inputs edit and follow the selected colour",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1186,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:36.477Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "02b98f4376f845d0a940-9fb4390f57f16a7beae8",
+          "file": "symbol-controls.spec.cjs",
+          "line": 81,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "symbol-preview.spec.cjs",
+      "file": "symbol-preview.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "crosshair colours remain preview-only and survive workflow changes (development)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1651,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:37.675Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "325757b3d58c728a5ecf-26bdfaa57abbdbf8d7af",
+          "file": "symbol-preview.spec.cjs",
+          "line": 20,
+          "column": 38
+        },
+        {
+          "title": "crosshair colours remain preview-only and survive workflow changes (portable)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1848,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:39.333Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "325757b3d58c728a5ecf-950a8b7cd578ad7d6258",
+          "file": "symbol-preview.spec.cjs",
+          "line": 20,
+          "column": 38
+        },
+        {
+          "title": "preview title and live font metadata wrap without hiding or overlapping actions",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1460,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:41.188Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "325757b3d58c728a5ecf-33f0d8121a84fb4c796b",
+          "file": "symbol-preview.spec.cjs",
+          "line": 50,
+          "column": 1
+        },
+        {
+          "title": "compact Export Symbol keeps details aligned, close at top right and keyboard focus contained",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1204,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:42.654Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "325757b3d58c728a5ecf-b4f65dc124774458bc7e",
+          "file": "symbol-preview.spec.cjs",
+          "line": 78,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "ui.spec.cjs",
+      "file": "ui.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "palette targets follow the active artwork and preserve independent colours",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 965,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:43.869Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a0b3f84e73f00b386f90-91ca294f6053a0879f4e",
+          "file": "ui.spec.cjs",
+          "line": 10,
+          "column": 1
+        },
+        {
+          "title": "map settings use a validated authoring whitelist and omit credentials",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 873,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:44.844Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a0b3f84e73f00b386f90-f3fd890e785979eca71f",
+          "file": "ui.spec.cjs",
+          "line": 25,
+          "column": 1
+        },
+        {
+          "title": "text editing keeps browser undo and header Load is keyboard accessible",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 883,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:45.725Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a0b3f84e73f00b386f90-792a80fe52e49a46cfd3",
+          "file": "ui.spec.cjs",
+          "line": 44,
+          "column": 1
+        },
+        {
+          "title": "application undo restores a committed map colour",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 937,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:46.616Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a0b3f84e73f00b386f90-dc30ce16338ccd728cb1",
+          "file": "ui.spec.cjs",
+          "line": 60,
+          "column": 1
+        },
+        {
+          "title": "Save and Load round trip map design settings through the application",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 893,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:47.561Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a0b3f84e73f00b386f90-a15ab6997c7c87468009",
+          "file": "ui.spec.cjs",
+          "line": 76,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "workflow-controls.spec.cjs",
+      "file": "workflow-controls.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "QR correction precedes content while the centred count and divider remain below the input",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1220,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:48.467Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44e86887da88d5f5de08-e8c2384a82690edc69ca",
+          "file": "workflow-controls.spec.cjs",
+          "line": 19,
+          "column": 1
+        },
+        {
+          "title": "Magic Eye keeps all colour controls right, other controls left and its editor fully functional",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1828,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:49.694Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44e86887da88d5f5de08-52ea73f11b53fd4a44c4",
+          "file": "workflow-controls.spec.cjs",
+          "line": 49,
+          "column": 1
+        },
+        {
+          "title": "scan reliability occupies one compact full-width preview footer across workflows",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2068,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:51.528Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44e86887da88d5f5de08-7c5fd5faabf65f9934ea",
+          "file": "workflow-controls.spec.cjs",
+          "line": 76,
+          "column": 1
+        },
+        {
+          "title": "bulk collapse is local to each workflow, keeps headings and restores preferences",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1898,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:53.602Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44e86887da88d5f5de08-2e7a37f143f92f9abed3",
+          "file": "workflow-controls.spec.cjs",
+          "line": 105,
+          "column": 1
+        },
+        {
+          "title": "Scan QR clear retains inputs and module reset restores defaults, including missing attachments",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1580,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:55.506Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44e86887da88d5f5de08-948a4edbaa083349f7bc",
+          "file": "workflow-controls.spec.cjs",
+          "line": 134,
+          "column": 1
+        },
+        {
+          "title": "Scan QR reset actions cannot race CSV import or batch export",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1037,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:57.093Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "44e86887da88d5f5de08-2d7aab8a4b0334bc93df",
+          "file": "workflow-controls.spec.cjs",
+          "line": 173,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "workflows.spec.cjs",
+      "file": "workflows.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "all established workflows remain reachable without script errors",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1059,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:58.139Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "306d463450f31e1fc873-800f524c54dd256826c0",
+          "file": "workflows.spec.cjs",
+          "line": 6,
+          "column": 1
+        },
+        {
+          "title": "generated QR encodes its value and offline reverse scanning decodes it",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1406,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:30:59.206Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "306d463450f31e1fc873-c4b69ea41121f9cac0d7",
+          "file": "workflows.spec.cjs",
+          "line": 16,
+          "column": 1
+        },
+        {
+          "title": "large glyph ranges keep bounded DOM and support Find and keyboard selection",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 955,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:31:00.618Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "306d463450f31e1fc873-7eae5a4db809059d5d41",
+          "file": "workflows.spec.cjs",
+          "line": 31,
+          "column": 1
+        },
+        {
+          "title": "first font fills the explorer after startup layout and viewport growth",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1050,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:31:01.582Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "306d463450f31e1fc873-b38576f2e2e680a2e060",
+          "file": "workflows.spec.cjs",
+          "line": 43,
+          "column": 1
+        },
+        {
+          "title": "standalone build can parse and render a font through its embedded worker",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 904,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T07:31:02.640Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "306d463450f31e1fc873-854ec1aa18fab3517099",
+          "file": "workflows.spec.cjs",
+          "line": 61,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-30T07:27:50.655Z",
+    "duration": 200484.79400000002,
+    "expected": 147,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

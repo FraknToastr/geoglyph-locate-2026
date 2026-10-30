@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-10-21T09:56:50.989Z",
+  "transport": "Chromium from file:// portable build",
+  "layers": [
+    {
+      "id": 0,
+      "name": "survey",
+      "url": "https://services.arcgis.com/BzylpWnjWP0tW4nL/arcgis/rest/services/survey123_03f5011529544723b64ad3f781a7e186_results/FeatureServer/0",
+      "field": "whats_on_your_mind",
+      "objectIdField": "objectid",
+      "creationField": "CreationDate",
+      "orderBy": "CreationDate DESC,objectid DESC",
+      "orderingLabel": "Newest by CreationDate",
+      "pageSize": 25
+    }
+  ],
+  "result": null,
+  "requests": [
+    {
+      "url": "https://services.arcgis.com/BzylpWnjWP0tW4nL/arcgis/rest/services/survey123_03f5011529544723b64ad3f781a7e186_results/FeatureServer?f=json",
+      "method": "GET",
+      "authenticated": false
+    },
+    {
+      "url": "https://services.arcgis.com/BzylpWnjWP0tW4nL/arcgis/rest/services/survey123_03f5011529544723b64ad3f781a7e186_results/FeatureServer/0?f=json",
+      "method": "GET",
+      "authenticated": false
+    },
+    {
+      "url": "https://services.arcgis.com/BzylpWnjWP0tW4nL/arcgis/rest/services/survey123_03f5011529544723b64ad3f781a7e186_results/FeatureServer/0/query?f=json&where=whats_on_your_mind+IS+NOT+NULL&outFields=whats_on_your_mind%2Cobjectid%2CCreationDate&returnGeometry=false&orderByFields=CreationDate+DESC%2Cobjectid+DESC&resultRecordCount=25&resultOffset=0&cacheHint=false",
+      "method": "GET",
+      "authenticated": false
+    }
+  ]
+}

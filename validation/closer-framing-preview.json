@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-10-23T03:16:12.653Z",
+  "readOnly": true,
+  "scene": "Controlled conference message; no Survey123 queries",
+  "zoom": 8.09432815500289,
+  "previousSphereZoom": 7.130504951133583,
+  "linearScaleIncrease": 1.9504718863893822,
+  "anchor": {
+    "lng": 138.59,
+    "lat": -34.92
+  },
+  "center": [
+    138.5899985094694,
+    -34.92000000000001
+  ],
+  "height": 30000,
+  "depth": 3000,
+  "viewport": [
+    2048,
+    1032
+  ],
+  "mode": "yaw",
+  "tilesLoaded": true,
+  "pageErrors": []
+}

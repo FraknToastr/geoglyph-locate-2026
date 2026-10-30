@@ -1,0 +1,62 @@
+/* Map uses the shared Controls header and collapse actions without changing
+   the compact panel's three fixed rows or the engine's original containers. */
+.geoglyph-map-editor > .map-controls-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+  height: auto;
+  padding: 10px;
+}
+
+.map-controls-head .panel-title {
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.geoglyph-map-editor:not(.is-collapsed) > .control-section {
+  padding: 16px 10px;
+  margin: 0;
+  gap: 10px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--text, #edf2f4) 24%, transparent);
+}
+
+.geoglyph-map-editor:not(.is-collapsed) > .map-3d-panel.control-section {
+  gap: 12px;
+  border-bottom: 0;
+}
+
+.geoglyph-map-editor > .control-section.is-collapsed {
+  padding-block: 12px;
+  gap: 0;
+}
+
+.map-section-head {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+}
+
+.map-section-head .map-section-collapse {
+  width: 100%;
+  min-height: 26px;
+  height: auto;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #e7eef1;
+}
+
+.map-section-head .map-section-collapse:hover {
+  color: var(--map-orange);
+}
+
+.map-section-head .module-collapse-mark {
+  flex: 0 0 13px;
+  border-color: var(--map-orange);
+  color: var(--map-orange);
+}
+
+.map-section-head .map-section-collapse:focus-visible {
+  outline-color: var(--map-orange);
+}

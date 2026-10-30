@@ -1,0 +1,18 @@
+{
+  "scope": "Locate 2026 Map Random button and Survey123 Random Font Yes",
+  "sequence": ["prepare compatible font", "commit guarded render", "wait for own source map frame", "apply closer Fit", "await camera completion"],
+  "automaticFit": "Preserve anchor, content and active animation. Combine Random, content and explicit Fit within one survey cue. Explicit Fit retains its stop policy.",
+  "cancellation": "Random request and font-choice versions guard preparation, rendering, frame readiness and camera completion. Failed or superseded changes do not automatically fit the previous artwork.",
+  "testFixtureCorrection": {
+    "file": "tests/browser/map-mode-fixes.spec.cjs",
+    "problem": "A permanent constant Math.random override caused worker message ID collisions, exposed by the new post-draw source-readiness check.",
+    "evidence": [
+      "src/vendor/geoglyph-maplibre-v530-vendor.js Actor.sendAsync generates message IDs from Math.round(1e18*Math.random()).toString(36).substring(0,10) and stores promise handlers in resolveRejects[id].",
+      "Repeated IDs overwrite handlers; processing one response deletes its entry, leaving other concurrent promises unresolved.",
+      "GeoJSONSource._updateWorkerData increments _pendingLoads, awaits actor.sendAsync(LD), and decrements after completion. loaded() requires _pendingLoads === 0.",
+      "The affected test reported The artwork did not reach the map frame; restoring normal randomness before asynchronous drawing makes it pass."
+    ],
+    "fix": "Seed only the synchronous Random shuffle and restore Math.random in finally before awaiting candidate preparation. Production rendering and font policies remain unchanged."
+  },
+  "runnerNote": "The sandbox prevented a test-server socket from the npm wrapper. Build and unit checks ran separately; the existing permitted project-local Playwright CLI runs the complete browser suite. The wrapper attempt is retained in random-fit-npm-wrapper-attempt.log."
+}

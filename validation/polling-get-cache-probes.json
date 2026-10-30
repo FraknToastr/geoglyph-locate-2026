@@ -1,0 +1,29 @@
+[
+  {
+    "request": 0,
+    "noCacheRequestHeader": false,
+    "responseHeaders": [
+      "date: Wed, 21 Oct 2026 10:26:18 GMT",
+      "cache-control: public, max-age=30, s-maxage=30",
+      "x-cache: TCP_MISS"
+    ]
+  },
+  {
+    "request": 1,
+    "noCacheRequestHeader": false,
+    "responseHeaders": [
+      "date: Wed, 21 Oct 2026 10:26:18 GMT",
+      "cache-control: public, max-age=30, s-maxage=30",
+      "x-cache: TCP_HIT"
+    ]
+  },
+  {
+    "request": 2,
+    "noCacheRequestHeader": true,
+    "responseHeaders": [
+      "date: Wed, 21 Oct 2026 10:26:18 GMT",
+      "cache-control: public, max-age=30, s-maxage=30",
+      "x-cache: TCP_HIT"
+    ]
+  }
+]

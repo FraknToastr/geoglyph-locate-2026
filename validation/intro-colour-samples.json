@@ -1,0 +1,25 @@
+{
+  "before": {
+    "coloured": 0.9362648101493923,
+    "white": 0.0164969210136917,
+    "width": 1355,
+    "height": 1055,
+    "samplingHeightPx": 615.5112727304114
+  },
+  "mid": {
+    "coloured": 0.9362648101493923,
+    "white": 0.0164969210136917,
+    "width": 1355,
+    "height": 1055,
+    "samplingHeightPx": 615.5112727304114,
+    "yellowPixels": 982,
+    "moving": true
+  },
+  "after": {
+    "coloured": 0.9362648101493923,
+    "white": 0.0164969210136917,
+    "width": 1355,
+    "height": 1055,
+    "samplingHeightPx": 616.0946957287864
+  }
+}

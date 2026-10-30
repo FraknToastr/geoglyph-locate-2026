@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-30T06:30:52Z",
+  "scope": "Locate 2026 conference presentation only",
+  "startup": {
+    "view": "Australia, north-up, zero pitch, geographic bounds framed to the viewport",
+    "content": "Sleeping Geo, Segoe UI Emoji, native colours, 2D, Small, Adelaide anchor",
+    "surveyBaseline": "Newest stored Object ID establishes the cursor without replaying its content or command",
+    "polling": "Anonymous, one second; newly empty feeds use cursor zero"
+  },
+  "commands": {
+    "field": "special_commands",
+    "parsing": "Trimmed, case-insensitive Begin/Reset; commands override other fields in their submission",
+    "begin": "Draw and await sleeping Geo's own source frame, fly to shared geometry-based close Fit over 15000ms, then release queued cues",
+    "reset": "Invalidate older render/camera operations, discard preceding queued cues, restore opening defaults and anchor, jump to Australia, continue polling",
+    "repeatedBeginDuringFlight": "Ignored without restarting the flight",
+    "reducedMotion": "Immediate positioning"
+  },
+  "regressionChecks": {
+    "browser": { "passed": 143, "failed": 0, "skipped": 0, "flaky": 0, "presentationChecks": 30, "report": "validation/browser-results.json" },
+    "unit": { "files": 8, "cases": 71, "failed": 0, "command": "rtk proxy node -e 'for(const file of require(\"fs\").readdirSync(\"tests/unit\").filter(file=>file.endsWith(\".test.cjs\")))require(\"./tests/unit/\"+file)'" },
+    "scenarios": [
+      "Modular startup with an empty view",
+      "Portable startup with historical commands and content",
+      "Actual 15-second flight, draw-before-flight ordering, queued content and duplicate Begin",
+      "Delayed sleeping-emoji face waits before flight",
+      "Reset interrupts a flight without stale camera movement",
+      "Reset does not wait for a superseded font model",
+      "Reset stops Orbit, Turn and Face and restores defaults",
+      "Leaving Map during Begin allows a subsequent Begin after polling resumes",
+      "Overview suppresses automatic framing and animation",
+      "Reduced motion and different viewport sizes",
+      "Existing message, Random, Fit, rendering, anchoring and other workflow checks"
+    ]
+  },
+  "artifacts": {
+    "portableFiles": ["dist/GeoGlyph.html", "GeoGlyph_Locate_2026.html"],
+    "identical": true,
+    "bytesEach": 21142803,
+    "sha256": "804a9f58c25cabcac67a4abfa3301690ff6358f274e45dcf316d72c2ee7b2170"
+  },
+  "originalProject": { "inventoryFilesChecked": 96, "changed": [], "missing": [] },
+  "validationBoundary": "Survey and tile responses are mocked in browser tests; no survey records or service configuration were changed."
+}

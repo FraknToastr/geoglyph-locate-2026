@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-10-22T13:40:03.319Z",
+  "readOnly": true,
+  "anchor": {
+    "lng": 138.599567413,
+    "lat": -34.921656101
+  },
+  "cameraCenter": [
+    138.59956741299993,
+    -34.92165610099997
+  ],
+  "zoom": 15.986690931808774,
+  "objectId": 25,
+  "kind": "emoji",
+  "basemap": "aerial",
+  "tilesLoaded": true
+}
