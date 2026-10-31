@@ -1909,6 +1909,7 @@
     return true;
   }
 
+  let conferenceApplyOwner = null;
   async function applyConferenceCue(patch, options = {}) {
     await waitForCondition(() => !mapState.rebuilding || options.isCurrent?.() === false, 'Previous render did not complete');
     if (options.isCurrent?.() === false) throw Error('Cue was superseded');
@@ -1918,6 +1919,8 @@
     cancelRandomSearch();
     const choice = ++mapState.fontChoiceVersion;
     const current = () => mapState.fontChoiceVersion === choice && mapState.previewActive && (!options.isCurrent || options.isCurrent());
+    const owner = {};
+    conferenceApplyOwner = owner;
     mapState.conferenceApplying = true;
     clearTimeout(queueRebuild.timer);
     try {
@@ -1959,7 +1962,10 @@
       }
       throw error;
     } finally {
-      if (mapState.fontChoiceVersion === choice) {
+      // A manual selection invalidates the result, but this transaction must
+      // still release its lock. Older cleanup must never release a newer owner.
+      if (conferenceApplyOwner === owner) {
+        conferenceApplyOwner = null;
         mapState.conferenceApplying = false;
         if (mapState.conferenceRebuildPending) { mapState.conferenceRebuildPending=false; queueRebuild(false); }
       }
@@ -1968,6 +1974,7 @@
 
   function cancelConferenceWork() {
     cancelRandomSearch();
+    conferenceApplyOwner = null;
     ++mapState.fontChoiceVersion;
     // Cancelled async work must not own a later draw or its cleanup.
     activeBuildToken = ++mapState.buildToken;
