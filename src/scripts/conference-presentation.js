@@ -8,6 +8,7 @@
     lastTextFont: 'Gill Sans', fontIds: {}, error: ''
   };
   const client = window.GeoGlyphSurveyResults.create();
+  const MAX_QUEUED_CUES = 100;
   let source = '', epoch = 0, activeRun = null;
   const delay = () => new Promise(resolve => setTimeout(resolve, 20));
   const engine = () => window.GeoGlyphMapEngine;
@@ -76,12 +77,12 @@
     throw Error('None of the survey fonts can draw this message in the selected mode.');
   }
   async function drain() {
-    if (!state.ready || state.paused || state.applying || !engine().state.previewActive || engine().state.mode !== 'arcgis') return;
+    if (!state.ready || state.paused || state.applying || document.hidden || !engine().state.previewActive || engine().state.mode !== 'arcgis') return;
     const run = {};
     activeRun = run;
     state.applying = true;
     try {
-      while (activeRun === run && !state.paused && state.queue.length && engine().state.previewActive && engine().state.mode === 'arcgis') {
+      while (activeRun === run && !state.paused && !document.hidden && state.queue.length && engine().state.previewActive && engine().state.mode === 'arcgis') {
         const raw = state.queue.shift(), generation = epoch;
         const current = () => activeRun === run && generation === epoch && engine().state.previewActive && engine().state.mode === 'arcgis';
         record(raw.objectId, 'started');
@@ -142,9 +143,17 @@
     }
     const generation = epoch;
     const baseline = !state.baselined;
+    if (!baseline && document.hidden) return 'Live · Waiting for the presentation to become visible';
+    const capacity = MAX_QUEUED_CUES - state.queue.length;
     let rows = baseline
       ? [await client.latestCue(layer, { signal })].filter(Boolean)
-      : await client.afterCues(layer, state.lastQueuedId, { signal });
+      : capacity > 0 ? await client.afterCues(layer, state.lastQueuedId, { signal, maxRows:capacity }) : [];
+    if (!baseline && client.latestResetCue && (capacity <= 0 || rows.length >= Math.min(capacity, layer.pageSize * 4))) {
+      const priority = await client.latestResetCue(layer, state.lastQueuedId, { signal });
+      if (priority && !rows.some(row => row.objectId === priority.objectId)) {
+        rows.push(priority); rows.sort((a,b) => a.objectId-b.objectId);
+      }
+    }
     signal?.throwIfAborted();
     if (generation !== epoch) return 'Results source changed';
     if (baseline) {
@@ -177,6 +186,7 @@
     pause() { state.paused = true; },
     resume() { state.paused = false; void drain(); }
   });
+  document.addEventListener?.('visibilitychange', () => { if (!document.hidden) void drain(); });
 
   async function conferenceFonts(run) {
     const element = document.getElementById('geoglyph-conference-fonts');

@@ -64,7 +64,7 @@
       creationField: creation?.name || '',
       orderBy: creation ? `${creation.name} DESC,${oid.name} DESC` : `${oid.name} DESC`,
       orderingLabel: creation ? `Newest by ${creation.name}` : 'Newest by Object ID (creation date unavailable)',
-      pageSize: Math.max(1, Math.min(25, Number(metadata.maxRecordCount) || 25))
+      pageSize: Math.max(1, Math.min(25, Math.floor(Number(metadata.maxRecordCount) || 25)))
     });
   }
 
@@ -183,26 +183,57 @@
       return cues[0] || null;
     }
 
-    async function afterCues(layer, afterId, { signal } = {}) {
+    async function latestResetCue(layer, afterId, { signal } = {}) {
+      const field = layer.cueFields?.special_commands;
+      if (!field) return null;
+      if (!/^[a-z_][a-z\d_]*$/i.test(field) || !Number.isSafeInteger(afterId) || afterId < 0)
+        throw new ResultsError('Expected a valid command field and submission cursor.', 'schema');
+      let before = null;
+      // A bounded control query lets Reset interrupt a full data queue. LIKE is
+      // supported by the hosted service; validate exact JS trim/case semantics
+      // below rather than treating substring matches as commands.
+      for (let page = 0; page < 4; page++) {
+        const { json, cues } = await queryCues(layer, {
+          where:`${layer.objectIdField}>${afterId}${before === null ? '' : ` AND ${layer.objectIdField}<${before}`} AND UPPER(${field}) LIKE '%RESET%'`,
+          orderByFields:`${layer.objectIdField} DESC`, resultRecordCount:'25', resultOffset:'0'
+        }, signal);
+        if (cues.length > 25) throw new ResultsError('The results service exceeded the requested command batch size.');
+        for (const cue of cues) {
+          if (cue.objectId <= afterId || (before !== null && cue.objectId >= before)) throw new ResultsError('Invalid command query ordering.');
+          before = cue.objectId;
+          if (String(attribute(cue.attributes, field) ?? '').trim().toLowerCase() === 'reset') return cue;
+        }
+        if (!cues.length || json.exceededTransferLimit === false || (json.exceededTransferLimit !== true && cues.length < 25)) return null;
+      }
+      return null;
+    }
+
+    async function afterCues(layer, afterId, { signal, maxRows = 100 } = {}) {
       if (!Number.isSafeInteger(afterId) || afterId < 0) throw new ResultsError('Expected a valid submission Object ID.', 'schema');
+      if (!Number.isInteger(maxRows) || maxRows < 1 || maxRows > 100) throw new ResultsError('Expected a cue batch size from 1 to 100.', 'schema');
+      if (!Number.isInteger(layer.pageSize) || layer.pageSize < 1 || layer.pageSize > 25) throw new ResultsError('Expected a valid results page size.', 'schema');
       const cues = [];
       let cursor = afterId;
-      for (;;) {
+      for (let pages = 0; pages < 4 && cues.length < maxRows; pages++) {
         // Keyset paging avoids skips when older records are removed during a poll.
+        // Return a bounded batch; the next poll resumes after the last retained ID.
+        const count = Math.min(layer.pageSize, maxRows - cues.length);
         const { json, cues: page } = await queryCues(layer, {
           where: `${layer.objectIdField}>${cursor}`, orderByFields: `${layer.objectIdField} ASC`,
-          resultRecordCount: String(layer.pageSize), resultOffset: '0'
+          resultRecordCount: String(count), resultOffset: '0'
         }, signal);
+        if (page.length > count) throw new ResultsError('The results service exceeded the requested cue batch size.');
         for (const cue of page) {
           if (cue.objectId <= cursor) throw new ResultsError('Results changed during paging; the next poll will retry.');
           cursor = cue.objectId;
           cues.push(cue);
         }
-        if (!page.length || json.exceededTransferLimit === false || (json.exceededTransferLimit !== true && page.length < layer.pageSize)) return cues;
+        if (!page.length || json.exceededTransferLimit === false || (json.exceededTransferLimit !== true && page.length < count)) return cues;
       }
+      return cues;
     }
 
-    return Object.freeze({ discover, latest, latestCue, afterCues });
+    return Object.freeze({ discover, latest, latestCue, afterCues, latestResetCue });
   }
 
   return Object.freeze({ config, create, ResultsError });

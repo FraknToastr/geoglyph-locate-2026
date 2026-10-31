@@ -1893,12 +1893,40 @@
     return String(mapState.message || "");
   }
 
-  async function waitForCondition(check, message, timeout = 30000) {
-    const start = performance.now();
-    while (!check()) {
-      if (performance.now() - start > timeout) throw Error(message);
-      await new Promise(resolve => setTimeout(resolve, 16));
-    }
+  function renderWaitClock() {
+    let last = performance.now(), visible = !document.hidden, elapsed = 0;
+    const update = () => {
+      const now = performance.now();
+      if (visible) elapsed += Math.max(0, now - last);
+      last = now; visible = !document.hidden;
+      return elapsed;
+    };
+    document.addEventListener('visibilitychange', update);
+    return { elapsed:update, dispose:() => document.removeEventListener('visibilitychange', update) };
+  }
+
+  function waitForCondition(check, message, timeout = 30000) {
+    return new Promise((resolve, reject) => {
+      const clock = renderWaitClock();
+      let timer, settled = false;
+      const finish = error => {
+        if (settled) return;
+        settled = true; clearTimeout(timer); clock.dispose();
+        document.removeEventListener('visibilitychange', poll);
+        error ? reject(error) : resolve();
+      };
+      const poll = () => {
+        if (settled) return;
+        clearTimeout(timer);
+        try {
+          if (check()) return finish();
+          if (clock.elapsed() > timeout) return finish(Error(message));
+          timer = setTimeout(poll, document.hidden ? 250 : 16);
+        } catch (error) { finish(error); }
+      };
+      document.addEventListener('visibilitychange', poll);
+      poll();
+    });
   }
 
   async function waitForCamera(current = () => true, timeout = 30000) {
@@ -1909,15 +1937,34 @@
   function waitForGroundFrame(current) {
     const map = mapState.map;
     return new Promise((resolve, reject) => {
-      const finish = error => { clearTimeout(timer); map.off('render', rendered); error ? reject(error) : resolve(); };
+      const clock = renderWaitClock();
+      let timer, settled = false;
+      const finish = error => {
+        if (settled) return;
+        settled = true; clearTimeout(timer); clock.dispose(); map.off('render', rendered);
+        document.removeEventListener('visibilitychange', visibility);
+        error ? reject(error) : resolve();
+      };
       const rendered = () => {
+        if (settled) return;
         if (!current()) return finish(Error('Artwork was superseded'));
+        if (document.hidden) return;
         const source = mapState.lastRenderMode === 'decal' ? DECAL_SOURCE_ID : SOURCE_ID;
         if (!map.getSource(source) || map.isSourceLoaded(source)) finish();
         else map.triggerRepaint();
       };
-      const timer = setTimeout(() => finish(Error('The artwork did not reach the map frame')), 15000);
-      map.on('render', rendered); map.triggerRepaint();
+      const deadline = () => {
+        if (settled) return;
+        clearTimeout(timer);
+        if (!current()) return finish(Error('Artwork was superseded'));
+        const remaining = 15000 - clock.elapsed();
+        if (remaining <= 0) return finish(Error('The artwork did not reach the map frame'));
+        timer = setTimeout(deadline, document.hidden ? 250 : Math.min(remaining, 250));
+      };
+      const visibility = () => { deadline(); if (!settled && !document.hidden) map.triggerRepaint(); };
+      document.addEventListener('visibilitychange', visibility);
+      map.on('render', rendered); deadline();
+      if (!document.hidden) map.triggerRepaint();
     });
   }
 

@@ -1,0 +1,16 @@
+{
+  "finding": "GG-06",
+  "method": "Short actual Chromium custom-layer draw measurement and framebuffer byte comparison at a frozen camera. Candidate packing was first injected at runtime before applying source changes; production-build regression case separately added.",
+  "browser": "HeadlessChrome/149.0.7827.55",
+  "renderer": "ANGLE Vulkan SwiftShader Device (Subzero)",
+  "physicalGPUPerformanceMeasured": false,
+  "fixture": "223-character synthetic text in installed DejaVu Sans; 400 original material groups; fixed fixture map tiles",
+  "meshBytes": 6488448,
+  "meshTriangles": 77152,
+  "solid": { "beforeDrawCalls": 401, "afterDrawCalls": 3, "differentFramebufferChannels": 0 },
+  "transparent": { "beforeDrawCalls": 801, "afterDrawCalls": 801, "differentFramebufferChannels": 0 },
+  "preservation": "Positions, normals, triangle/material association and outline buffers retain their values. Transparent mode retains the original ordered group sequence through remapped offsets. Solid mode uses two contiguous material ranges, plus the original outline draw.",
+  "focusedUnitTests": { "passed": 3, "failed": 0 },
+  "productionBrowserRegression": "tests/browser/material-batching.spec.cjs; run after generated bundles are rebuilt",
+  "limitations": "No FPS, GPU utilization, physical display performance or long-running stability improvement is claimed. No extended run or soak performed."
+}

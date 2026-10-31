@@ -34,6 +34,7 @@ async function open(page, { records = [], portable = false, localModular = false
     let records = [...server.records];
     const newer = /objectid\s*>\s*(\d+)/i.exec(params.get('where') || '');
     if (newer) records = records.filter(row => row.attributes.objectid > Number(newer[1]));
+    if (/UPPER\(/i.test(params.get('where') || '')) records = records.filter(row => String(row.attributes.special_commands || '').toUpperCase().includes('RESET'));
     const ascending = !/DESC/i.test(params.get('orderByFields') || '');
     records.sort((a, b) => (a.attributes.objectid - b.attributes.objectid) * (ascending ? 1 : -1));
     const offset = Number(params.get('resultOffset') || 0);
@@ -800,4 +801,86 @@ test('Tier 1: Start recovers failed font startup without duplicate fonts or relo
   expect(await page.evaluate(() => GeoGlyphMapEngine.state.arcgisPolling)).toBe(true);
   expect(await page.evaluate(() => GeoGlyphConference.retryStartup())).toBe(true);
   expect(attempts).toBe(2);
+});
+
+test('Tier 2: shared graphics context restores and accepts another 3D cue', async ({ page }, testInfo) => {
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const server=await open(page,{records:[cue(1,{geoglyph_speaks:'RESTORE',_2d_or_3d:'3D'})]});
+  await applied(page,1);
+  const graphics=await page.evaluate(()=>{
+    const map=GeoGlyphMapEngine.state.map,gl=map.getCanvas().getContext('webgl2');
+    const debug=gl.getExtension('WEBGL_debug_renderer_info');
+    window.regressionContext=gl.getExtension('WEBGL_lose_context');
+    if(!window.regressionContext)return {supported:false};
+    window.contextLostCount=0;window.contextRestoredCount=0;window.restoredRenderCount=0;
+    map.on('webglcontextlost',()=>window.contextLostCount++);
+    map.on('webglcontextrestored',()=>window.contextRestoredCount++);
+    map.on('render',()=>{if(window.contextRestoredCount)window.restoredRenderCount++;});
+    return {supported:true,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):'unavailable',dpr:devicePixelRatio,
+      width:map.getCanvas().width,height:map.getCanvas().height};
+  });
+  test.skip(!graphics.supported,'Context-loss extension unavailable');
+  await testInfo.attach('graphics-environment',{body:JSON.stringify(graphics),contentType:'application/json'});
+  await page.evaluate(()=>window.regressionContext.loseContext());
+  await page.waitForFunction(()=>window.contextLostCount===1);
+  await page.evaluate(()=>window.regressionContext.restoreContext());
+  await page.waitForFunction(()=>window.contextRestoredCount===1&&window.restoredRenderCount>0);
+  await submit(page,server,cue(2,{geoglyph_speaks:'RECOVERED',_2d_or_3d:'3D'}));
+  expect(await page.evaluate(()=>GeoGlyph3D.isVisible())).toBe(true);
+  expect((await snapshot(page)).content.message).toBe('RECOVERED');
+  expect(errors).toEqual([]);
+});
+
+test('Tier 2: a paused cue queue bounds admission without skipping its cursor', async ({page}) => {
+  const server=await open(page,{overview:true});
+  await page.evaluate(()=>GeoGlyphConference.pause());
+  for(let id=1;id<=125;id++)server.records.push(cue(id,{geoglyph_speaks:'BOUNDED '+id}));
+  for(let batch=0;batch<13;batch++){
+    const before=await page.evaluate(()=>GeoGlyphConference.state.lastQueuedId);
+    if(before===100)break;
+    await poll(page);
+    await page.waitForFunction(previous=>!GeoGlyphMapEngine.state.arcgisPollBusy&&GeoGlyphConference.state.lastQueuedId>previous,before);
+  }
+  expect(await page.evaluate(()=>GeoGlyphConference.state.queue.length)).toBe(100);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.lastQueuedId)).toBe(100);
+  const queries=server.queries.length;await poll(page);
+  await page.waitForFunction(()=>!GeoGlyphMapEngine.state.arcgisPollBusy);
+  expect(server.queries.length).toBe(queries+1);
+  expect(server.queries.at(-1).get('where')).toContain('UPPER(');
+  expect(await page.evaluate(()=>GeoGlyphConference.state.queue.map(row=>row.objectId))).toEqual(Array.from({length:100},(_,i)=>i+1));
+  server.records.push(cue(126,{special_commands:' ReSeT '}));await poll(page);
+  await page.waitForFunction(()=>!GeoGlyphMapEngine.state.arcgisPollBusy);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.queue.map(row=>row.objectId))).toEqual([126]);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.lastQueuedId)).toBe(126);
+});
+
+test('Tier 2: injected visibility pauses camera deadlines and cue admission until return', async ({ page }) => {
+  const server=await open(page, {records:[cue(1,{geoglyph_speaks:'VISIBLE',_2d_or_3d:'3D'})]});
+  await applied(page,1);
+  await page.evaluate(() => {
+    const map=GeoGlyphMapEngine.state.map;
+    window.visibilityMoving=map.isMoving;
+    map.isMoving=()=>true;
+    window.visibilityWait='pending';
+    window.visibilityPromise=GeoGlyphMapEngine.waitForCamera(()=>true,100).then(
+      ()=>{window.visibilityWait='complete';}, error=>{window.visibilityWait=error.message;});
+    Object.defineProperty(document,'hidden',{configurable:true,value:true});
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  server.records.push(cue(2,{geoglyph_speaks:'AFTER VISIBILITY'}));
+  await poll(page);
+  // This explicitly injects visibility and exercises a real map/DOM wait. It
+  // does not emulate browser background throttling or run a prolonged hide.
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(()=>window.visibilityWait)).toBe('pending');
+  expect(await page.evaluate(()=>GeoGlyphConference.state.lastAppliedId)).toBe(1);
+  await page.evaluate(() => {
+    GeoGlyphMapEngine.state.map.isMoving=window.visibilityMoving;
+    delete document.hidden;
+    document.dispatchEvent(new Event('visibilitychange'));
+    return window.visibilityPromise;
+  });
+  expect(await page.evaluate(()=>window.visibilityWait)).toBe('complete');
+  await poll(page);await applied(page,2);
+  expect((await snapshot(page)).content.message).toBe('AFTER VISIBILITY');
 });

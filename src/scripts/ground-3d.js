@@ -73,6 +73,7 @@ function createLayer(map) {
     },
     paint() {
       const s=state();if(!this.ready||!data)return;
+      this.geometry.groups=s.extrusionSolid?(data.solidGroups||data.groups):data.groups;
       this.front.color.set(s.fill);this.side.color.set(s.fill).multiplyScalar(.62);
       const opacity=s.extrusionSolid?1:s.opacity;
       for(const material of [this.front,this.side]){
