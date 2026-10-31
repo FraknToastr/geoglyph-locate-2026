@@ -1112,6 +1112,8 @@
   }
 
   async function startArcgisPolling() {
+    if (presentation && window.GeoGlyphConference && !window.GeoGlyphConference.state.ready)
+      return window.GeoGlyphConference.retryStartup();
     stopArcgisPolling({ quiet: true });
     mapState.arcgisPolling = true;
     if (presentation) window.GeoGlyphConference?.resume();
@@ -1451,12 +1453,25 @@
     }
   }
 
+  let mapInitialisationGeneration = 0;
+  function retryConferenceMapInitialization() {
+    if (!presentation || mapState.mapReady) return;
+    ++mapInitialisationGeneration;
+    const old = mapState.map;
+    if (old) { window.GeoGlyph3D?.clear(); old.remove(); }
+    mapState.map = null;
+    mapState.mapInitialising = false;
+    return initMap();
+  }
   async function initMap() {
     if (mapState.map || mapState.mapInitialising) return;
     mapState.mapInitialising = true;
+    const generation = mapInitialisationGeneration;
     setStatus("Creating map canvas…", "info");
     try {
-      if (!await ensureMapLibre()) {
+      const available = await ensureMapLibre();
+      if (generation !== mapInitialisationGeneration) return;
+      if (!available) {
         setStatus("Embedded MapLibre vendor failed to initialise", "warn");
         return;
       }
@@ -1467,6 +1482,7 @@
       const container = $("geoglyphMap");
       if (!container) return;
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (generation !== mapInitialisationGeneration) return;
       const map = new window.maplibregl.Map({
         container,
         style: {
@@ -1515,10 +1531,12 @@
       const watchdog = window.setTimeout(() => {
         if (!mapState.mapReady) setStatus("Map canvas created; waiting for renderer", "warn");
       }, 4000);
+      map.once('remove', () => window.clearTimeout(watchdog));
       // Cue readiness depends on the style, not every remote basemap tile.
       // Keep the established authoring startup boundary outside presentation.
       map.once(presentation ? "style.load" : "load", () => {
         window.clearTimeout(watchdog);
+        if (generation !== mapInitialisationGeneration || mapState.map !== map) return;
         mapState.mapReady = true;
         if (presentation && mapState.conferenceOverview) showConferenceOverview();
         syncMetroMapKeyUi();
@@ -1582,7 +1600,7 @@
       console.error(error);
       setStatus(`Map initialisation failed: ${error.message}`, "warn");
     } finally {
-      mapState.mapInitialising = false;
+      if (generation === mapInitialisationGeneration) mapState.mapInitialising = false;
     }
   }
 
@@ -2371,6 +2389,7 @@
       drawConferenceOpening,
       flyToConferenceOpening: current => fitDrawnGeometry(current, { introduction:true }),
       waitForCamera: waitForCamera,
+      retryConferenceMapInitialization,
       startPolling: startArcgisPolling,
       stopPolling: stopArcgisPolling,
       setConnectionStatus: setArcgisStatus,

@@ -141,7 +141,15 @@
       if (epoch !== serviceEpoch) throw Error('Font service disposed');
       const cssFamily = `GeoGlyphExact_${hash(resource.key)}`;
       const face = new FontFace(cssFamily, buffer);
-      await face.load();
+      const loading = face.load();
+      if (options.timeoutMs > 0) {
+        let timer;
+        try {
+          await Promise.race([loading, new Promise((_, reject) => {
+            timer = setTimeout(() => reject(Error('Exact font face loading timed out')), options.timeoutMs);
+          })]);
+        } finally { clearTimeout(timer); }
+      } else await loading;
       if(epoch!==serviceEpoch) throw Error('Font service disposed');
       if (options.isCurrent && !options.isCurrent()) return resource;
       document.fonts.add(face); counters.faces++; resource.face = face; resource.cssFamily = cssFamily;
