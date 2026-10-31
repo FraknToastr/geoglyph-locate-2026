@@ -13584,7 +13584,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
 <script data-geoglyph-asset="font-service">(function (root) {
   'use strict';
   const resources = new Map(), queue = [], pending = new Map(), pins = new Map();
-  let active = 0, sequence = 0, worker = null, workerUrl = '', catalogGeneration = 0, serviceEpoch = 0;
+  let active = 0, sequence = 0, worker = null, workerUrl = '', catalogGeneration = 0, serviceEpoch = 0, workerGeneration = 0;
   const counters = { reads: 0, faces: 0, parses: 0, jobs: 0 };
   const yieldTask = () => root.scheduler?.yield ? root.scheduler.yield() : new Promise(resolve => setTimeout(resolve, 0));
   const hash = value => { let n = 2166136261; for (const c of String(value)) n = Math.imul(n ^ c.charCodeAt(0), 16777619); return (n >>> 0).toString(36); };
@@ -13600,7 +13600,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
   }
   function register(record) {
     const key = keyFor(record); let resource = resources.get(key);
-    if (!resource) { resource = { key, records: new Map(), buffer: null, face: null, facePromise: null, bufferPromise: null, parsePromise: null, metadata: null, error: null, faceError:null, readError:null, used: performance.now() }; resources.set(key, resource); }
+    if (!resource) { resource = { key, records: new Map(), buffer: null, face: null, facePromise: null, bufferPromise: null, parsePromise: null, metadata: null, preparedGeneration: -1, error: null, faceError:null, readError:null, used: performance.now() }; resources.set(key, resource); }
     resource.records.set(record.id || `${record.source || ''}:${record.name || ''}:${record.style || ''}`, record); record.fontResourceKey = key; resource.provider = record;
     if (resource.face) { record.cssFamily = resource.cssFamily; record.exactFace = true; }
     if(resource.hasColor!==undefined)record.hasColor=resource.hasColor;
@@ -13646,22 +13646,70 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
       if (r.key !== activeKey && ![...pins.values()].includes(r.key) && !r.bufferPromise) { bytes -= r.buffer?.byteLength || 0; r.buffer = null; }
     }
   }
-  function workerRequest(type, payload, transfers) {
-    if (!worker) {
-      const source = document.getElementById('geoglyph-font-worker-source');
-      if (!source || !root.Worker) return Promise.reject(Error('Font worker unavailable; using styled browser rendering'));
-      try {
-        workerUrl = URL.createObjectURL(new Blob([JSON.parse(source.textContent)], { type: 'text/javascript' })); worker = new Worker(workerUrl);
-        worker.onmessage = event => { const job = pending.get(event.data.id); if (!job) return; pending.delete(event.data.id); clearTimeout(job.timeout); event.data.error ? job.reject(Error(event.data.error)) : job.resolve(event.data.result); };
-        worker.onerror = event => { const reason = Error(event.message || 'Font worker failed'); for (const job of pending.values()) { clearTimeout(job.timeout); job.reject(reason); } pending.clear(); worker.terminate(); worker = null; URL.revokeObjectURL(workerUrl); };
-      } catch (error) { worker = null; return Promise.reject(error); }
+  function workerFailure(message) {
+    const error = Error(message); error.workerFailure = true; return error;
+  }
+  function resetWorker(target, reason) {
+    if (target !== worker) return;
+    const previous = worker; worker = null; workerGeneration++;
+    if (previous) {
+      previous.onmessage = previous.onerror = previous.onmessageerror = null;
+      previous.terminate();
     }
+    if (workerUrl) URL.revokeObjectURL(workerUrl);
+    workerUrl = '';
+    for (const job of pending.values()) { clearTimeout(job.timeout); job.reject(reason); }
+    pending.clear();
+  }
+  function ensureWorker() {
+    if (worker) return;
+    const source = document.getElementById('geoglyph-font-worker-source');
+    if (!source || !root.Worker) throw Error('Font worker unavailable; using styled browser rendering');
+    try {
+      workerUrl = URL.createObjectURL(new Blob([JSON.parse(source.textContent)], { type: 'text/javascript' }));
+      const target = worker = new Worker(workerUrl), generation = ++workerGeneration;
+      const current = () => worker === target && workerGeneration === generation;
+      target.onmessage = event => {
+        if (!current()) return;
+        const data = event.data;
+        if (!data || !Number.isInteger(data.id) || (!('result' in data) && typeof data.error !== 'string')) {
+          resetWorker(target, workerFailure('Font worker returned an invalid message')); return;
+        }
+        const job = pending.get(data.id); if (!job) return;
+        pending.delete(data.id); clearTimeout(job.timeout);
+        data.error ? job.reject(Error(data.error)) : job.resolve(data.result);
+      };
+      target.onerror = event => { if (current()) resetWorker(target, workerFailure(event.message || 'Font worker failed')); };
+      target.onmessageerror = () => { if (current()) resetWorker(target, workerFailure('Font worker message could not be decoded')); };
+    } catch (error) {
+      resetWorker(worker, error);
+      throw error;
+    }
+  }
+  function workerRequest(type, payload, transfers) {
+    try { ensureWorker(); } catch (error) { return Promise.reject(error); }
+    const target = worker;
     return new Promise((resolve, reject) => {
       const id = ++sequence;
-      const timeout = setTimeout(() => { pending.delete(id); reject(Error('Font worker request timed out')); }, 30000);
+      const timeout = setTimeout(() => resetWorker(target, workerFailure('Font worker request timed out')), 30000);
       pending.set(id, { resolve, reject, timeout });
-      try { worker.postMessage({ id, type, payload }, transfers || []); } catch (error) { clearTimeout(timeout); pending.delete(id); reject(error); }
+      try { target.postMessage({ id, type, payload }, transfers || []); }
+      catch (error) { clearTimeout(timeout); pending.delete(id); reject(error); }
     });
+  }
+  async function recoverWorker(task) {
+    const epoch = serviceEpoch;
+    for (let attempt = 0; ; attempt++) {
+      if (epoch !== serviceEpoch) throw Error('Font service disposed');
+      try {
+        const result = await task(epoch);
+        if (epoch !== serviceEpoch) throw Error('Font service disposed');
+        return result;
+      }
+      catch (error) {
+        if (!error.workerFailure || attempt === 1 || epoch !== serviceEpoch) throw error;
+      }
+    }
   }
   async function ensureFace(record, options = {}) {
     const resource = register(record); resource.used = performance.now();
@@ -13687,24 +13735,42 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     }, options.priority ?? 0).catch(error=>{ if(epoch===serviceEpoch)resource.faceError=error; throw error; }).finally(() => { resource.facePromise = null; });
     return resource.facePromise;
   }
-  async function prepare(record, options = {}) {
+  async function prepareOnce(record, options = {}) {
     const resource = register(record); resource.used = performance.now();
-    if(options.retry) { resource.error=null; resource.readError=null; }
-    if (resource.metadata && !options.retry) return resource.metadata;
+    if(options.retry) { resource.error=null; resource.readError=null; resource.preparedGeneration=-1; }
+    if (worker && resource.metadata && resource.preparedGeneration === workerGeneration) return resource.metadata;
     if (resource.parsePromise) return resource.parsePromise;
-    if (resource.error && !options.retry) throw resource.error;
-    resource.parsePromise = (async () => {
-      const buffer = await schedule(()=>read(resource),options.priority ?? 0); const copy = buffer.slice(0); counters.parses++;
-      try { resource.metadata = await workerRequest('prepare', { key: resource.key, buffer: copy }, [copy]); resource.error = null; return resource.metadata; }
-      catch (error) { resource.error = error; throw error; }
-    })().finally(() => { resource.parsePromise = null; });
-    return resource.parsePromise;
+    if (resource.error) throw resource.error;
+    const epoch = serviceEpoch;
+    const job = (async () => {
+      const buffer = await schedule(()=>read(resource),options.priority ?? 0);
+      if (epoch !== serviceEpoch) throw Error('Font service disposed');
+      const copy = buffer.slice(0); counters.parses++;
+      const request = workerRequest('prepare', { key: resource.key, buffer: copy }, [copy]);
+      const generation = workerGeneration;
+      try {
+        resource.metadata = await request; resource.preparedGeneration = generation;
+        resource.error = null; return resource.metadata;
+      } catch (error) { if (!error.workerFailure && epoch === serviceEpoch) resource.error = error; throw error; }
+    })().finally(() => { if (resource.parsePromise === job) resource.parsePromise = null; });
+    resource.parsePromise = job; return job;
   }
-  async function model(record, text, options = {}) {
-    const resource = register(record);
-    if (!resource.metadata) await prepare(record);
-    try { return await workerRequest('model', { key: resource.key, text, options }); }
-    catch (error) { if (error.message !== 'FONT_EVICTED') throw error; await prepare(record, { retry: true }); return workerRequest('model', { key: resource.key, text, options }); }
+  function prepare(record, options = {}) { return recoverWorker(() => prepareOnce(record, options)); }
+  function model(record, text, options = {}) {
+    return recoverWorker(async epoch => {
+      const resource = register(record);
+      await prepareOnce(record);
+      if (epoch !== serviceEpoch) throw Error('Font service disposed');
+      try { return await workerRequest('model', { key: resource.key, text, options }); }
+      catch (error) {
+        if (epoch !== serviceEpoch) throw Error('Font service disposed');
+        if (error.message !== 'FONT_EVICTED') throw error;
+        resource.preparedGeneration = -1;
+        await prepareOnce(record);
+        if (epoch !== serviceEpoch) throw Error('Font service disposed');
+        return workerRequest('model', { key: resource.key, text, options });
+      }
+    });
   }
   async function catalog(records, onRecord, options = {}) {
     const generation = ++catalogGeneration; let sliceStart = performance.now(), lastProgress = 0, done = 0;
@@ -13720,10 +13786,10 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
   function dispose() {
     ++serviceEpoch; cancelCatalog();
     for (const r of resources.values()) if (r.face) document.fonts.delete(r.face);
-    resources.clear(); pins.clear(); for(const item of queue.splice(0))item.reject(Error('Font service disposed')); if (worker) worker.terminate(); worker = null; if (workerUrl) URL.revokeObjectURL(workerUrl);
-    for (const job of pending.values()) { clearTimeout(job.timeout); job.reject(Error('Font service disposed')); } pending.clear();
+    resources.clear(); pins.clear(); for(const item of queue.splice(0))item.reject(Error('Font service disposed'));
+    resetWorker(worker, Error('Font service disposed'));
   }
-  root.GeoGlyphFontService = Object.freeze({ keyFor, register, ensureFace, prepare, model, mesh:(key,model)=>workerRequest('mesh',{key,model}), catalog, cancelCatalog, yieldTask, pin, unpin:owner=>pins.delete(owner), dispose, stats: () => ({ ...counters, resources: resources.size, queued: queue.length, active, retainedBytes: [...resources.values()].reduce((sum, r) => sum + (r.buffer?.byteLength || 0), 0) }), workerStats: () => workerRequest('stats', {}) });
+  root.GeoGlyphFontService = Object.freeze({ keyFor, register, ensureFace, prepare, model, mesh:(key,model)=>recoverWorker(()=>workerRequest('mesh',{key,model})), catalog, cancelCatalog, yieldTask, pin, unpin:owner=>pins.delete(owner), dispose, stats: () => ({ ...counters, resources: resources.size, queued: queue.length, active, retainedBytes: [...resources.values()].reduce((sum, r) => sum + (r.buffer?.byteLength || 0), 0) }), workerStats: () => workerRequest('stats', {}) });
 })(globalThis);
 </script>
 <script data-geoglyph-asset="ground-geometry">(function (root) {
