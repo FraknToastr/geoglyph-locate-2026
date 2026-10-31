@@ -1555,7 +1555,7 @@
         }
         requestAnimationFrame(() => map.resize());
       });
-      map.on("zoomend",()=>{if(mapState.previewActive&&mapState.lastMetrics)queueRebuild(false);});
+      map.on("zoomend", rebuildAfterZoom);
 
       for (const event of ["dragstart", "zoomstart", "pitchstart", "rotatestart"]) {
         map.on(event, e => { if (e.originalEvent) cancelInitialFit(); });
@@ -1588,6 +1588,14 @@
 
   function emptyFeatureCollection() {
     return { type: "FeatureCollection", features: [] };
+  }
+
+  function rebuildAfterZoom() {
+    if (!mapState.previewActive || !mapState.lastMetrics) return;
+    // Committed 3D outlines use fixed model detail; only their camera changes.
+    if (mapState.extrusionEnabled && mapState.lastRenderMode === 'vector' &&
+        mapState.lastLocalModel && window.GeoGlyph3D?.isVisible()) return;
+    queueRebuild(false);
   }
 
   function queueRebuild(fit = false) {
