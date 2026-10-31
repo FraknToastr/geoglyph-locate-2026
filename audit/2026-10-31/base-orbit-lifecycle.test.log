@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: continuous orbit completes circles with one callback, preserving model settings and target elevation
+ok 1 - continuous orbit completes circles with one callback, preserving model settings and target elevation
+  ---
+  duration_ms: 7.443132
+  type: 'test'
+  ...
+# Subtest: hidden tabs and export pauses resume without elapsed-time jumps or unintended restarts
+ok 2 - hidden tabs and export pauses resume without elapsed-time jumps or unintended restarts
+  ---
+  duration_ms: 1.586801
+  type: 'test'
+  ...
+# Subtest: framing interpolates elevation and can pause without jumping to the end
+ok 3 - framing interpolates elevation and can pause without jumping to the end
+  ---
+  duration_ms: 1.122115
+  type: 'test'
+  ...
+# Subtest: camera-facing modes are temporary and orbit speed changes do not rebuild or restart animation
+ok 4 - camera-facing modes are temporary and orbit speed changes do not rebuild or restart animation
+  ---
+  duration_ms: 1.39553
+  type: 'test'
+  ...
+# Subtest: model swaps preserve orbit phase and smoothly zoom both out and in
+ok 5 - model swaps preserve orbit phase and smoothly zoom both out and in
+  ---
+  duration_ms: 1.463978
+  type: 'test'
+  ...
+# Subtest: rapid model changes replace zoom destinations from the current displayed zoom
+ok 6 - rapid model changes replace zoom destinations from the current displayed zoom
+  ---
+  duration_ms: 1.976807
+  type: 'test'
+  ...
+# Subtest: repeated updates and export pauses preserve a zoom transition clock
+ok 7 - repeated updates and export pauses preserve a zoom transition clock
+  ---
+  duration_ms: 1.650882
+  type: 'test'
+  ...
+# Subtest: model changes during initial framing accept closer targets without jumps or extending the flight
+ok 8 - model changes during initial framing accept closer targets without jumps or extending the flight
+  ---
+  duration_ms: 1.3559
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 24.482932

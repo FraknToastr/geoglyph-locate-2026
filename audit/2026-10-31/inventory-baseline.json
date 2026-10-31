@@ -1,0 +1,1255 @@
+{
+  "note": "Baseline captured after committing existing user changes; prior temporary inventory was unavailable after tool environment transition. Git is clean at fc19961.",
+  "files": [
+    {
+      "path": "package-lock.json",
+      "bytes": 20058,
+      "sha256": "3b87348a600dc3cd7bd436d441976ad938f759a4af2131f4dc5ebbe64d031858"
+    },
+    {
+      "path": "geoglyph-map-message-1792448190305.png",
+      "bytes": 15085279,
+      "sha256": "36475bf25cdcde76b7c35913c0e58a199696e62f90e03e4543c14575209beae3"
+    },
+    {
+      "path": "FONT_OUTLINE_POLICY_PLAN.md",
+      "bytes": 5819,
+      "sha256": "b10507db4e311f5b5f83e22f9d2a8c22ae88ba7eb5a30b5418ee8eb1951e9a79"
+    },
+    {
+      "path": "GeoGlyph_Studio_MapGeometry_v18.5.html",
+      "bytes": 3393500,
+      "sha256": "fc03c7251ed8d79f37e8d504d9d727a478dc5695fb8a36c66f291acbd5c833ba"
+    },
+    {
+      "path": "geoglyph-map-message-1792448190305.png:Zone.Identifier",
+      "bytes": 25,
+      "sha256": "f37ade74b4d293408fffa95a3781fd5e2c0f8dac052950135fb27adfabf75fd9"
+    },
+    {
+      "path": "CSS_AUDIT.md",
+      "bytes": 11834,
+      "sha256": "d8f39df58e8f5d68199141ee07d29fecc530884b95d8e6e6e45853165d946c47"
+    },
+    {
+      "path": "playwright.config.js",
+      "bytes": 551,
+      "sha256": "a166105a013e0419a7c11633ad01927d8dbae2f1f1903e7efc7eec3acc6a08a2"
+    },
+    {
+      "path": "README.md",
+      "bytes": 12126,
+      "sha256": "116699dac962575d3672d19ae611c70a4ae200115612078da4e75e3c07dab2a8"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "bytes": 936,
+      "sha256": "e718e5296ab9d15e419db65b9dcbaa904fab58a3567125d0d2cc38018e50de5e"
+    },
+    {
+      "path": "index.html",
+      "bytes": 668590,
+      "sha256": "21eaf7751a8729b20edf42cad0b31fe13854189d9ae6e258b7dc931956bfef7f"
+    },
+    {
+      "path": "package.json",
+      "bytes": 664,
+      "sha256": "87ac16a0748f8d89acedb3554824e198167ac27c4cd48400bff04f34f22c319d"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 67,
+      "sha256": "ece6d11dc11972042f3abd058ab1621609ad4ffc4b78d095eafc679dcabd8967"
+    },
+    {
+      "path": "OVERTIME-PLANNER-UPDATE-PLAN/OVERTIME-PLANNER-UPDATE-EVIDENCE.md",
+      "bytes": 2713,
+      "sha256": "7cdd3e2d4ccc90410875b1bd20c22d48158aff33e82dbc2035e4ad2d4d110469"
+    },
+    {
+      "path": "OVERTIME-PLANNER-UPDATE-PLAN/OVERTIME-PLANNER-UPDATE-PLAN.md",
+      "bytes": 3926,
+      "sha256": "be8f9fc2f7113863dc13f1ac80554e70aaefd2f5efcf4a59d53c21603ff6460f"
+    },
+    {
+      "path": "tests/browser/map-section-controls.spec.cjs",
+      "bytes": 5244,
+      "sha256": "a2b92c6d0c5e07fb99a809592a3e5e34464ee6fd691a7d23447287a55e62db77"
+    },
+    {
+      "path": "tests/browser/ui.spec.cjs",
+      "bytes": 5004,
+      "sha256": "f04900a26c31c40a4d771a07969c6d01bbcf04da55fce11e26e71f063f6da29b"
+    },
+    {
+      "path": "tests/browser/map-mode-fixes.spec.cjs",
+      "bytes": 12801,
+      "sha256": "3c1be3a66e26ad45d82722ee039e50afc91cea48399f4ba9e352e4de99f047b7"
+    },
+    {
+      "path": "tests/browser/outline-policy.spec.cjs",
+      "bytes": 6197,
+      "sha256": "150cc51acbcdfb94a6f92f701fc09d1d9895276e895e5e7122b29bedb36db719"
+    },
+    {
+      "path": "tests/browser/workflow-controls.spec.cjs",
+      "bytes": 19200,
+      "sha256": "672b8d561360cbef935c15d3eae5d92a780e96bee34064fb60f979feb4eb2be6"
+    },
+    {
+      "path": "tests/browser/basemap-coverage.spec.cjs",
+      "bytes": 3745,
+      "sha256": "5329ecab11071aa9b7a7a95bbad26c67fba5c05dd45c617d9593bb68290a3614"
+    },
+    {
+      "path": "tests/browser/placement-3d.spec.cjs",
+      "bytes": 13096,
+      "sha256": "9752707f4e331ce9d30dd0b72ea679354d06683a3a5b59121c7e676d2797a5c0"
+    },
+    {
+      "path": "tests/browser/symbol-controls.spec.cjs",
+      "bytes": 9078,
+      "sha256": "7a23514194a083425bafa3e7387891941859e62a70f0b48a335d3533a6c7b561"
+    },
+    {
+      "path": "tests/browser/orbit-solid.spec.cjs",
+      "bytes": 10944,
+      "sha256": "8b5713ffd006bb0c0b90490d55c5950f1abd4e9666090d370fbcb0907681f6e9"
+    },
+    {
+      "path": "tests/browser/map-shortcuts.spec.cjs",
+      "bytes": 20649,
+      "sha256": "642f6560ae8384c1229a58fd61d4742989805d0a1cbd1829d5411afc12b2b9ba"
+    },
+    {
+      "path": "tests/browser/workflows.spec.cjs",
+      "bytes": 4863,
+      "sha256": "45b93e1507350b72c953063b81321a4bdb2d9ca368dc407b92cf0774026db804"
+    },
+    {
+      "path": "tests/browser/map-panel-layout.spec.cjs",
+      "bytes": 4386,
+      "sha256": "d9727c30e336145a3c99f386b7ca96743f5a1a81f383d259744ecddfaea1698a"
+    },
+    {
+      "path": "tests/browser/qr-controls.spec.cjs",
+      "bytes": 11783,
+      "sha256": "95e32b075a667859edf047174e54cd55edecff7e5b6b3165d7118cab637aaac0"
+    },
+    {
+      "path": "tests/browser/fonts.spec.cjs",
+      "bytes": 9708,
+      "sha256": "6a2c625f645f5a0d0e6a5b5dded0e1851b38cdc9a625df5568a5418c94b1424d"
+    },
+    {
+      "path": "tests/browser/symbol-preview.spec.cjs",
+      "bytes": 8096,
+      "sha256": "ea7f070487bf4f718cda38466a4cd0c4f8f103cc33b8572dc37abde7c48b42eb"
+    },
+    {
+      "path": "tests/fixtures/overlapping-outline.cjs",
+      "bytes": 1403,
+      "sha256": "84b738b62851f223efbcad0ab5de15b3a2944c2e074c8311343074cb889c79a1"
+    },
+    {
+      "path": "tests/fixtures/baseline.sha256",
+      "bytes": 65,
+      "sha256": "3cc74a9350664f06aea7d9010d8381736954aa4fcd812d8dfa92da70b0467609"
+    },
+    {
+      "path": "tests/fixtures/baseline.html",
+      "bytes": 1875986,
+      "sha256": "fa75780c23973e95cffacc8b34cc663241ee5b93d857e5fcbcda7711c20328f0"
+    },
+    {
+      "path": "tests/unit/basemap-coverage.test.cjs",
+      "bytes": 1850,
+      "sha256": "1b8c641824f410f016eebede9b3ef9582c6056125c32dc874f4ba8222cfc5222"
+    },
+    {
+      "path": "tests/unit/orbit-lifecycle.test.cjs",
+      "bytes": 9264,
+      "sha256": "73f828395658d9277f96a4c14c820493bab6926bb57a8dc4da01e362881d10af"
+    },
+    {
+      "path": "tests/unit/outline-policy.test.cjs",
+      "bytes": 5587,
+      "sha256": "0744590c35178ed68ac3567e465fcee8399710461189fceb2fd2ea25d75a1e66"
+    },
+    {
+      "path": "tests/unit/placement-3d.test.cjs",
+      "bytes": 3634,
+      "sha256": "cc96b674cf4b6a2f225f119615052e2279ccb0cd979bc5091a189861fd7c0434"
+    },
+    {
+      "path": "tests/unit/fonts-rendering.test.cjs",
+      "bytes": 8385,
+      "sha256": "67c27f1d552ee170b0010cbeb8d299b278de3e0b6bf47a277934737c8fa30f22"
+    },
+    {
+      "path": "tests/unit/ground-model-cache.test.cjs",
+      "bytes": 6274,
+      "sha256": "1ff4772994fb5091ae8f5037377e3c68a3f4bb61d91e6d56d8e05cc7725f7e58"
+    },
+    {
+      "path": "src/version.json",
+      "bytes": 77,
+      "sha256": "3cfecee6be40e2ed7e368d77dc9262434aec2ce65399c36dc333f5b6a983569a"
+    },
+    {
+      "path": "src/assets.json",
+      "bytes": 5469,
+      "sha256": "0dd62d2ebbc9af4ffa63ff468e33f5194a847ab2404f5fba037996a0fc80d81b"
+    },
+    {
+      "path": "src/template.html",
+      "bytes": 68479,
+      "sha256": "faa60a64a5a12e071f2489e007585120b2c0c207a284438e1af893a69f847a7d"
+    },
+    {
+      "path": "src/styles/app.css",
+      "bytes": 133190,
+      "sha256": "ee17c10d6f768578d5609a94cdf14c551cf092a099a463cee25d42f79e723aa6"
+    },
+    {
+      "path": "src/styles/map-controls.css",
+      "bytes": 1346,
+      "sha256": "a3cc9242984727950f42e3400f415d77ca4ee8d7ea048c381bfaf3679d3dc277"
+    },
+    {
+      "path": "src/vendor/jsqr.js",
+      "bytes": 256886,
+      "sha256": "9fe288a770b80532943291c7f756ad0df4e8e98ad52403f8dd3848260838d090"
+    },
+    {
+      "path": "src/vendor/opentype.js",
+      "bytes": 171001,
+      "sha256": "c0f9c7ca85e18075a8819e5fe2dee6e1d535f9a2269f5314f36cce94a183adba"
+    },
+    {
+      "path": "src/vendor/ground-3d.js",
+      "bytes": 585058,
+      "sha256": "e22ba7e55ea90bec5f787aa029142404dea2369dc42c07fc645ad01a0f33926a"
+    },
+    {
+      "path": "src/vendor/qrious.js",
+      "bytes": 17579,
+      "sha256": "db99dcaf40a926181bce4522477c2efc5924f6c4b29111b6a97faea477c9528b"
+    },
+    {
+      "path": "src/vendor/jszip.js",
+      "bytes": 97631,
+      "sha256": "d14e71a95ef3290dec66a9cfdd8a37c2dd624f6f2b594c4512f607d4a56e19fc"
+    },
+    {
+      "path": "src/vendor/geoglyph-maplibre-v530-css.css",
+      "bytes": 69547,
+      "sha256": "ca453059a02ad38e81e51400480a63cb7ed80285b1275a8018cecd7c62d0117a"
+    },
+    {
+      "path": "src/vendor/extrusion-worker.js",
+      "bytes": 301099,
+      "sha256": "85172cf6319bac9f60f91189f956a1ca4b9fc884d124ea77e6345e205a2b6ab5"
+    },
+    {
+      "path": "src/vendor/polygon-clipping.js",
+      "bytes": 29106,
+      "sha256": "7f8619e84a86ce8dd400c9b50430e9c8cf8f26027b19eeb479f109f5c1a9d688"
+    },
+    {
+      "path": "src/vendor/geoglyph-maplibre-v530-vendor.js",
+      "bytes": 913870,
+      "sha256": "a19b265e244f2ffcf92d84bfe5cca9802790c86a9ff0f8b14003dcb74792b490"
+    },
+    {
+      "path": "src/vendor/licenses/three.txt",
+      "bytes": 1081,
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    },
+    {
+      "path": "src/vendor/licenses/polygon-clipping.txt",
+      "bytes": 1327,
+      "sha256": "864ae9e4ed75e1571a3bcf5dc9070264213445b32e7e2af5bf60eba46fb656d0"
+    },
+    {
+      "path": "src/vendor/licenses/opentype.txt",
+      "bytes": 1085,
+      "sha256": "a5b87c9bc191e7f9c06b07bd7cbbed3ed846dfdb50e859484b2c245aa1ab2e61"
+    },
+    {
+      "path": "src/vendor/licenses/maplibre.txt",
+      "bytes": 5984,
+      "sha256": "ee5fc05a0677eaf69601d2c7db0d9ecd6cc27c3abc1d0733bc9ed34707cf8ef2"
+    },
+    {
+      "path": "src/vendor/licenses/lucide.txt",
+      "bytes": 880,
+      "sha256": "1e7290b35280a048667bbf0ebabac1c7fd52a75300e8b2946ac165715997f2bc"
+    },
+    {
+      "path": "src/vendor/licenses/jszip.txt",
+      "bytes": 33753,
+      "sha256": "566c953c6090b1218ca6217dd7359d45dde46581968586dc607d59a78af6a9c4"
+    },
+    {
+      "path": "src/vendor/licenses/jsqr.txt",
+      "bytes": 11358,
+      "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+    },
+    {
+      "path": "src/vendor/licenses/qrious.txt",
+      "bytes": 706,
+      "sha256": "573aa60568eb0d6829453b85a9bcae84763de76638bc16e6a198a9535871191a"
+    },
+    {
+      "path": "src/workers/font-geometry-worker.js",
+      "bytes": 2854,
+      "sha256": "df7dcb304f4d5ee8fc3783e6d24fa35bfe066cd05302925367ce8798b80e4395"
+    },
+    {
+      "path": "src/workers/extrusion-entry.js",
+      "bytes": 1752,
+      "sha256": "37c8e17dcd14a6979af27c5fe84644fea429ac30cd6e0615769c9cc65a1a1cb5"
+    },
+    {
+      "path": "src/scripts/geoglyph-v1511-ui.js",
+      "bytes": 1841,
+      "sha256": "140afb8819ba306d9ff5d689ae9cd6ef7bc8fffd463d02be198bee72eded4a66"
+    },
+    {
+      "path": "src/scripts/ground-3d.js",
+      "bytes": 19134,
+      "sha256": "29ddd2fc4dee32c7ef9fec693cf3bba558860485834e028ae8126272da4f8c86"
+    },
+    {
+      "path": "src/scripts/geoglyph-v164-version-marker.js",
+      "bytes": 168,
+      "sha256": "1591beaad42e7b2c5289b995e196afd00d6d672a1755078ebf5ba3b9b916825b"
+    },
+    {
+      "path": "src/scripts/version.js",
+      "bytes": 219,
+      "sha256": "69ea508ee475d4c16a454cc75faa58e6147c68b67ecb89c84581bbe7a7cfad2c"
+    },
+    {
+      "path": "src/scripts/geoglyph-v156-ui.js",
+      "bytes": 4817,
+      "sha256": "a322d769168b34bae14cb24c8860957d2d1cc27014ccec5fef57e40d2e73f771"
+    },
+    {
+      "path": "src/scripts/ground-icons.js",
+      "bytes": 2886,
+      "sha256": "46e285b83225e1118a4b9ce6b37169f2d5e4c5cb879aa0f423675885dccd8c34"
+    },
+    {
+      "path": "src/scripts/geoglyph-v1512-ux-ui.js",
+      "bytes": 27153,
+      "sha256": "1ef7beca74f2e23c0fe61f457add7ae0f31767e5a5ab268f5856e683e7f75f6a"
+    },
+    {
+      "path": "src/scripts/geoglyph-v1511-section-structure-repair-ui.js",
+      "bytes": 1443,
+      "sha256": "7cd2d8d9d43853a01b0a6b2a47d8a79cb13bb075ad51a5663f5f5656bcf19242"
+    },
+    {
+      "path": "src/scripts/geoglyph-v154-ui.js",
+      "bytes": 3021,
+      "sha256": "fd0b9b2ae2bd41aa49c06f8c87c00005b57654a4b75cb6cb582eaff1831a73f9"
+    },
+    {
+      "path": "src/scripts/geoglyph-v1510-ui.js",
+      "bytes": 782,
+      "sha256": "15c4b250b62cc8f8cee83aa00de4c30d8268813147de3e21013dbea9e564fcfa"
+    },
+    {
+      "path": "src/scripts/font-service.js",
+      "bytes": 10939,
+      "sha256": "ed4884f6968b22b156ac9240881f706fa1020e270c471549e78528488d5c8acf"
+    },
+    {
+      "path": "src/scripts/geoglyph-map-engine-inline.js",
+      "bytes": 110448,
+      "sha256": "3a7d351ae56ad33f2e9167d9f55a1416b025ddf6a6b09f26e26ae9bf339a5fb3"
+    },
+    {
+      "path": "src/scripts/studio-ui.js",
+      "bytes": 25853,
+      "sha256": "3367a3b86d899c89680fde591858ee68f70aeff7cd3c0e15847c6de7e56bd877"
+    },
+    {
+      "path": "src/scripts/ground-camera.js",
+      "bytes": 9178,
+      "sha256": "80bbe7d643065691fab06980a5afd78a83293cdf7e2e836e4575f4d809e61e62"
+    },
+    {
+      "path": "src/scripts/geoglyph-v159-ui.js",
+      "bytes": 528,
+      "sha256": "44ece0370467444fdfb834f6abf677cccf52209b53590f1a1c58386fd913d8e7"
+    },
+    {
+      "path": "src/scripts/geoglyph-v1511-magic-eye-random-colours.js",
+      "bytes": 4231,
+      "sha256": "a08ac470d1ce92aa26d40bcf0ccc7164d0c55f1e520e5c0c31b272c765a50e48"
+    },
+    {
+      "path": "src/scripts/map-controls-ui.js",
+      "bytes": 4078,
+      "sha256": "5b326ba01c371b790569d8ff10e0dc542a520221f576941b6fe3cf5fd2220151"
+    },
+    {
+      "path": "src/scripts/geoglyph-v157-ui.js",
+      "bytes": 118,
+      "sha256": "fdf042ce49cea3f91ab67e8fdd5fe8a5c30a11bce9cfe25a61f16e1d89b2abfc"
+    },
+    {
+      "path": "src/scripts/geoglyph-v1511-magic-eye-fullscreen.js",
+      "bytes": 7487,
+      "sha256": "d5100a6607b1b3a1299123b2dad237695ccdd168178fa445c466ab02a389e627"
+    },
+    {
+      "path": "src/scripts/geoglyph-v154-base-ui.js",
+      "bytes": 24449,
+      "sha256": "64587aaab38bce3bfb2b95f82bb7ac9a5a38d5dac36bdfd8cc7bc6845fed0c3f"
+    },
+    {
+      "path": "src/scripts/core.js",
+      "bytes": 149064,
+      "sha256": "1e68da5e0a72103ba7a34aa73f87eaf82ef8ac3a0c09eb25b0f052a4fffded08"
+    },
+    {
+      "path": "src/scripts/ground-model-cache.js",
+      "bytes": 2768,
+      "sha256": "c11ade80845b70360a53973c3b6d6fe7a922f6aedc6120e7179ef25c7f80a981"
+    },
+    {
+      "path": "src/scripts/ground-geometry.js",
+      "bytes": 12509,
+      "sha256": "33117ab55537d0d8e83f0c3c4bedea83e93400513f4780b592ce8402427fea2a"
+    },
+    {
+      "path": "src/scripts/basemap-coverage.js",
+      "bytes": 1863,
+      "sha256": "1cba91d3a75b98e0e5da0f82b6ab09816126c2151feaa6b70ee0cd3f92204d8f"
+    },
+    {
+      "path": "src/scripts/geoglyph-v155-ui.js",
+      "bytes": 13926,
+      "sha256": "1d90bab5700e1c6bd6a5cd942c03490af85cdd4595a061248b36482c3b00ba38"
+    },
+    {
+      "path": "src/scripts/geoglyph-v15-ui.js",
+      "bytes": 25062,
+      "sha256": "d691ab4ee2b4cf91ff66b06c4071fec39d904c8c37f34f99960e80ff00403b4f"
+    },
+    {
+      "path": "src/scripts/controls.js",
+      "bytes": 6272,
+      "sha256": "12fff2fa4383326afcfc9baeb0adec68d738b0a67b5a8864fffae09b2db712ad"
+    },
+    {
+      "path": "src/scripts/ground-transform.js",
+      "bytes": 1469,
+      "sha256": "5b433a93e7029af30097e9e044d5225576055cdb3319d82f1733dc28c2271cfe"
+    },
+    {
+      "path": "src/scripts/geoglyph-v1511-accessible-hover-tips-ui.js",
+      "bytes": 5453,
+      "sha256": "5a618d02d6fcb8f262f6213271477e9d881813ce4858a7c16f4813e8c858ca0b"
+    },
+    {
+      "path": "src/scripts/colour-picker.js",
+      "bytes": 7927,
+      "sha256": "eccd89f3515945e8c8af8e07fdb574667a7c3a417bc0c0d9d8fbceee84479eab"
+    },
+    {
+      "path": "Locate 2026 version/GeoGlyph_Locate_2026.html",
+      "bytes": 21150660,
+      "sha256": "e71fc5a1b22cb9d8c04d16190a5b9ed79a4264cbb9814daabebaace6e6bbfe0f"
+    },
+    {
+      "path": "Locate 2026 version/package-lock.json",
+      "bytes": 20082,
+      "sha256": "a357d1b9583c660d5a3c413a7f87b8f0f454a95b674b238d1ea4a6cc13f40afc"
+    },
+    {
+      "path": "Locate 2026 version/geoglyph-map-message-1792448190305.png",
+      "bytes": 15085279,
+      "sha256": "36475bf25cdcde76b7c35913c0e58a199696e62f90e03e4543c14575209beae3"
+    },
+    {
+      "path": "Locate 2026 version/FONT_OUTLINE_POLICY_PLAN.md",
+      "bytes": 5819,
+      "sha256": "b10507db4e311f5b5f83e22f9d2a8c22ae88ba7eb5a30b5418ee8eb1951e9a79"
+    },
+    {
+      "path": "Locate 2026 version/CONFERENCE_PRESENTATION.md",
+      "bytes": 9097,
+      "sha256": "79127a7756827c5fb1592ad5e0a2c1cc73c76949989d6a15dee7639c57828c9e"
+    },
+    {
+      "path": "Locate 2026 version/geoglyph-map-message-1792448190305.png:Zone.Identifier",
+      "bytes": 25,
+      "sha256": "f37ade74b4d293408fffa95a3781fd5e2c0f8dac052950135fb27adfabf75fd9"
+    },
+    {
+      "path": "Locate 2026 version/CSS_AUDIT.md",
+      "bytes": 11834,
+      "sha256": "d8f39df58e8f5d68199141ee07d29fecc530884b95d8e6e6e45853165d946c47"
+    },
+    {
+      "path": "Locate 2026 version/playwright.config.js",
+      "bytes": 615,
+      "sha256": "ddea1b1ca9fb6a7603388a6442d7845504f3fc35853f1434142c4033a2546e92"
+    },
+    {
+      "path": "Locate 2026 version/LOCATE_2026_VALIDATION.md",
+      "bytes": 18825,
+      "sha256": "b96249e9482fe16bed9f8c0135470fd2ef1863ebbfa83dac0662d7b284c7654e"
+    },
+    {
+      "path": "Locate 2026 version/README.md",
+      "bytes": 17519,
+      "sha256": "af94790ca1bc657a05a5f8676389445391f34fd072c7905682fd7cbbfcf32c40"
+    },
+    {
+      "path": "Locate 2026 version/THIRD_PARTY_NOTICES.md",
+      "bytes": 1381,
+      "sha256": "d310b75a38ca01f4db9b1099a6e694d7d99e05c54ef925a3b519ce68bd21a6d8"
+    },
+    {
+      "path": "Locate 2026 version/index.html",
+      "bytes": 670384,
+      "sha256": "3af4397e02037dfd80081aa6442a98666c3222424eb53fb935ac9cab6ba028d8"
+    },
+    {
+      "path": "Locate 2026 version/package.json",
+      "bytes": 680,
+      "sha256": "4b53038dc0221b4b9b60646b50ce72e828f141b6b687f91a4cda43c2d90e67e0"
+    },
+    {
+      "path": "Locate 2026 version/.gitignore",
+      "bytes": 154,
+      "sha256": "c8ead6a40e44fa92c30b9fdad42d3e386d7497e2dc554b28b9610dfe1a808a93"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/map-section-controls.spec.cjs",
+      "bytes": 5248,
+      "sha256": "9597645c7eb9dd2c8386bc63c3e2abb58b2c7477917217e1268115e63eda4147"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/ui.spec.cjs",
+      "bytes": 5008,
+      "sha256": "f832229f1104c7949722810effc14da83a5b2c79bb446d8c4838dfa45d13ca7d"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/random-fit.spec.cjs",
+      "bytes": 16492,
+      "sha256": "5bafe39a242e143ca368000f220abb75ca31288c92eaafc3247e365da5461f3b"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/map-mode-fixes.spec.cjs",
+      "bytes": 13053,
+      "sha256": "d92da06408bb00151f80bf9d5ff9711ca27a20de594e493d8473229fc3d84c84"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/closer-framing.spec.cjs",
+      "bytes": 18165,
+      "sha256": "4990bb01b8e853161dfc4d35c2a9c00612a65897f01e655a3bd242e3040aa608"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/outline-policy.spec.cjs",
+      "bytes": 6201,
+      "sha256": "de5d2a36e03e165a8a5b328031b294f5acf9753099c8ca26292dc9650558cd7e"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/workflow-controls.spec.cjs",
+      "bytes": 19204,
+      "sha256": "6e7f27ecb9cf6458086aac57a92af4a60391447a7da2f9794c05d1baae659fed"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/studio-fixture.cjs",
+      "bytes": 421,
+      "sha256": "808e8add1207a6af16073e66b50e4777141624eb1c823f5346ff70a237c8f4aa"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/basemap-coverage.spec.cjs",
+      "bytes": 3943,
+      "sha256": "f100165b7b151b41f67b98c4c582e19ed956518a03f0864c251d002b22e9da66"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/conference-presentation.spec.cjs",
+      "bytes": 43220,
+      "sha256": "ace300467bb8249d89764ce4dce00382f23aa7c84a516a6660c34f123b0bb82d"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/placement-3d.spec.cjs",
+      "bytes": 13100,
+      "sha256": "bcd53e9d5b245eb13f084ab667dacce439db03239ed6cb4895223a9afcbc5db6"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/symbol-controls.spec.cjs",
+      "bytes": 9082,
+      "sha256": "fd8d226ed8b271d4134d15b8b66d616e568c21fb8b55cc4d49bcba885835dd78"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/survey-results.spec.cjs",
+      "bytes": 15979,
+      "sha256": "e600771ad1c69bb0354cc77400a3bfd78417f4b78f17df09403d95dbd2c2e70c"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/orbit-solid.spec.cjs",
+      "bytes": 10948,
+      "sha256": "549c86abb8db7d7a5d6c04a394d6626d2697e67f3661de5e99c16dddc7a4af5a"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/explorer-keyboard.spec.cjs",
+      "bytes": 5878,
+      "sha256": "04d11814b8a5dad020ac3054c4b6cd6449c1d8d9e56c575d81a9cd036d7838fb"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/map-shortcuts.spec.cjs",
+      "bytes": 21021,
+      "sha256": "5d4ac08c088b3b5771e719eebe6e8e1d0b14cc55161b643e4b48ef70752a7572"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/workflows.spec.cjs",
+      "bytes": 4947,
+      "sha256": "e5ca240b62c2cbbcb1e884974e568bdec7c74921e9c6e58cc0505d6493601a32"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/map-panel-layout.spec.cjs",
+      "bytes": 4390,
+      "sha256": "b12446da9a0951b584589d19aab0beb6c7cd5fdd6885aab561ab20de896c08ea"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/qr-controls.spec.cjs",
+      "bytes": 14406,
+      "sha256": "eb5532ff84ada9066e404cc2cee693812405d17a65a3093fc8b536fc79c1f33b"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/fonts.spec.cjs",
+      "bytes": 9712,
+      "sha256": "87b863ff518c3cdcfed76b865e5b7a5167fb2807b7689827f05ab6787f82def4"
+    },
+    {
+      "path": "Locate 2026 version/tests/browser/symbol-preview.spec.cjs",
+      "bytes": 9703,
+      "sha256": "8dadffb8b836bb21116028a702b7f5dd57041463095db4ac52d193be06686fbe"
+    },
+    {
+      "path": "Locate 2026 version/tests/fixtures/overlapping-outline.cjs",
+      "bytes": 1403,
+      "sha256": "84b738b62851f223efbcad0ab5de15b3a2944c2e074c8311343074cb889c79a1"
+    },
+    {
+      "path": "Locate 2026 version/tests/fixtures/baseline.sha256",
+      "bytes": 65,
+      "sha256": "3cc74a9350664f06aea7d9010d8381736954aa4fcd812d8dfa92da70b0467609"
+    },
+    {
+      "path": "Locate 2026 version/tests/fixtures/baseline.html",
+      "bytes": 1875986,
+      "sha256": "fa75780c23973e95cffacc8b34cc663241ee5b93d857e5fcbcda7711c20328f0"
+    },
+    {
+      "path": "Locate 2026 version/tests/unit/conference-cues.test.cjs",
+      "bytes": 9261,
+      "sha256": "db152d977e9ab6c760720c7f818c8ac4deeae078e237fda71bd71b9dfa76f2f0"
+    },
+    {
+      "path": "Locate 2026 version/tests/unit/basemap-coverage.test.cjs",
+      "bytes": 1850,
+      "sha256": "1b8c641824f410f016eebede9b3ef9582c6056125c32dc874f4ba8222cfc5222"
+    },
+    {
+      "path": "Locate 2026 version/tests/unit/orbit-lifecycle.test.cjs",
+      "bytes": 12891,
+      "sha256": "44a7183a082324c452a34bb7fdd89812039ed7c8d48a8792746280a53bf23b93"
+    },
+    {
+      "path": "Locate 2026 version/tests/unit/outline-policy.test.cjs",
+      "bytes": 5587,
+      "sha256": "0744590c35178ed68ac3567e465fcee8399710461189fceb2fd2ea25d75a1e66"
+    },
+    {
+      "path": "Locate 2026 version/tests/unit/survey-results.test.cjs",
+      "bytes": 12332,
+      "sha256": "fd265fba12ca3980692d3a2a481b009f7010bdecb6f001ffc88f42b069f04855"
+    },
+    {
+      "path": "Locate 2026 version/tests/unit/placement-3d.test.cjs",
+      "bytes": 3634,
+      "sha256": "cc96b674cf4b6a2f225f119615052e2279ccb0cd979bc5091a189861fd7c0434"
+    },
+    {
+      "path": "Locate 2026 version/tests/unit/fonts-rendering.test.cjs",
+      "bytes": 8385,
+      "sha256": "67c27f1d552ee170b0010cbeb8d299b278de3e0b6bf47a277934737c8fa30f22"
+    },
+    {
+      "path": "Locate 2026 version/tests/unit/ground-model-cache.test.cjs",
+      "bytes": 6274,
+      "sha256": "1ff4772994fb5091ae8f5037377e3c68a3f4bb61d91e6d56d8e05cc7725f7e58"
+    },
+    {
+      "path": "Locate 2026 version/src/version.json",
+      "bytes": 68,
+      "sha256": "2b5dd30ad6d586c51b18986ade4cde3141bb3c2be96b4e45550319a11d77439f"
+    },
+    {
+      "path": "Locate 2026 version/src/assets.json",
+      "bytes": 6099,
+      "sha256": "256e54e513510870547ba828defe3316aeae06eacd69fca9ec9b24f21b63a606"
+    },
+    {
+      "path": "Locate 2026 version/src/template.html",
+      "bytes": 69243,
+      "sha256": "7c4f2aae47c4681efe761502ac644ff979da0fe082e5a81d2730d7dfb9dcc45c"
+    },
+    {
+      "path": "Locate 2026 version/src/styles/app.css",
+      "bytes": 132947,
+      "sha256": "fcfe094ca061db9c64976f11b7dc56fc8a3aadffb50d5c604acfcbf6fb5fbe2c"
+    },
+    {
+      "path": "Locate 2026 version/src/styles/map-controls.css",
+      "bytes": 1346,
+      "sha256": "a3cc9242984727950f42e3400f415d77ca4ee8d7ea048c381bfaf3679d3dc277"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/jsqr.js",
+      "bytes": 256886,
+      "sha256": "9fe288a770b80532943291c7f756ad0df4e8e98ad52403f8dd3848260838d090"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/opentype.js",
+      "bytes": 171001,
+      "sha256": "c0f9c7ca85e18075a8819e5fe2dee6e1d535f9a2269f5314f36cce94a183adba"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/ground-3d.js",
+      "bytes": 586379,
+      "sha256": "81197d5b7be153580485047aee387f124ae4a4463a6d46aa2cba456403ad4436"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/qrious.js",
+      "bytes": 17579,
+      "sha256": "db99dcaf40a926181bce4522477c2efc5924f6c4b29111b6a97faea477c9528b"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/jszip.js",
+      "bytes": 97631,
+      "sha256": "d14e71a95ef3290dec66a9cfdd8a37c2dd624f6f2b594c4512f607d4a56e19fc"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/geoglyph-maplibre-v530-css.css",
+      "bytes": 69547,
+      "sha256": "ca453059a02ad38e81e51400480a63cb7ed80285b1275a8018cecd7c62d0117a"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/extrusion-worker.js",
+      "bytes": 301099,
+      "sha256": "85172cf6319bac9f60f91189f956a1ca4b9fc884d124ea77e6345e205a2b6ab5"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/polygon-clipping.js",
+      "bytes": 29106,
+      "sha256": "7f8619e84a86ce8dd400c9b50430e9c8cf8f26027b19eeb479f109f5c1a9d688"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/geoglyph-maplibre-v530-vendor.js",
+      "bytes": 913870,
+      "sha256": "a19b265e244f2ffcf92d84bfe5cca9802790c86a9ff0f8b14003dcb74792b490"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/licenses/three.txt",
+      "bytes": 1081,
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/licenses/polygon-clipping.txt",
+      "bytes": 1327,
+      "sha256": "864ae9e4ed75e1571a3bcf5dc9070264213445b32e7e2af5bf60eba46fb656d0"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/licenses/opentype.txt",
+      "bytes": 1085,
+      "sha256": "a5b87c9bc191e7f9c06b07bd7cbbed3ed846dfdb50e859484b2c245aa1ab2e61"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/licenses/maplibre.txt",
+      "bytes": 5984,
+      "sha256": "ee5fc05a0677eaf69601d2c7db0d9ecd6cc27c3abc1d0733bc9ed34707cf8ef2"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/licenses/lucide.txt",
+      "bytes": 880,
+      "sha256": "1e7290b35280a048667bbf0ebabac1c7fd52a75300e8b2946ac165715997f2bc"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/licenses/jszip.txt",
+      "bytes": 33753,
+      "sha256": "566c953c6090b1218ca6217dd7359d45dde46581968586dc607d59a78af6a9c4"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/licenses/jsqr.txt",
+      "bytes": 11358,
+      "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08"
+    },
+    {
+      "path": "Locate 2026 version/src/vendor/licenses/qrious.txt",
+      "bytes": 706,
+      "sha256": "573aa60568eb0d6829453b85a9bcae84763de76638bc16e6a198a9535871191a"
+    },
+    {
+      "path": "Locate 2026 version/src/workers/font-geometry-worker.js",
+      "bytes": 2854,
+      "sha256": "df7dcb304f4d5ee8fc3783e6d24fa35bfe066cd05302925367ce8798b80e4395"
+    },
+    {
+      "path": "Locate 2026 version/src/workers/extrusion-entry.js",
+      "bytes": 1752,
+      "sha256": "37c8e17dcd14a6979af27c5fe84644fea429ac30cd6e0615769c9cc65a1a1cb5"
+    },
+    {
+      "path": "Locate 2026 version/src/fonts/MAGNETOB.TTF",
+      "bytes": 65284,
+      "sha256": "455964b4a07af53205ed705e0f40778ff203f2c9e7c72a8bf2c4d7a3a834e895"
+    },
+    {
+      "path": "Locate 2026 version/src/fonts/CHILLER.TTF",
+      "bytes": 96452,
+      "sha256": "64327ea7bccc5583396d6796cbc535d27c0389906a36312e5811d9ec535c6a03"
+    },
+    {
+      "path": "Locate 2026 version/src/fonts/GILLUBCD.TTF",
+      "bytes": 72404,
+      "sha256": "850cf06d039dd9d0831d2c8f61016b9623e77f6a4a9cd04c1c2bb2b386f7a796"
+    },
+    {
+      "path": "Locate 2026 version/src/fonts/manifest.json",
+      "bytes": 740,
+      "sha256": "70b84cd0c3cdd27d492afb9b123f397545209275469221b354ed3e7b0cd76e1f"
+    },
+    {
+      "path": "Locate 2026 version/src/fonts/FORTE.TTF",
+      "bytes": 61776,
+      "sha256": "7407f0814d04a4cc45127933df1d6ffab5c90e5e888d33a7279cd82c36426b30"
+    },
+    {
+      "path": "Locate 2026 version/src/fonts/SHOWG.TTF",
+      "bytes": 52316,
+      "sha256": "80cd2486979c2c18f9dd59277c0fd800959afa1ce23820dcf7bce31f208647af"
+    },
+    {
+      "path": "Locate 2026 version/src/fonts/conference-font-data.js",
+      "bytes": 17711696,
+      "sha256": "6a772e698dc051e36d8e9346a300c5ef465caca6147600702c5c90c05128327d"
+    },
+    {
+      "path": "Locate 2026 version/src/fonts/seguiemj.ttf",
+      "bytes": 12934920,
+      "sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v1511-ui.js",
+      "bytes": 2762,
+      "sha256": "c4b7a100be71af06a2be4b553fc7822e6fd2f82d3cab0113f4aa01819f7910d4"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/ground-3d.js",
+      "bytes": 19406,
+      "sha256": "33ccd67a35e96a44f82e6e84f7a796717fd97916a2a94c07f36253286bfc597a"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v164-version-marker.js",
+      "bytes": 168,
+      "sha256": "1591beaad42e7b2c5289b995e196afd00d6d672a1755078ebf5ba3b9b916825b"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/version.js",
+      "bytes": 216,
+      "sha256": "2decbd772736d139d44889185a08d8555f186f5a1402400561628e9c6d91096f"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v156-ui.js",
+      "bytes": 4817,
+      "sha256": "a322d769168b34bae14cb24c8860957d2d1cc27014ccec5fef57e40d2e73f771"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/ground-icons.js",
+      "bytes": 2886,
+      "sha256": "46e285b83225e1118a4b9ce6b37169f2d5e4c5cb879aa0f423675885dccd8c34"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v1512-ux-ui.js",
+      "bytes": 27417,
+      "sha256": "3ef46f5ac538f4f953abe887f61109010f63a8f098fe31fad239340c39464241"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v1511-section-structure-repair-ui.js",
+      "bytes": 1443,
+      "sha256": "7cd2d8d9d43853a01b0a6b2a47d8a79cb13bb075ad51a5663f5f5656bcf19242"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v154-ui.js",
+      "bytes": 3021,
+      "sha256": "fd0b9b2ae2bd41aa49c06f8c87c00005b57654a4b75cb6cb582eaff1831a73f9"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v1510-ui.js",
+      "bytes": 782,
+      "sha256": "15c4b250b62cc8f8cee83aa00de4c30d8268813147de3e21013dbea9e564fcfa"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/font-service.js",
+      "bytes": 10939,
+      "sha256": "ed4884f6968b22b156ac9240881f706fa1020e270c471549e78528488d5c8acf"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/conference-presentation.js",
+      "bytes": 12445,
+      "sha256": "e948a879d8cfb173c53b23b6f982bf0791d220234520dfe0110eb330f92fa9e0"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-map-engine-inline.js",
+      "bytes": 119728,
+      "sha256": "868ed916f6528f0c82ee4bab24acf35e26c8a27273fb29b7f8a90abb811b6163"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/studio-ui.js",
+      "bytes": 26003,
+      "sha256": "e7a2a78feb9c9521d2d71fdf1016b75dbb58f0015d01f7fdb9fef730660c8b20"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/ground-camera.js",
+      "bytes": 11529,
+      "sha256": "45768f4928d3ca288b70d5ec0df415838e5dcff3429c3f4454ed8cd28c6c1e61"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v159-ui.js",
+      "bytes": 528,
+      "sha256": "44ece0370467444fdfb834f6abf677cccf52209b53590f1a1c58386fd913d8e7"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v1511-magic-eye-random-colours.js",
+      "bytes": 4231,
+      "sha256": "a08ac470d1ce92aa26d40bcf0ccc7164d0c55f1e520e5c0c31b272c765a50e48"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/map-controls-ui.js",
+      "bytes": 4078,
+      "sha256": "5b326ba01c371b790569d8ff10e0dc542a520221f576941b6fe3cf5fd2220151"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v157-ui.js",
+      "bytes": 118,
+      "sha256": "fdf042ce49cea3f91ab67e8fdd5fe8a5c30a11bce9cfe25a61f16e1d89b2abfc"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v1511-magic-eye-fullscreen.js",
+      "bytes": 7487,
+      "sha256": "d5100a6607b1b3a1299123b2dad237695ccdd168178fa445c466ab02a389e627"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/survey-results.js",
+      "bytes": 11648,
+      "sha256": "ea39cce7158f19d0919f01693af0ec702cf45d096ccbeaf0bc428b3f3290275b"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/conference-cues.js",
+      "bytes": 4989,
+      "sha256": "c667ded441d6c04741509d4d74d682847628cb8856be22d7a91471da60e5ae67"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v154-base-ui.js",
+      "bytes": 24449,
+      "sha256": "64587aaab38bce3bfb2b95f82bb7ac9a5a38d5dac36bdfd8cc7bc6845fed0c3f"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/core.js",
+      "bytes": 152210,
+      "sha256": "c9ef9380d64a03d0c3c9d9b6d468aa954ad8473db35ece3e2bab78ee26830056"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/ground-model-cache.js",
+      "bytes": 2768,
+      "sha256": "c11ade80845b70360a53973c3b6d6fe7a922f6aedc6120e7179ef25c7f80a981"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/conference-config.js",
+      "bytes": 392,
+      "sha256": "59fda41dd3cdaf94d48fd857b1e231c3f5ece12c680888d68876a2fc72db019a"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/ground-geometry.js",
+      "bytes": 12509,
+      "sha256": "33117ab55537d0d8e83f0c3c4bedea83e93400513f4780b592ce8402427fea2a"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/basemap-coverage.js",
+      "bytes": 1863,
+      "sha256": "1cba91d3a75b98e0e5da0f82b6ab09816126c2151feaa6b70ee0cd3f92204d8f"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v155-ui.js",
+      "bytes": 13926,
+      "sha256": "1d90bab5700e1c6bd6a5cd942c03490af85cdd4595a061248b36482c3b00ba38"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v15-ui.js",
+      "bytes": 25226,
+      "sha256": "dc61ad3f0ddbaf3aef29aff571efe53cbe478ce275b310fdade025575fdad86d"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/controls.js",
+      "bytes": 6312,
+      "sha256": "0f8025a2b814fb7fa3d1ef0199bebdf4d70be0f29809d7683bd7151d792effcb"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/ground-transform.js",
+      "bytes": 1599,
+      "sha256": "7940b0c95b468dd012389f0b375761cf59d67c1582ff83da853ad12ee9a41983"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/geoglyph-v1511-accessible-hover-tips-ui.js",
+      "bytes": 5453,
+      "sha256": "5a618d02d6fcb8f262f6213271477e9d881813ce4858a7c16f4813e8c858ca0b"
+    },
+    {
+      "path": "Locate 2026 version/src/scripts/colour-picker.js",
+      "bytes": 7927,
+      "sha256": "eccd89f3515945e8c8af8e07fdb574667a7c3a417bc0c0d9d8fbceee84479eab"
+    },
+    {
+      "path": "Locate 2026 version/dist/GeoGlyph.html",
+      "bytes": 21150660,
+      "sha256": "e71fc5a1b22cb9d8c04d16190a5b9ed79a4264cbb9814daabebaace6e6bbfe0f"
+    },
+    {
+      "path": "Locate 2026 version/validation/random-fit-unit-tests.log",
+      "bytes": 17045,
+      "sha256": "d857792b3810738b1b156b6b12f41c0252fc6e9c3bab816750106a2f9e65c916"
+    },
+    {
+      "path": "Locate 2026 version/validation/begin-reset-unit-tests.xml",
+      "bytes": 940,
+      "sha256": "3c7bec1ea886d9a6c59974c69cbe46a36b863cfe6fee92e1f81be858e2c2aad4"
+    },
+    {
+      "path": "Locate 2026 version/validation/random-fit-test-run.log",
+      "bytes": 39548,
+      "sha256": "9612d48491c2d22b49768f918f9d9e29d9f2cac3718274775ec7a268034df756"
+    },
+    {
+      "path": "Locate 2026 version/validation/original-files-check.json",
+      "bytes": 136,
+      "sha256": "908f13c590016fb0ec4b42140cbb0ee444e3c8d60211d206097630a5be061ab7"
+    },
+    {
+      "path": "Locate 2026 version/validation/intro-duration-review.json",
+      "bytes": 977,
+      "sha256": "9e30eaaa3b7b73c3502bfe427b3dca7feed8bcf48f4fe5d8e0a0917bade6e5fe"
+    },
+    {
+      "path": "Locate 2026 version/validation/intro-colour-review.json",
+      "bytes": 2261,
+      "sha256": "d0d85e3cd3f06836c0ead4a585703bca64ad1c26d1ab62c1a9132f035e839014"
+    },
+    {
+      "path": "Locate 2026 version/validation/random-fit-browser-test-run.log",
+      "bytes": 22305,
+      "sha256": "292812d4e727e7765b490ea49db32e1978847662419b4312fb1953bf2509c7ae"
+    },
+    {
+      "path": "Locate 2026 version/validation/test-summary.json",
+      "bytes": 1111,
+      "sha256": "518a300cdf99757340362c69dca8b19b1a7905b2b99ae6074ac8cb63382569c2"
+    },
+    {
+      "path": "Locate 2026 version/validation/no-location-live.json",
+      "bytes": 321,
+      "sha256": "3d1b260ffd00b2ef41ad76b3036d3fc0e8bdfb3a625dfd34de1ed90a9806819c"
+    },
+    {
+      "path": "Locate 2026 version/validation/gill-font-metadata.json",
+      "bytes": 461,
+      "sha256": "f25d85cf9cda0c1d88fa0b8b317ad2656f43363e6095f9d44f1bdd36ba2ad667"
+    },
+    {
+      "path": "Locate 2026 version/validation/closer-framing-test-run.log",
+      "bytes": 36392,
+      "sha256": "615ef9702ad97650a13457a1d91d95cb1082d0812531d81a5f566e4d5339813d"
+    },
+    {
+      "path": "Locate 2026 version/validation/closer-framing-preview.png",
+      "bytes": 2959929,
+      "sha256": "767e4063a2a1e0bb21e88f124782dff6b5265cd523cc717dcff71ea048489462"
+    },
+    {
+      "path": "Locate 2026 version/validation/test-run-excerpt.log",
+      "bytes": 6107,
+      "sha256": "7a0fdeba483cd35e60e001eb8bdf72f26b831b323d830077bc27c8a4d742ff4e"
+    },
+    {
+      "path": "Locate 2026 version/validation/auto-fit-test-run.log",
+      "bytes": 34400,
+      "sha256": "e558b73d007d2229696d5e88b813425682709f6bc6096a1ff442f44984b61003"
+    },
+    {
+      "path": "Locate 2026 version/validation/polling-get-cache-probes.json",
+      "bytes": 660,
+      "sha256": "a7cbab7d1c6386f0396e692010475043b267e7ed957c3eaa36ad3102c1abcfcc"
+    },
+    {
+      "path": "Locate 2026 version/validation/no-location-live.png",
+      "bytes": 2348398,
+      "sha256": "99fae2ce05cdbab4e968de5bb4a678d15508f185f1c5a9e7c729a1ce27ef2bc0"
+    },
+    {
+      "path": "Locate 2026 version/validation/unit-tests.xml",
+      "bytes": 7122,
+      "sha256": "35e11489ea49af2221b70f018ded1b821284ce6a0a25ae0e868631bc5aa3edfc"
+    },
+    {
+      "path": "Locate 2026 version/validation/closer-framing-preview.json",
+      "bytes": 505,
+      "sha256": "984608a9fb329175de82466f0c8025e6f143b8069d14c18cfcd5687961dc2e70"
+    },
+    {
+      "path": "Locate 2026 version/validation/conference-test-run.log",
+      "bytes": 32817,
+      "sha256": "9d62f2f1152b53465b32e0555201f353b77666f70d73d090d454e34100781d5a"
+    },
+    {
+      "path": "Locate 2026 version/validation/font-startup-review.json",
+      "bytes": 1884,
+      "sha256": "166374a6c7ffb4f6482974ddfe9026c680f7992be191dd56a0ecd79595b08b46"
+    },
+    {
+      "path": "Locate 2026 version/validation/begin-reset-review.json",
+      "bytes": 2673,
+      "sha256": "3e4bac4daaccc7393439572b9d186e9a19859b15498dbb4cffe3943b91c57799"
+    },
+    {
+      "path": "Locate 2026 version/validation/browser-results.json",
+      "bytes": 170278,
+      "sha256": "7be19817c46bb2d70cd7e38bd0be9e2d809c1fa1c388d9eaca078df54d48a0f2"
+    },
+    {
+      "path": "Locate 2026 version/validation/random-fit-review.json",
+      "bytes": 1978,
+      "sha256": "01c0af373eae1c6455790925de9b37e7328894e30c37898abe610825eb0c3608"
+    },
+    {
+      "path": "Locate 2026 version/validation/qart-crosshair-off-review.json",
+      "bytes": 1971,
+      "sha256": "a01b06abf650bc766fac6c46230378866c276075f48421491203778f917fc05e"
+    },
+    {
+      "path": "Locate 2026 version/validation/explorer-keyboard-crosshair-review.json",
+      "bytes": 1959,
+      "sha256": "bf9034f46306b2a776304633fbb6146718e7316f7dbe413969420692ce56858e"
+    },
+    {
+      "path": "Locate 2026 version/validation/intro-colour-samples.json",
+      "bytes": 551,
+      "sha256": "6e5ba2be8e028fb88d21f56f0da31d0e5af541581a57472694a3a2d7bacb785a"
+    },
+    {
+      "path": "Locate 2026 version/validation/conference-live.json",
+      "bytes": 5233,
+      "sha256": "29cb1cf44bd4d79529f45f59b137b4cf95061d271fca3c503385a20744a6581d"
+    },
+    {
+      "path": "Locate 2026 version/validation/random-fit-npm-wrapper-attempt.log",
+      "bytes": 1346,
+      "sha256": "2ef92aac559c4ddaba5f1d20f7080f2643de986b54f0d96686b4196f963bdd05"
+    },
+    {
+      "path": "Locate 2026 version/validation/live-public-results.json",
+      "bytes": 1471,
+      "sha256": "95307f1c5a75cf067a56488e1458c34eb0e50c4586e316fc8ac9df0bd5791e87"
+    },
+    {
+      "path": "Locate 2026 version/validation/polling-fix-live.json",
+      "bytes": 804,
+      "sha256": "2c2e6d91e7a9fd282c7a6178070d2247a453f3bd1980065c11cdd2b1ac87d8f0"
+    },
+    {
+      "path": "Locate 2026 version/validation/build-check.json",
+      "bytes": 186,
+      "sha256": "eacea5a990980d449252e4b6cd481251ef099825f6013f84fd8fbeb426f16353"
+    },
+    {
+      "path": "Locate 2026 version/validation/original-file-inventory.json",
+      "bytes": 9996,
+      "sha256": "7fa1d50e04b03226b3cb6e3817a01ee1abed1750f7fde87c1ae6171dfcc12970"
+    },
+    {
+      "path": "Locate 2026 version/scripts/build.cjs",
+      "bytes": 4513,
+      "sha256": "9fa04562aea09f1460221071c8f0a8d1ec2cad13f60694f0ac6bf8c152df3ede"
+    },
+    {
+      "path": "Locate 2026 version/scripts/consolidate-css.cjs",
+      "bytes": 2831,
+      "sha256": "e80fc2f304212398f1d4e22d4c944d89f34d2536b908bb2828d8a0c07f0fc396"
+    },
+    {
+      "path": "Locate 2026 version/scripts/test-all.cjs",
+      "bytes": 513,
+      "sha256": "7ee793858d7028e896250882d5a1279f0f1a48d6c834bd2755a16c3c58fea0e7"
+    },
+    {
+      "path": "Locate 2026 version/scripts/dev-server.cjs",
+      "bytes": 1374,
+      "sha256": "7af1aaa924b5de11556859d10dde9f5eacbe2305124eff1515b5ac3e8c07013d"
+    },
+    {
+      "path": "Locate 2026 version/scripts/verify-original.cjs",
+      "bytes": 1690,
+      "sha256": "3e2c0733aec54476f6015447481a3f9f543b09773a80ea157e288563b8ede027"
+    },
+    {
+      "path": "Locate 2026 version/scripts/extract-source.cjs",
+      "bytes": 2014,
+      "sha256": "17efd55a51ffd3b7325f4c325f61063a30f8eb355325bd1b49c2ae89d8ae823f"
+    },
+    {
+      "path": "Locate 2026 version/scripts/prepare-conference-gill-font.py",
+      "bytes": 1075,
+      "sha256": "a891776217c7636fe0d07d09132822aeec87643dfcb0de92264b901c86aa4d36"
+    },
+    {
+      "path": "dist/GeoGlyph.html",
+      "bytes": 3393500,
+      "sha256": "fc03c7251ed8d79f37e8d504d9d727a478dc5695fb8a36c66f291acbd5c833ba"
+    },
+    {
+      "path": "scripts/build.cjs",
+      "bytes": 3549,
+      "sha256": "b64019b2c6f23f7616f6944e663a640b7fdd5c41e882a7fce5cbbd4feecfbf25"
+    },
+    {
+      "path": "scripts/consolidate-css.cjs",
+      "bytes": 2831,
+      "sha256": "e80fc2f304212398f1d4e22d4c944d89f34d2536b908bb2828d8a0c07f0fc396"
+    },
+    {
+      "path": "scripts/test-all.cjs",
+      "bytes": 513,
+      "sha256": "7ee793858d7028e896250882d5a1279f0f1a48d6c834bd2755a16c3c58fea0e7"
+    },
+    {
+      "path": "scripts/dev-server.cjs",
+      "bytes": 1374,
+      "sha256": "9945fa34670179e8b1a4e622036010741dee6ea17fdeaf8b46e0e756859c8262"
+    },
+    {
+      "path": "scripts/extract-source.cjs",
+      "bytes": 2027,
+      "sha256": "1ff978ec70565e3bffd836b59783d2067f955b04981e5a0c69add9831058d1cb"
+    }
+  ]
+}

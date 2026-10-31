@@ -1,0 +1,103 @@
+{
+  "method": "Each file executed directly with node to obtain case-level TAP output; node --test in the restricted environment reported only file-level successes.",
+  "results": [
+    {
+      "edition": "conference",
+      "file": "tests/unit/basemap-coverage.test.cjs",
+      "exitCode": 0,
+      "pass": 3,
+      "fail": 0
+    },
+    {
+      "edition": "conference",
+      "file": "tests/unit/conference-cues.test.cjs",
+      "exitCode": 0,
+      "pass": 14,
+      "fail": 0
+    },
+    {
+      "edition": "conference",
+      "file": "tests/unit/fonts-rendering.test.cjs",
+      "exitCode": 0,
+      "pass": 10,
+      "fail": 0
+    },
+    {
+      "edition": "conference",
+      "file": "tests/unit/ground-model-cache.test.cjs",
+      "exitCode": 0,
+      "pass": 7,
+      "fail": 0
+    },
+    {
+      "edition": "conference",
+      "file": "tests/unit/orbit-lifecycle.test.cjs",
+      "exitCode": 0,
+      "pass": 11,
+      "fail": 0
+    },
+    {
+      "edition": "conference",
+      "file": "tests/unit/outline-policy.test.cjs",
+      "exitCode": 0,
+      "pass": 6,
+      "fail": 0
+    },
+    {
+      "edition": "conference",
+      "file": "tests/unit/placement-3d.test.cjs",
+      "exitCode": 0,
+      "pass": 5,
+      "fail": 0
+    },
+    {
+      "edition": "conference",
+      "file": "tests/unit/survey-results.test.cjs",
+      "exitCode": 0,
+      "pass": 15,
+      "fail": 0
+    },
+    {
+      "edition": "base",
+      "file": "tests/unit/basemap-coverage.test.cjs",
+      "exitCode": 0,
+      "pass": 3,
+      "fail": 0
+    },
+    {
+      "edition": "base",
+      "file": "tests/unit/fonts-rendering.test.cjs",
+      "exitCode": 0,
+      "pass": 10,
+      "fail": 0
+    },
+    {
+      "edition": "base",
+      "file": "tests/unit/ground-model-cache.test.cjs",
+      "exitCode": 0,
+      "pass": 7,
+      "fail": 0
+    },
+    {
+      "edition": "base",
+      "file": "tests/unit/orbit-lifecycle.test.cjs",
+      "exitCode": 0,
+      "pass": 8,
+      "fail": 0
+    },
+    {
+      "edition": "base",
+      "file": "tests/unit/outline-policy.test.cjs",
+      "exitCode": 0,
+      "pass": 6,
+      "fail": 0
+    },
+    {
+      "edition": "base",
+      "file": "tests/unit/placement-3d.test.cjs",
+      "exitCode": 0,
+      "pass": 5,
+      "fail": 0
+    }
+  ]
+}

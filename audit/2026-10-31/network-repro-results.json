@@ -1,0 +1,16 @@
+{
+  "methodology": "Unmodified source functions/client, synthetic dependencies and records; no browser, network or app source mutation.",
+  "manualSelectionRace": {
+    "error": "Cue render was superseded",
+    "conferenceApplying": true,
+    "conferenceRebuildPending": true,
+    "actualRebuildCalls": 1
+  },
+  "unboundedPaging": {
+    "fullPagesAcceptedBeforeExternalAbort": 100,
+    "rowsHeldBeforeExternalAbort": 2500,
+    "fetchCalls": 101,
+    "deliveredBeforeAbort": false,
+    "error": "Synthetic probe stops after 100 full pages"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "font": "Magneto",
+  "source": "actual geometry/extrusion/main cache modules",
+  "budgetBytes": 33554432,
+  "models": [
+    {
+      "characters": 223,
+      "vertices": 56144,
+      "meshBytes": 18777984,
+      "outlineBytes": 2686848,
+      "retainedBudgetBytes": 22363136,
+      "groups": 256
+    },
+    {
+      "characters": 225,
+      "vertices": 56190,
+      "meshBytes": 18792816,
+      "outlineBytes": 2689008,
+      "retainedBudgetBytes": 22380864,
+      "groups": 258
+    }
+  ],
+  "rejection": "Combined models exceed the 32 MiB budget; reduce curve quality or message length",
+  "previousDisplayGeometryPreserved": true,
+  "activeGeometryDisposalsDuringRejection": 0,
+  "secondAcceptedInFreshCache": true,
+  "afterReject": {
+    "entries": 1,
+    "bytes": 22363136,
+    "hits": 1,
+    "evictions": 0,
+    "pending": 0
+  }
+}

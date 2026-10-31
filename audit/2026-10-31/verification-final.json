@@ -1,0 +1,44 @@
+{
+  "baselineCommit": "fc1996153199b3667827693d3a0479b99f427c7b",
+  "inventoriedFiles": 250,
+  "changedOriginalFiles": [],
+  "auditScriptSyntax": [
+    {
+      "file": "audit/2026-10-31/browser-benchmark.cjs",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "file": "audit/2026-10-31/geometry-benchmark.cjs",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "file": "audit/2026-10-31/geometry-capacity-probe.cjs",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "file": "audit/2026-10-31/network-repro.cjs",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "file": "audit/2026-10-31/rendering-probes.cjs",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "file": "audit/2026-10-31/ui-probes.cjs",
+      "exitCode": 0,
+      "error": ""
+    }
+  ],
+  "unitCasePasses": {
+    "conference": 71,
+    "base": 39
+  },
+  "reportMissingSections": [],
+  "reportWords": 9006,
+  "browserSoakExecuted": false
+}

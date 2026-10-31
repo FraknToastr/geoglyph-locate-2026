@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-10-31T00:20:30.629Z",
+  "node": "v22.23.2",
+  "evidenceClass": "Deterministic unchanged-source probes with boundary mocks; no browser/GPU performance claims.",
+  "stalledWorker": {
+    "creations": 1,
+    "posts": 2,
+    "terminationsBeforeDispose": 0,
+    "errors": [
+      "Font worker request timed out",
+      "Font worker request timed out"
+    ]
+  },
+  "identicalGeometry": {
+    "iterations": 100,
+    "calls": {
+      "projection": 100,
+      "sourceSetData": 100,
+      "meshPrepare": 100,
+      "commits": 100,
+      "events": 100
+    },
+    "boundary": "Unchanged rebuildGeometry with cached model and mocked Three/map commits; verifies work dispatch counts, not execution time or GPU allocation."
+  }
+}

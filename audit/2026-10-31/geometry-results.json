@@ -1,0 +1,1409 @@
+{
+  "generatedAt": "2026-10-31T00:23:24.780Z",
+  "completedAt": "2026-10-31T00:24:50.564Z",
+  "root": "/home/n0rt/headroom-projects/geoglyph/Locate 2026 version",
+  "environment": {
+    "node": "v22.23.2",
+    "platform": "linux",
+    "arch": "x64",
+    "kernel": "6.18.54.1-microsoft-standard-WSL2",
+    "logicalCpus": 32,
+    "cpu": "AMD Ryzen 9 7950X3D 16-Core Processor",
+    "totalMemory": 33203380224,
+    "exposedGC": true
+  },
+  "methodology": {
+    "clock": "node:perf_hooks.performance.now",
+    "percentiles": "nearest rank; short sample tails do not estimate browser p99",
+    "coldModel": "fresh parsed font per sample; parse time excluded",
+    "warmGlyphCacheModel": "same font; glyph outline cache warm; complete text model still regenerated",
+    "worker": "unmodified classic worker protocol in Node VM with structuredClone both directions; no browser threading, GPU, frame or DOM measurement",
+    "execution": "shared WSL host, no exclusive CPU reservation",
+    "options": {
+      "tracking": 0,
+      "lineHeight": 1.15,
+      "quality": 10,
+      "symbol": false,
+      "tolerance": 0.18181818181818182
+    },
+    "scenarios": [
+      {
+        "name": "short",
+        "text": "GeoGlyph"
+      },
+      {
+        "name": "normal-multiline",
+        "text": "GeoGlyph\nLocate 2026"
+      },
+      {
+        "name": "heavy-update",
+        "text": "GEOGLYPH LIVE VISUALISATION GEOGLYPH LIVE VISUALISATION GEOGLYPH LIVE VISUALISATION GEOGLYPH LIVE VISUALISATION GEOGLYPH LIVE VISUALISATION GEOGLYPH LIVE VISUALISATION GEOGLYPH LIVE VISUALISATION GEOGLYPH LIVE VISUALISATION"
+      }
+    ],
+    "sampleCounts": {
+      "parse": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "coldModel": 12,
+      "warmGlyphCacheModel": {
+        "warmup": 5,
+        "samples": 50
+      },
+      "meshBuild": {
+        "warmup": 3,
+        "samples": 20
+      },
+      "clone": {
+        "warmup": 5,
+        "samples": 50
+      },
+      "warmWorker": {
+        "warmup": 10,
+        "samples": 100
+      },
+      "mainCacheHits": 1000
+    }
+  },
+  "rows": [
+    {
+      "font": "Gill Sans",
+      "scenario": "short",
+      "characters": 8,
+      "utf8Bytes": 8,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.3385995499999993,
+        "medianMs": 0.21108599999999456,
+        "p95Ms": 0.9482109999999864,
+        "p99Ms": 1.077588999999989,
+        "minMs": 0.15329399999998827,
+        "maxMs": 1.077588999999989
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 2.486438333333332,
+        "medianMs": 1.8619919999999865,
+        "p95Ms": 9.141226000000017,
+        "p99Ms": 9.141226000000017,
+        "minMs": 0.944564999999983,
+        "maxMs": 9.141226000000017
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 0.046335059999999546,
+        "medianMs": 0.03256999999999266,
+        "p95Ms": 0.05540199999998663,
+        "p99Ms": 0.5962499999999977,
+        "minMs": 0.03084400000000187,
+        "maxMs": 0.5962499999999977
+      },
+      "model": {
+        "vertices": 1149,
+        "polygons": 8,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 27576,
+        "glyphCache": {
+          "glyphs": 7,
+          "bytes": 14784,
+          "pathBuilds": 7
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 0.12230225999999846,
+        "medianMs": 0.11101500000000897,
+        "p95Ms": 0.13089399999998363,
+        "p99Ms": 0.5260690000000068,
+        "minMs": 0.10573400000001243,
+        "maxMs": 0.5260690000000068
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 2.9169749999999937,
+        "medianMs": 2.885253999999975,
+        "p95Ms": 3.6726789999999596,
+        "p99Ms": 6.141101999999989,
+        "minMs": 2.1507399999999848,
+        "maxMs": 6.141101999999989
+      },
+      "mesh": {
+        "bytes": 380928,
+        "positionBytes": 163152,
+        "normalBytes": 163152,
+        "outlineBytes": 54624,
+        "triangles": 4532,
+        "groups": 16,
+        "nonemptyGroups": 16,
+        "predictedSolidDrawCallsWithOutline": 17
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.16245852000000355,
+        "medianMs": 0.15939900000000762,
+        "p95Ms": 0.18762200000003304,
+        "p99Ms": 0.21841500000004999,
+        "minMs": 0.1448909999999728,
+        "maxMs": 0.21841500000004999
+      }
+    },
+    {
+      "font": "Gill Sans",
+      "scenario": "normal-multiline",
+      "characters": 20,
+      "utf8Bytes": 20,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.3385995499999993,
+        "medianMs": 0.21108599999999456,
+        "p95Ms": 0.9482109999999864,
+        "p99Ms": 1.077588999999989,
+        "minMs": 0.15329399999998827,
+        "maxMs": 1.077588999999989
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 2.699220166666663,
+        "medianMs": 2.616958000000011,
+        "p95Ms": 3.2855179999999677,
+        "p99Ms": 3.2855179999999677,
+        "minMs": 2.1144939999999792,
+        "maxMs": 3.2855179999999677
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 0.20260237999999617,
+        "medianMs": 0.17183900000003405,
+        "p95Ms": 0.23586499999998978,
+        "p99Ms": 1.3608939999999734,
+        "minMs": 0.14646700000002966,
+        "maxMs": 1.3608939999999734
+      },
+      "model": {
+        "vertices": 2949,
+        "polygons": 18,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 70776,
+        "glyphCache": {
+          "glyphs": 15,
+          "bytes": 34080,
+          "pathBuilds": 15
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 0.30748760000000064,
+        "medianMs": 0.2928539999999771,
+        "p95Ms": 0.3134059999999863,
+        "p99Ms": 0.9089530000000536,
+        "minMs": 0.27887800000002017,
+        "maxMs": 0.9089530000000536
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 6.6567791500000055,
+        "medianMs": 6.687579000000028,
+        "p95Ms": 7.158227000000011,
+        "p99Ms": 7.3622740000000135,
+        "minMs": 5.968208000000004,
+        "maxMs": 7.3622740000000135
+      },
+      "mesh": {
+        "bytes": 979248,
+        "positionBytes": 419472,
+        "normalBytes": 419472,
+        "outlineBytes": 140304,
+        "triangles": 11652,
+        "groups": 36,
+        "nonemptyGroups": 36,
+        "predictedSolidDrawCallsWithOutline": 37
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.37632423999998993,
+        "medianMs": 0.3899579999999787,
+        "p95Ms": 0.5355870000000778,
+        "p99Ms": 2.4526200000000244,
+        "minMs": 0.07544400000006135,
+        "maxMs": 2.4526200000000244
+      }
+    },
+    {
+      "font": "Gill Sans",
+      "scenario": "heavy-update",
+      "characters": 223,
+      "utf8Bytes": 223,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.3385995499999993,
+        "medianMs": 0.21108599999999456,
+        "p95Ms": 0.9482109999999864,
+        "p99Ms": 1.077588999999989,
+        "minMs": 0.15329399999998827,
+        "maxMs": 1.077588999999989
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 28.90717316666665,
+        "medianMs": 24.651294000000007,
+        "p95Ms": 57.834374000000025,
+        "p99Ms": 57.834374000000025,
+        "minMs": 20.936392999999953,
+        "maxMs": 57.834374000000025
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 21.324321399999977,
+        "medianMs": 21.24598100000003,
+        "p95Ms": 23.932395000000042,
+        "p99Ms": 26.020355999999992,
+        "minMs": 18.700133999999935,
+        "maxMs": 26.020355999999992
+      },
+      "model": {
+        "vertices": 15592,
+        "polygons": 200,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 374208,
+        "glyphCache": {
+          "glyphs": 15,
+          "bytes": 18048,
+          "pathBuilds": 15
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 1.834521620000014,
+        "medianMs": 1.7157680000000255,
+        "p95Ms": 2.549710000000232,
+        "p99Ms": 2.716370999999981,
+        "minMs": 1.6672279999997954,
+        "maxMs": 2.716370999999981
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 37.55550780000003,
+        "medianMs": 35.61372200000005,
+        "p95Ms": 42.396741999999904,
+        "p99Ms": 50.026714000000084,
+        "minMs": 34.192785000000185,
+        "maxMs": 50.026714000000084
+      },
+      "mesh": {
+        "bytes": 5112192,
+        "positionBytes": 2187648,
+        "normalBytes": 2187648,
+        "outlineBytes": 736896,
+        "triangles": 60768,
+        "groups": 400,
+        "nonemptyGroups": 400,
+        "predictedSolidDrawCallsWithOutline": 401
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.6242149400000381,
+        "medianMs": 0.4582869999999275,
+        "p95Ms": 1.1570489999999154,
+        "p99Ms": 4.118941000000177,
+        "minMs": 0.38384799999994357,
+        "maxMs": 4.118941000000177
+      }
+    },
+    {
+      "font": "Forte",
+      "scenario": "short",
+      "characters": 8,
+      "utf8Bytes": 8,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.0915677500000129,
+        "medianMs": 0.08238900000014837,
+        "p95Ms": 0.14915500000006432,
+        "p99Ms": 0.15210500000011962,
+        "minMs": 0.07175600000027771,
+        "maxMs": 0.15210500000011962
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 1.968676333333292,
+        "medianMs": 1.6949930000000677,
+        "p95Ms": 2.629692999999861,
+        "p99Ms": 2.629692999999861,
+        "minMs": 1.4236299999997755,
+        "maxMs": 2.629692999999861
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 0.07107766000001903,
+        "medianMs": 0.05674799999997049,
+        "p95Ms": 0.09853599999996732,
+        "p99Ms": 0.5020159999999123,
+        "minMs": 0.047551000000112253,
+        "maxMs": 0.5020159999999123
+      },
+      "model": {
+        "vertices": 2816,
+        "polygons": 8,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 67584,
+        "glyphCache": {
+          "glyphs": 7,
+          "bytes": 37536,
+          "pathBuilds": 7
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 0.29560571999999413,
+        "medianMs": 0.2814600000001519,
+        "p95Ms": 0.35281099999974685,
+        "p99Ms": 0.7614200000002711,
+        "minMs": 0.2591459999998733,
+        "maxMs": 0.7614200000002711
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 6.514375800000016,
+        "medianMs": 6.681223999999929,
+        "p95Ms": 7.383034999999836,
+        "p99Ms": 7.392291000000114,
+        "minMs": 5.648650000000089,
+        "maxMs": 7.392291000000114
+      },
+      "mesh": {
+        "bytes": 941088,
+        "positionBytes": 403200,
+        "normalBytes": 403200,
+        "outlineBytes": 134688,
+        "triangles": 11200,
+        "groups": 16,
+        "nonemptyGroups": 16,
+        "predictedSolidDrawCallsWithOutline": 17
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.12197159999998802,
+        "medianMs": 0.08751699999993434,
+        "p95Ms": 0.23484099999996033,
+        "p99Ms": 0.9494819999999891,
+        "minMs": 0.06949900000017806,
+        "maxMs": 0.9494819999999891
+      }
+    },
+    {
+      "font": "Forte",
+      "scenario": "normal-multiline",
+      "characters": 20,
+      "utf8Bytes": 20,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.0915677500000129,
+        "medianMs": 0.08238900000014837,
+        "p95Ms": 0.14915500000006432,
+        "p99Ms": 0.15210500000011962,
+        "minMs": 0.07175600000027771,
+        "maxMs": 0.15210500000011962
+      },
+      "error": "Complex or self-crossing outline requires styled raster rendering"
+    },
+    {
+      "font": "Forte",
+      "scenario": "heavy-update",
+      "characters": 223,
+      "utf8Bytes": 223,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.0915677500000129,
+        "medianMs": 0.08238900000014837,
+        "p95Ms": 0.14915500000006432,
+        "p99Ms": 0.15210500000011962,
+        "minMs": 0.07175600000027771,
+        "maxMs": 0.15210500000011962
+      },
+      "error": "Complex or self-crossing outline requires styled raster rendering"
+    },
+    {
+      "font": "Chiller",
+      "scenario": "short",
+      "characters": 8,
+      "utf8Bytes": 8,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.05168119999996179,
+        "medianMs": 0.04612500000030195,
+        "p95Ms": 0.0811119999998482,
+        "p99Ms": 0.08175600000004124,
+        "minMs": 0.04431299999987459,
+        "maxMs": 0.08175600000004124
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 1.3372550000000274,
+        "medianMs": 1.1454850000000079,
+        "p95Ms": 2.167605000000094,
+        "p99Ms": 2.167605000000094,
+        "minMs": 0.9148519999998825,
+        "maxMs": 2.167605000000094
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 0.032075340000001236,
+        "medianMs": 0.02708699999993769,
+        "p95Ms": 0.061480000000301516,
+        "p99Ms": 0.06911200000013196,
+        "minMs": 0.024334999999609863,
+        "maxMs": 0.06911200000013196
+      },
+      "model": {
+        "vertices": 983,
+        "polygons": 14,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 23592,
+        "glyphCache": {
+          "glyphs": 7,
+          "bytes": 13776,
+          "pathBuilds": 7
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 0.10230799999994815,
+        "medianMs": 0.09428799999977855,
+        "p95Ms": 0.12870100000009188,
+        "p99Ms": 0.21462500000006912,
+        "minMs": 0.0895660000001044,
+        "maxMs": 0.21462500000006912
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 2.195465799999988,
+        "medianMs": 2.0138300000003255,
+        "p95Ms": 2.9576909999996133,
+        "p99Ms": 2.9888200000000325,
+        "minMs": 1.9445959999998195,
+        "maxMs": 2.9888200000000325
+      },
+      "mesh": {
+        "bytes": 321504,
+        "positionBytes": 137520,
+        "normalBytes": 137520,
+        "outlineBytes": 46464,
+        "triangles": 3820,
+        "groups": 28,
+        "nonemptyGroups": 28,
+        "predictedSolidDrawCallsWithOutline": 29
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.03443040000001019,
+        "medianMs": 0.03334599999971033,
+        "p95Ms": 0.04084499999999025,
+        "p99Ms": 0.04778200000009747,
+        "minMs": 0.030654999999569554,
+        "maxMs": 0.04778200000009747
+      }
+    },
+    {
+      "font": "Chiller",
+      "scenario": "normal-multiline",
+      "characters": 20,
+      "utf8Bytes": 20,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.05168119999996179,
+        "medianMs": 0.04612500000030195,
+        "p95Ms": 0.0811119999998482,
+        "p99Ms": 0.08175600000004124,
+        "minMs": 0.04431299999987459,
+        "maxMs": 0.08175600000004124
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 3.0093163333333073,
+        "medianMs": 2.9299849999997605,
+        "p95Ms": 5.7780109999998785,
+        "p99Ms": 5.7780109999998785,
+        "minMs": 2.2067799999999806,
+        "maxMs": 5.7780109999998785
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 0.0685318400000051,
+        "medianMs": 0.050869000000147935,
+        "p95Ms": 0.08986500000037267,
+        "p99Ms": 0.7737680000000182,
+        "minMs": 0.04570499999999811,
+        "maxMs": 0.7737680000000182
+      },
+      "model": {
+        "vertices": 2270,
+        "polygons": 38,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 54480,
+        "glyphCache": {
+          "glyphs": 15,
+          "bytes": 28960,
+          "pathBuilds": 15
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 0.3553780600000027,
+        "medianMs": 0.3344959999999446,
+        "p95Ms": 0.434146999999939,
+        "p99Ms": 0.853005999999823,
+        "minMs": 0.31397400000014386,
+        "maxMs": 0.853005999999823
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 5.6698841000000355,
+        "medianMs": 5.5123640000001615,
+        "p95Ms": 6.249915999999757,
+        "p99Ms": 10.85208300000022,
+        "minMs": 4.660673999999744,
+        "maxMs": 10.85208300000022
+      },
+      "mesh": {
+        "bytes": 738864,
+        "positionBytes": 315936,
+        "normalBytes": 315936,
+        "outlineBytes": 106992,
+        "triangles": 8776,
+        "groups": 76,
+        "nonemptyGroups": 76,
+        "predictedSolidDrawCallsWithOutline": 77
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.26639914000002135,
+        "medianMs": 0.30486999999993714,
+        "p95Ms": 0.3531970000003639,
+        "p99Ms": 0.8138220000000729,
+        "minMs": 0.06820500000003449,
+        "maxMs": 0.8138220000000729
+      }
+    },
+    {
+      "font": "Chiller",
+      "scenario": "heavy-update",
+      "characters": 223,
+      "utf8Bytes": 223,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.05168119999996179,
+        "medianMs": 0.04612500000030195,
+        "p95Ms": 0.0811119999998482,
+        "p99Ms": 0.08175600000004124,
+        "minMs": 0.04431299999987459,
+        "maxMs": 0.08175600000004124
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 53.838175083333454,
+        "medianMs": 51.276184000000285,
+        "p95Ms": 62.134411,
+        "p99Ms": 62.134411,
+        "minMs": 47.767389000000094,
+        "maxMs": 62.134411
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 51.617674760000064,
+        "medianMs": 49.75328200000058,
+        "p95Ms": 70.48605399999997,
+        "p99Ms": 72.2660190000006,
+        "minMs": 44.27660300000025,
+        "maxMs": 72.2660190000006
+      },
+      "model": {
+        "vertices": 29328,
+        "polygons": 504,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 703872,
+        "glyphCache": {
+          "glyphs": 15,
+          "bytes": 32544,
+          "pathBuilds": 15
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 4.12362253999996,
+        "medianMs": 3.385044999999991,
+        "p95Ms": 5.5764829999998256,
+        "p99Ms": 11.647187000000486,
+        "minMs": 3.25927799999954,
+        "maxMs": 11.647187000000486
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 76.05435415000011,
+        "medianMs": 75.30135100000007,
+        "p95Ms": 88.91692300000068,
+        "p99Ms": 90.49835100000018,
+        "minMs": 65.62023000000045,
+        "maxMs": 90.49835100000018
+      },
+      "mesh": {
+        "bytes": 9538944,
+        "positionBytes": 4078080,
+        "normalBytes": 4078080,
+        "outlineBytes": 1382784,
+        "triangles": 113280,
+        "groups": 1008,
+        "nonemptyGroups": 1008,
+        "predictedSolidDrawCallsWithOutline": 1009
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 1.3051021200000468,
+        "medianMs": 1.310685000000376,
+        "p95Ms": 1.7210350000004837,
+        "p99Ms": 2.229914000001372,
+        "minMs": 0.9838880000006611,
+        "maxMs": 2.229914000001372
+      }
+    },
+    {
+      "font": "Magneto",
+      "scenario": "short",
+      "characters": 8,
+      "utf8Bytes": 8,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.0869626500000777,
+        "medianMs": 0.07720399999925576,
+        "p95Ms": 0.13378200000079232,
+        "p99Ms": 0.1482400000004418,
+        "minMs": 0.05445599999984552,
+        "maxMs": 0.1482400000004418
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 2.943374166666672,
+        "medianMs": 2.7115499999999884,
+        "p95Ms": 5.407279999999446,
+        "p99Ms": 5.407279999999446,
+        "minMs": 1.8404700000010052,
+        "maxMs": 5.407279999999446
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 1.6475940800000899,
+        "medianMs": 1.2587819999989733,
+        "p95Ms": 2.354334999999992,
+        "p99Ms": 8.831206000000748,
+        "minMs": 1.1153869999998278,
+        "maxMs": 8.831206000000748
+      },
+      "model": {
+        "vertices": 1414,
+        "polygons": 3,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 33936,
+        "glyphCache": {
+          "glyphs": 7,
+          "bytes": 18432,
+          "pathBuilds": 7
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 0.17710987999984354,
+        "medianMs": 0.13832800000091083,
+        "p95Ms": 0.2360869999993156,
+        "p99Ms": 1.6138240000000224,
+        "minMs": 0.1261640000011539,
+        "maxMs": 1.6138240000000224
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 3.152298200000223,
+        "medianMs": 2.80774300000121,
+        "p95Ms": 4.038549000000785,
+        "p99Ms": 4.47384399999828,
+        "minMs": 2.669777000000977,
+        "maxMs": 4.47384399999828
+      },
+      "mesh": {
+        "bytes": 473136,
+        "positionBytes": 202752,
+        "normalBytes": 202752,
+        "outlineBytes": 67632,
+        "triangles": 5632,
+        "groups": 6,
+        "nonemptyGroups": 6,
+        "predictedSolidDrawCallsWithOutline": 7
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.19405211999997846,
+        "medianMs": 0.18983599999955914,
+        "p95Ms": 0.23579199999949196,
+        "p99Ms": 0.2726170000005368,
+        "minMs": 0.10268999999971129,
+        "maxMs": 0.2726170000005368
+      }
+    },
+    {
+      "font": "Magneto",
+      "scenario": "normal-multiline",
+      "characters": 20,
+      "utf8Bytes": 20,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.0869626500000777,
+        "medianMs": 0.07720399999925576,
+        "p95Ms": 0.13378200000079232,
+        "p99Ms": 0.1482400000004418,
+        "minMs": 0.05445599999984552,
+        "maxMs": 0.1482400000004418
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 7.603969333333377,
+        "medianMs": 6.944236999999703,
+        "p95Ms": 10.333549999999377,
+        "p99Ms": 10.333549999999377,
+        "minMs": 6.419643999999607,
+        "maxMs": 10.333549999999377
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 5.055379040000044,
+        "medianMs": 4.8483219999998255,
+        "p95Ms": 6.776193000001513,
+        "p99Ms": 7.7382459999989806,
+        "minMs": 3.785178000000087,
+        "maxMs": 7.7382459999989806
+      },
+      "model": {
+        "vertices": 3729,
+        "polygons": 8,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 89496,
+        "glyphCache": {
+          "glyphs": 15,
+          "bytes": 47008,
+          "pathBuilds": 15
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 0.4112024799999199,
+        "medianMs": 0.3774950000006356,
+        "p95Ms": 0.41439100000025064,
+        "p99Ms": 1.2920830000002752,
+        "minMs": 0.35463399999935064,
+        "maxMs": 1.2920830000002752
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 9.242747250000047,
+        "medianMs": 9.223089000000982,
+        "p95Ms": 10.013847999998688,
+        "p99Ms": 13.438928999999916,
+        "minMs": 7.879136999999901,
+        "maxMs": 13.438928999999916
+      },
+      "mesh": {
+        "bytes": 1247712,
+        "positionBytes": 534672,
+        "normalBytes": 534672,
+        "outlineBytes": 178368,
+        "triangles": 14852,
+        "groups": 16,
+        "nonemptyGroups": 16,
+        "predictedSolidDrawCallsWithOutline": 17
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.20815182000005733,
+        "medianMs": 0.10996399999930873,
+        "p95Ms": 0.5494530000014493,
+        "p99Ms": 1.4537280000004102,
+        "minMs": 0.05556099999921571,
+        "maxMs": 1.4537280000004102
+      }
+    },
+    {
+      "font": "Magneto",
+      "scenario": "heavy-update",
+      "characters": 223,
+      "utf8Bytes": 223,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.0869626500000777,
+        "medianMs": 0.07720399999925576,
+        "p95Ms": 0.13378200000079232,
+        "p99Ms": 0.1482400000004418,
+        "minMs": 0.05445599999984552,
+        "maxMs": 0.1482400000004418
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 118.73668758333315,
+        "medianMs": 113.29578899999979,
+        "p95Ms": 139.3316759999998,
+        "p99Ms": 139.3316759999998,
+        "minMs": 106.02329899999859,
+        "maxMs": 139.3316759999998
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 112.06202175999995,
+        "medianMs": 110.9427680000008,
+        "p95Ms": 126.11589300000014,
+        "p99Ms": 134.10824700000012,
+        "minMs": 103.53731200000038,
+        "maxMs": 134.10824700000012
+      },
+      "model": {
+        "vertices": 56144,
+        "polygons": 128,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 1347456,
+        "glyphCache": {
+          "glyphs": 15,
+          "bytes": 63312,
+          "pathBuilds": 15
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 9.026881120000253,
+        "medianMs": 9.072471999999834,
+        "p95Ms": 10.00955199999953,
+        "p99Ms": 23.475555000000895,
+        "minMs": 6.547439000001759,
+        "maxMs": 23.475555000000895
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 150.0373860499998,
+        "medianMs": 147.72419000000082,
+        "p95Ms": 159.3204659999974,
+        "p99Ms": 160.67192500000237,
+        "minMs": 143.5841389999987,
+        "maxMs": 160.67192500000237
+      },
+      "mesh": {
+        "bytes": 18777984,
+        "positionBytes": 8045568,
+        "normalBytes": 8045568,
+        "outlineBytes": 2686848,
+        "triangles": 223488,
+        "groups": 256,
+        "nonemptyGroups": 256,
+        "predictedSolidDrawCallsWithOutline": 257
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 4.442999940000009,
+        "medianMs": 2.833504999998695,
+        "p95Ms": 8.72515999999814,
+        "p99Ms": 11.147106000000349,
+        "minMs": 2.024700000001758,
+        "maxMs": 11.147106000000349
+      }
+    },
+    {
+      "font": "Showcard Gothic",
+      "scenario": "short",
+      "characters": 8,
+      "utf8Bytes": 8,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.07259270000067772,
+        "medianMs": 0.06566799999927753,
+        "p95Ms": 0.09101000000009662,
+        "p99Ms": 0.1130379999995057,
+        "minMs": 0.06136700000206474,
+        "maxMs": 0.1130379999995057
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 1.6652529166667591,
+        "medianMs": 1.4465979999986303,
+        "p95Ms": 2.577973999999813,
+        "p99Ms": 2.577973999999813,
+        "minMs": 1.1793660000003001,
+        "maxMs": 2.577973999999813
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 0.04021156000017072,
+        "medianMs": 0.022955000000365544,
+        "p95Ms": 0.06154500000047847,
+        "p99Ms": 0.671490000000631,
+        "minMs": 0.01970900000014808,
+        "maxMs": 0.671490000000631
+      },
+      "model": {
+        "vertices": 1200,
+        "polygons": 8,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 28800,
+        "glyphCache": {
+          "glyphs": 7,
+          "bytes": 15488,
+          "pathBuilds": 7
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 0.1728005400000984,
+        "medianMs": 0.17030200000226614,
+        "p95Ms": 0.20696800000223448,
+        "p99Ms": 0.20824999999967986,
+        "minMs": 0.16139399999883608,
+        "maxMs": 0.20824999999967986
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 2.6308799999995243,
+        "medianMs": 2.3753060000017285,
+        "p95Ms": 3.7226269999991928,
+        "p99Ms": 3.774632999997266,
+        "minMs": 2.2219420000001264,
+        "maxMs": 3.774632999997266
+      },
+      "mesh": {
+        "bytes": 398112,
+        "positionBytes": 170496,
+        "normalBytes": 170496,
+        "outlineBytes": 57120,
+        "triangles": 4736,
+        "groups": 16,
+        "nonemptyGroups": 16,
+        "predictedSolidDrawCallsWithOutline": 17
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.0419691800000146,
+        "medianMs": 0.03984300000229268,
+        "p95Ms": 0.054926000000705244,
+        "p99Ms": 0.09047799999825656,
+        "minMs": 0.03427999999985332,
+        "maxMs": 0.09047799999825656
+      }
+    },
+    {
+      "font": "Showcard Gothic",
+      "scenario": "normal-multiline",
+      "characters": 20,
+      "utf8Bytes": 20,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.07259270000067772,
+        "medianMs": 0.06566799999927753,
+        "p95Ms": 0.09101000000009662,
+        "p99Ms": 0.1130379999995057,
+        "minMs": 0.06136700000206474,
+        "maxMs": 0.1130379999995057
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 3.140570999999909,
+        "medianMs": 2.8852250000018103,
+        "p95Ms": 6.013215999999375,
+        "p99Ms": 6.013215999999375,
+        "minMs": 2.3287550000022748,
+        "maxMs": 6.013215999999375
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 0.07895914000029734,
+        "medianMs": 0.062343999998120125,
+        "p95Ms": 0.11660900000060792,
+        "p99Ms": 0.5803610000002664,
+        "minMs": 0.05500500000198372,
+        "maxMs": 0.5803610000002664
+      },
+      "model": {
+        "vertices": 2854,
+        "polygons": 18,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 68496,
+        "glyphCache": {
+          "glyphs": 15,
+          "bytes": 32608,
+          "pathBuilds": 15
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 0.42880533999988985,
+        "medianMs": 0.4112039999999979,
+        "p95Ms": 0.5183430000033695,
+        "p99Ms": 0.8224670000017795,
+        "minMs": 0.3975219999992987,
+        "maxMs": 0.8224670000017795
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 6.409383049999815,
+        "medianMs": 6.442471999998816,
+        "p95Ms": 7.367895999999746,
+        "p99Ms": 7.432152999997925,
+        "minMs": 5.704288000000815,
+        "maxMs": 7.432152999997925
+      },
+      "mesh": {
+        "bytes": 947424,
+        "positionBytes": 405792,
+        "normalBytes": 405792,
+        "outlineBytes": 135840,
+        "triangles": 11272,
+        "groups": 36,
+        "nonemptyGroups": 36,
+        "predictedSolidDrawCallsWithOutline": 37
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.29657313999989127,
+        "medianMs": 0.09154299999863724,
+        "p95Ms": 0.17876600000090548,
+        "p99Ms": 9.182589000000007,
+        "minMs": 0.059660999999323394,
+        "maxMs": 9.182589000000007
+      }
+    },
+    {
+      "font": "Showcard Gothic",
+      "scenario": "heavy-update",
+      "characters": 223,
+      "utf8Bytes": 223,
+      "parse": {
+        "n": 20,
+        "meanMs": 0.07259270000067772,
+        "medianMs": 0.06566799999927753,
+        "p95Ms": 0.09101000000009662,
+        "p99Ms": 0.1130379999995057,
+        "minMs": 0.06136700000206474,
+        "maxMs": 0.1130379999995057
+      },
+      "coldModel": {
+        "n": 12,
+        "meanMs": 2.6574915833340733,
+        "medianMs": 2.9012840000032156,
+        "p95Ms": 3.754232999999658,
+        "p99Ms": 3.754232999999658,
+        "minMs": 1.626458000002458,
+        "maxMs": 3.754232999999658
+      },
+      "warmGlyphCacheModel": {
+        "n": 50,
+        "meanMs": 0.6112322000000131,
+        "medianMs": 0.4678169999970123,
+        "p95Ms": 1.1244220000007772,
+        "p99Ms": 1.1503259999990405,
+        "minMs": 0.34919499999887194,
+        "maxMs": 1.1503259999990405
+      },
+      "model": {
+        "vertices": 20496,
+        "polygons": 200,
+        "missing": 0,
+        "estimatedWorkerCacheBytes": 491904,
+        "glyphCache": {
+          "glyphs": 15,
+          "bytes": 23872,
+          "pathBuilds": 15
+        }
+      },
+      "modelStructuredClone": {
+        "n": 50,
+        "meanMs": 3.35060587999993,
+        "medianMs": 3.1415740000011283,
+        "p95Ms": 4.21053799999936,
+        "p99Ms": 4.462458000001789,
+        "minMs": 3.070962999998301,
+        "maxMs": 4.462458000001789
+      },
+      "meshBuild": {
+        "n": 20,
+        "meanMs": 50.60442579999999,
+        "medianMs": 50.35053700000208,
+        "p95Ms": 56.185333999997965,
+        "p99Ms": 56.28652499999953,
+        "minMs": 46.363430000001244,
+        "maxMs": 56.28652499999953
+      },
+      "mesh": {
+        "bytes": 6759936,
+        "positionBytes": 2893824,
+        "normalBytes": 2893824,
+        "outlineBytes": 972288,
+        "triangles": 80384,
+        "groups": 400,
+        "nonemptyGroups": 400,
+        "predictedSolidDrawCallsWithOutline": 401
+      },
+      "meshStructuredClone": {
+        "n": 50,
+        "meanMs": 0.8736770999999862,
+        "medianMs": 0.6594230000009702,
+        "p95Ms": 2.2943430000013905,
+        "p99Ms": 4.535334000000148,
+        "minMs": 0.531144000000495,
+        "maxMs": 4.535334000000148
+      }
+    }
+  ],
+  "cycling": {
+    "requests": 50,
+    "evictedRetries": 50,
+    "parseCalls": 55,
+    "before": {
+      "fonts": 2,
+      "fontBytes": 117600,
+      "models": 0,
+      "modelBytes": 0,
+      "meshes": 0,
+      "meshBytes": 0,
+      "meshBuilds": 0,
+      "parseCalls": 5,
+      "allFiveFontSourceBytes": 348232
+    },
+    "after": {
+      "fonts": 2,
+      "fontBytes": 117600,
+      "models": 5,
+      "modelBytes": 181488,
+      "meshes": 0,
+      "meshBytes": 0,
+      "meshBuilds": 0
+    },
+    "successfulRequestLatency": {
+      "n": 50,
+      "meanMs": 2.191577799999941,
+      "medianMs": 0.38434200000119745,
+      "p95Ms": 16.92312099999981,
+      "p99Ms": 26.192465000000084,
+      "minMs": 0.2906750000001921,
+      "maxMs": 26.192465000000084
+    },
+    "errors": []
+  },
+  "repeatedWorker": {
+    "model": {
+      "n": 100,
+      "meanMs": 0.31716025999980046,
+      "medianMs": 0.3000270000011369,
+      "p95Ms": 0.3905559999984689,
+      "p99Ms": 0.6398129999979574,
+      "minMs": 0.28371100000003935,
+      "maxMs": 0.6976450000001932
+    },
+    "mesh": {
+      "n": 100,
+      "meanMs": 0.9838695900000312,
+      "medianMs": 0.9531079999978829,
+      "p95Ms": 1.202902000000904,
+      "p99Ms": 1.6060790000010456,
+      "minMs": 0.9196309999970254,
+      "maxMs": 1.7721820000006119
+    },
+    "stats": {
+      "fonts": 1,
+      "fontBytes": 72404,
+      "models": 1,
+      "modelBytes": 70776,
+      "meshes": 1,
+      "meshBytes": 979248,
+      "meshBuilds": 1
+    }
+  },
+  "mainCacheReuse": {
+    "lookup": {
+      "n": 1000,
+      "meanMs": 0.0001808150000288151,
+      "medianMs": 0.00015999999959603883,
+      "p95Ms": 0.0002500000009604264,
+      "p99Ms": 0.0005999999993946403,
+      "minMs": 0.00014000000010128133,
+      "maxMs": 0.002458999999362277
+    },
+    "workerBuildRequests": 1,
+    "stats": {
+      "entries": 1,
+      "bytes": 1166736,
+      "hits": 1000,
+      "evictions": 0,
+      "pending": 0
+    }
+  },
+  "thousandGlyphs": {
+    "characters": 1000,
+    "modelMs": 1.9871519999978773,
+    "meshMs": 36.22671100000298,
+    "vertices": 13000,
+    "polygons": 1000,
+    "bytes": 3696000,
+    "groups": 2000,
+    "triangles": 44000,
+    "predictedSolidDrawCallsWithOutline": 2001
+  },
+  "continuousCPUUpdateProbe": {
+    "updates": 600,
+    "totalLatency": {
+      "n": 600,
+      "meanMs": 102.76796813999975,
+      "medianMs": 100.55181999999695,
+      "p95Ms": 117.66232799999852,
+      "p99Ms": 156.46619900000223,
+      "minMs": 91.40428500000417,
+      "maxMs": 187.8701230000006
+    },
+    "memory": [
+      {
+        "label": "before",
+        "processMemory": {
+          "rss": 605286400,
+          "heapTotal": 60489728,
+          "heapUsed": 14756184,
+          "external": 52219973,
+          "arrayBuffers": 7222739
+        },
+        "worker": {
+          "fonts": 1,
+          "fontBytes": 72404,
+          "models": 0,
+          "modelBytes": 0,
+          "meshes": 0,
+          "meshBytes": 0,
+          "meshBuilds": 0
+        }
+      },
+      {
+        "label": "after-100",
+        "processMemory": {
+          "rss": 608391168,
+          "heapTotal": 171696128,
+          "heapUsed": 70878800,
+          "external": 62456918,
+          "arrayBuffers": 41433683
+        },
+        "worker": {
+          "fonts": 1,
+          "fontBytes": 72404,
+          "models": 100,
+          "modelBytes": 16328640,
+          "meshes": 14,
+          "meshBytes": 31929744,
+          "meshBuilds": 100
+        }
+      },
+      {
+        "label": "after-200",
+        "processMemory": {
+          "rss": 631443456,
+          "heapTotal": 246087680,
+          "heapUsed": 118111944,
+          "external": 65840486,
+          "arrayBuffers": 42327971
+        },
+        "worker": {
+          "fonts": 1,
+          "fontBytes": 72404,
+          "models": 200,
+          "modelBytes": 32018880,
+          "meshes": 15,
+          "meshBytes": 32913360,
+          "meshBuilds": 200
+        }
+      },
+      {
+        "label": "after-300",
+        "processMemory": {
+          "rss": 663969792,
+          "heapTotal": 268107776,
+          "heapUsed": 122491016,
+          "external": 61542518,
+          "arrayBuffers": 40844723
+        },
+        "worker": {
+          "fonts": 1,
+          "fontBytes": 72404,
+          "models": 210,
+          "modelBytes": 33385032,
+          "meshes": 14,
+          "meshBytes": 31380048,
+          "meshBuilds": 300
+        }
+      },
+      {
+        "label": "after-400",
+        "processMemory": {
+          "rss": 668139520,
+          "heapTotal": 314769408,
+          "heapUsed": 122882192,
+          "external": 87416774,
+          "arrayBuffers": 41479763
+        },
+        "worker": {
+          "fonts": 1,
+          "fontBytes": 72404,
+          "models": 207,
+          "modelBytes": 33509064,
+          "meshes": 14,
+          "meshBytes": 31972752,
+          "meshBuilds": 400
+        }
+      },
+      {
+        "label": "after-500",
+        "processMemory": {
+          "rss": 678547456,
+          "heapTotal": 273088512,
+          "heapUsed": 122990328,
+          "external": 51244262,
+          "arrayBuffers": 42386339
+        },
+        "worker": {
+          "fonts": 1,
+          "fontBytes": 72404,
+          "models": 209,
+          "modelBytes": 33521736,
+          "meshes": 15,
+          "meshBytes": 32968080,
+          "meshBuilds": 500
+        }
+      },
+      {
+        "label": "after-600",
+        "processMemory": {
+          "rss": 678633472,
+          "heapTotal": 274923520,
+          "heapUsed": 123053064,
+          "external": 56992118,
+          "arrayBuffers": 41111843
+        },
+        "worker": {
+          "fonts": 1,
+          "fontBytes": 72404,
+          "models": 210,
+          "modelBytes": 33540792,
+          "meshes": 14,
+          "meshBytes": 31629360,
+          "meshBuilds": 600
+        }
+      }
+    ],
+    "warning": "Short CPU/cache probe, not 60–120 minute browser soak. Process memory includes other benchmark objects and VM runtime; worker byte counters estimate retained payloads, not GPU or true JS heap."
+  },
+  "processTotals": {
+    "wallMs": 85781.462996,
+    "userCPUms": 100381.132,
+    "systemCPUms": 8873.551
+  },
+  "sourceHashes": {
+    "src/scripts/ground-geometry.js": "33117ab55537d0d8e83f0c3c4bedea83e93400513f4780b592ce8402427fea2a",
+    "src/scripts/ground-model-cache.js": "c11ade80845b70360a53973c3b6d6fe7a922f6aedc6120e7179ef25c7f80a981",
+    "src/workers/font-geometry-worker.js": "df7dcb304f4d5ee8fc3783e6d24fa35bfe066cd05302925367ce8798b80e4395",
+    "src/workers/extrusion-entry.js": "37c8e17dcd14a6979af27c5fe84644fea429ac30cd6e0615769c9cc65a1a1cb5",
+    "src/vendor/extrusion-worker.js": "85172cf6319bac9f60f91189f956a1ca4b9fc884d124ea77e6345e205a2b6ab5"
+  }
+}

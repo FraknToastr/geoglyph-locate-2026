@@ -1,0 +1,16 @@
+{"font":"Gill Sans","scenario":"short","coldModel":1.8619919999999865,"meshBuild":2.885253999999975,"groups":16}
+{"font":"Gill Sans","scenario":"normal-multiline","coldModel":2.616958000000011,"meshBuild":6.687579000000028,"groups":36}
+{"font":"Gill Sans","scenario":"heavy-update","coldModel":24.651294000000007,"meshBuild":35.61372200000005,"groups":400}
+{"font":"Forte","scenario":"short","coldModel":1.6949930000000677,"meshBuild":6.681223999999929,"groups":16}
+{"font":"Forte","scenario":"normal-multiline","error":"Complex or self-crossing outline requires styled raster rendering"}
+{"font":"Forte","scenario":"heavy-update","error":"Complex or self-crossing outline requires styled raster rendering"}
+{"font":"Chiller","scenario":"short","coldModel":1.1454850000000079,"meshBuild":2.0138300000003255,"groups":28}
+{"font":"Chiller","scenario":"normal-multiline","coldModel":2.9299849999997605,"meshBuild":5.5123640000001615,"groups":76}
+{"font":"Chiller","scenario":"heavy-update","coldModel":51.276184000000285,"meshBuild":75.30135100000007,"groups":1008}
+{"font":"Magneto","scenario":"short","coldModel":2.7115499999999884,"meshBuild":2.80774300000121,"groups":6}
+{"font":"Magneto","scenario":"normal-multiline","coldModel":6.944236999999703,"meshBuild":9.223089000000982,"groups":16}
+{"font":"Magneto","scenario":"heavy-update","coldModel":113.29578899999979,"meshBuild":147.72419000000082,"groups":256}
+{"font":"Showcard Gothic","scenario":"short","coldModel":1.4465979999986303,"meshBuild":2.3753060000017285,"groups":16}
+{"font":"Showcard Gothic","scenario":"normal-multiline","coldModel":2.8852250000018103,"meshBuild":6.442471999998816,"groups":36}
+{"font":"Showcard Gothic","scenario":"heavy-update","coldModel":2.9012840000032156,"meshBuild":50.35053700000208,"groups":400}
+{"output":"/home/n0rt/headroom-projects/geoglyph/Locate 2026 version/audit/2026-10-31/geometry-results.json","wallMs":85781.462996,"cycling":{"requests":50,"evictedRetries":50,"parseCalls":55,"before":{"fonts":2,"fontBytes":117600,"models":0,"modelBytes":0,"meshes":0,"meshBytes":0,"meshBuilds":0,"parseCalls":5,"allFiveFontSourceBytes":348232},"after":{"fonts":2,"fontBytes":117600,"models":5,"modelBytes":181488,"meshes":0,"meshBytes":0,"meshBuilds":0},"successfulRequestLatency":{"n":50,"meanMs":2.191577799999941,"medianMs":0.38434200000119745,"p95Ms":16.92312099999981,"p99Ms":26.192465000000084,"minMs":0.2906750000001921,"maxMs":26.192465000000084},"errors":[]},"thousandGlyphs":{"characters":1000,"modelMs":1.9871519999978773,"meshMs":36.22671100000298,"vertices":13000,"polygons":1000,"bytes":3696000,"groups":2000,"triangles":44000,"predictedSolidDrawCallsWithOutline":2001},"cacheReuse":{"lookup":{"n":1000,"meanMs":0.0001808150000288151,"medianMs":0.00015999999959603883,"p95Ms":0.0002500000009604264,"p99Ms":0.0005999999993946403,"minMs":0.00014000000010128133,"maxMs":0.002458999999362277},"workerBuildRequests":1,"stats":{"entries":1,"bytes":1166736,"hits":1000,"evictions":0,"pending":0}},"stressLatency":{"n":600,"meanMs":102.76796813999975,"medianMs":100.55181999999695,"p95Ms":117.66232799999852,"p99Ms":156.46619900000223,"minMs":91.40428500000417,"maxMs":187.8701230000006}}

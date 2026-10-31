@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: nonzero winding retains counters, islands, opposite independent contours and overlapping components
+ok 1 - nonzero winding retains counters, islands, opposite independent contours and overlapping components
+  ---
+  duration_ms: 1.653698
+  type: 'test'
+  ...
+# Subtest: adaptive subdivision spends vertices on curved paths and rejects over-budget input
+ok 2 - adaptive subdivision spends vertices on curved paths and rejects over-budget input
+  ---
+  duration_ms: 0.489531
+  type: 'test'
+  ...
+# Subtest: repeated glyphs reuse origin shapes and kerning is computed once per pair
+ok 3 - repeated glyphs reuse origin shapes and kerning is computed once per pair
+  ---
+  duration_ms: 4.01836
+  type: 'test'
+  ...
+# Subtest: overlapping glyphs dissolve to one silhouette instead of internal outline seams
+ok 4 - overlapping glyphs dissolve to one silhouette instead of internal outline seams
+  ---
+  duration_ms: 1.780045
+  type: 'test'
+  ...
+# Subtest: text model preserves zero advance combining marks and resolves symbol cmaps
+ok 5 - text model preserves zero advance combining marks and resolves symbol cmaps
+  ---
+  duration_ms: 0.523388
+  type: 'test'
+  ...
+# Subtest: 1000-font catalog reads no bytes; duplicate catalog identities remain stable
+ok 6 - 1000-font catalog reads no bytes; duplicate catalog identities remain stable
+  ---
+  duration_ms: 4.366231
+  type: 'test'
+  ...
+# Subtest: selected-face preparation deduplicates work, limits native work to two, and caches parsing
+ok 7 - selected-face preparation deduplicates work, limits native work to two, and caches parsing
+  ---
+  duration_ms: 22.128294
+  type: 'test'
+  ...
+# Subtest: unsupported outline parsing keeps an independently loaded browser face and caches failure
+ok 8 - unsupported outline parsing keeps an independently loaded browser face and caches failure
+  ---
+  duration_ms: 2.134514
+  type: 'test'
+  ...
+# Subtest: cancelling a catalog stops later slices without reading font data
+ok 9 - cancelling a catalog stops later slices without reading font data
+  ---
+  duration_ms: 2.168141
+  type: 'test'
+  ...
+# Subtest: standalone worker protocol parses a real generated font, caches models and evicts inactive fonts
+ok 10 - standalone worker protocol parses a real generated font, caches models and evicts inactive fonts
+  ---
+  duration_ms: 16.888557
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 59.012414

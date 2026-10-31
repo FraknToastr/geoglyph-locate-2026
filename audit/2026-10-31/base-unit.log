@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: /home/n0rt/headroom-projects/geoglyph/tests/unit/basemap-coverage.test.cjs
+ok 1 - /home/n0rt/headroom-projects/geoglyph/tests/unit/basemap-coverage.test.cjs
+  ---
+  duration_ms: 26.905539
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/tests/unit/fonts-rendering.test.cjs
+ok 2 - /home/n0rt/headroom-projects/geoglyph/tests/unit/fonts-rendering.test.cjs
+  ---
+  duration_ms: 83.570156
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/tests/unit/ground-model-cache.test.cjs
+ok 3 - /home/n0rt/headroom-projects/geoglyph/tests/unit/ground-model-cache.test.cjs
+  ---
+  duration_ms: 142.089538
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/tests/unit/orbit-lifecycle.test.cjs
+ok 4 - /home/n0rt/headroom-projects/geoglyph/tests/unit/orbit-lifecycle.test.cjs
+  ---
+  duration_ms: 152.938763
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/tests/unit/outline-policy.test.cjs
+ok 5 - /home/n0rt/headroom-projects/geoglyph/tests/unit/outline-policy.test.cjs
+  ---
+  duration_ms: 190.622923
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/tests/unit/placement-3d.test.cjs
+ok 6 - /home/n0rt/headroom-projects/geoglyph/tests/unit/placement-3d.test.cjs
+  ---
+  duration_ms: 39.239196
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 202.435682

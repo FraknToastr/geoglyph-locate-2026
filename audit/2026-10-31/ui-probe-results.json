@@ -1,0 +1,36 @@
+{
+  "measuredAt": "2026-10-31T00:24:19.097Z",
+  "node": "v22.23.2",
+  "evidenceKind": "isolated source execution with simulated browser dependencies",
+  "probes": {
+    "storageStartup": {
+      "threw": true,
+      "errorName": "SecurityError",
+      "studioApiCreated": false,
+      "errorSite": "/home/n0rt/headroom-projects/geoglyph/Locate 2026 version/audit/2026-10-31/ui-probes.cjs:16\n  const storageContext = { window: {}, localStorage: { getItem() { const e = Error('Simulated denied storage'); e.name = 'SecurityError'; throw e; } } };\n                                                                                                                                          ^\n"
+    },
+    "favouriteStartupWrite": {
+      "threw": true,
+      "errorName": "QuotaExceededError"
+    },
+    "concurrentQrPreview": {
+      "expectedInput": "ORIGINAL-AUTHORED-VALUE",
+      "actualInput": "FIRST-SYNTHETIC-ROW",
+      "originalPreserved": false,
+      "note": "The two actual extracted source calls overlap at api.renderPreview; only DOM/render completion is simulated."
+    },
+    "settingsCodeRange": {
+      "input": 1114112,
+      "stored": 1114112,
+      "conversionError": "RangeError",
+      "note": "Settings mutation isolated from DOM and rendering; actual invalid value is retained by the loader."
+    },
+    "cssConsolidation": {
+      "exitCode": 0,
+      "output": "",
+      "appCssExists": false,
+      "manifestStillReferencesAppCss": true,
+      "note": "Unmodified maintenance script executed in a disposable copy. Workspace application files were not changed."
+    }
+  }
+}

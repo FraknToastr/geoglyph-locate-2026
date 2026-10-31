@@ -1,0 +1,19 @@
+{
+  "startedAt": "2026-10-31T00:23:30.105Z",
+  "status": "blocked-browser-launch",
+  "minutes": 0.1,
+  "target": "http://127.0.0.1:4174/",
+  "headed": false,
+  "liveTiles": false,
+  "node": "v22.23.2",
+  "limitations": [
+    "rAF intervals are scheduling observations, not GPU completion timings.",
+    "TaskDuration / wall duration estimates renderer main-thread occupancy, not total CPU utilization.",
+    "Synthetic survey records; no production submissions, authentication changes or survey writes.",
+    "Fullscreen, real hidden-tab timer throttling, display hotplug and visual comparison require operator checks.",
+    "JavaScript heap measurements exclude browser/native/GPU memory."
+  ],
+  "periods": [],
+  "errors": [],
+  "launchError": "browserType.launch: Target page, context or browser has been closed"
+}

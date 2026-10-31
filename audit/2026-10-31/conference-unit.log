@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/basemap-coverage.test.cjs
+ok 1 - /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/basemap-coverage.test.cjs
+  ---
+  duration_ms: 30.150261
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/conference-cues.test.cjs
+ok 2 - /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/conference-cues.test.cjs
+  ---
+  duration_ms: 37.658667
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/fonts-rendering.test.cjs
+ok 3 - /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/fonts-rendering.test.cjs
+  ---
+  duration_ms: 89.03461
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/ground-model-cache.test.cjs
+ok 4 - /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/ground-model-cache.test.cjs
+  ---
+  duration_ms: 148.213568
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/orbit-lifecycle.test.cjs
+ok 5 - /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/orbit-lifecycle.test.cjs
+  ---
+  duration_ms: 296.465357
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/outline-policy.test.cjs
+ok 6 - /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/outline-policy.test.cjs
+  ---
+  duration_ms: 207.5987
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/placement-3d.test.cjs
+ok 7 - /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/placement-3d.test.cjs
+  ---
+  duration_ms: 43.548615
+  type: 'test'
+  ...
+# Subtest: /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/survey-results.test.cjs
+ok 8 - /home/n0rt/headroom-projects/geoglyph/Locate 2026 version/tests/unit/survey-results.test.cjs
+  ---
+  duration_ms: 48.794134
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 308.956309

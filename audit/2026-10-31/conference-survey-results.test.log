@@ -1,0 +1,100 @@
+TAP version 13
+# Subtest: discovers a nonzero sublayer and sends no credentials or token
+ok 1 - discovers a nonzero sublayer and sends no credentials or token
+  ---
+  duration_ms: 1.301995
+  type: 'test'
+  ...
+# Subtest: discovers matching tables, ignores other layers and preserves multiple choices
+ok 2 - discovers matching tables, ignores other layers and preserves multiple choices
+  ---
+  duration_ms: 1.523892
+  type: 'test'
+  ...
+# Subtest: orders by creation date and Object ID, paging past blank responses
+ok 3 - orders by creation date and Object ID, paging past blank responses
+  ---
+  duration_ms: 0.733622
+  type: 'test'
+  ...
+# Subtest: returns null for an empty table and for entirely blank responses
+ok 4 - returns null for an empty table and for entirely blank responses
+  ---
+  duration_ms: 0.474719
+  type: 'test'
+  ...
+# Subtest: falls back explicitly to descending Object ID when creation time is unavailable
+ok 5 - falls back explicitly to descending Object ID when creation time is unavailable
+  ---
+  duration_ms: 0.235638
+  type: 'test'
+  ...
+# Subtest: rejects missing fields and unsupported ordering instead of showing an arbitrary record
+ok 6 - rejects missing fields and unsupported ordering instead of showing an arbitrary record
+  ---
+  duration_ms: 0.481484
+  type: 'test'
+  ...
+# Subtest: HTTP and ArcGIS JSON access failures explain public query permissions
+ok 7 - HTTP and ArcGIS JSON access failures explain public query permissions
+  ---
+  duration_ms: 0.252832
+  type: 'test'
+  ...
+# Subtest: network timeouts terminate the request and external cancellation stays cancelled
+ok 8 - network timeouts terminate the request and external cancellation stays cancelled
+  ---
+  duration_ms: 11.574712
+  type: 'test'
+  ...
+# Subtest: malformed responses and repeated pages cannot replace a valid displayed message
+ok 9 - malformed responses and repeated pages cannot replace a valid displayed message
+  ---
+  duration_ms: 0.641338
+  type: 'test'
+  ...
+# Subtest: latest cue retains a blank-content controls record and requests only approved fields plus geometry
+ok 10 - latest cue retains a blank-content controls record and requests only approved fields plus geometry
+  ---
+  duration_ms: 0.578872
+  type: 'test'
+  ...
+# Subtest: optional cue fields remain optional and an empty table yields no latest cue
+ok 11 - optional cue fields remain optional and an empty table yields no latest cue
+  ---
+  duration_ms: 0.274406
+  type: 'test'
+  ...
+# Subtest: new cue paging returns every record in ascending Object ID order including duplicate text and no content
+ok 12 - new cue paging returns every record in ascending Object ID order including duplicate text and no content
+  ---
+  duration_ms: 0.400757
+  type: 'test'
+  ...
+# Subtest: cue transport preserves invalid point values so placement rules can report them
+ok 13 - cue transport preserves invalid point values so placement rules can report them
+  ---
+  duration_ms: 0.445284
+  type: 'test'
+  ...
+# Subtest: cue transport rejects malformed records, invalid cursors and non-progressing pages
+ok 14 - cue transport rejects malformed records, invalid cursors and non-progressing pages
+  ---
+  duration_ms: 1.146068
+  type: 'test'
+  ...
+# Subtest: cue polling cancellation aborts the active query and never starts another page
+ok 15 - cue polling cancellation aborts the active query and never starts another page
+  ---
+  duration_ms: 0.280275
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 15
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 25.387368

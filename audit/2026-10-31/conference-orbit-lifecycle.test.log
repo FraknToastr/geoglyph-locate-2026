@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: automatic Fit reframes a running orbit without stopping or snapping back afterward
+ok 1 - automatic Fit reframes a running orbit without stopping or snapping back afterward
+  ---
+  duration_ms: 16.252613
+  type: 'test'
+  ...
+# Subtest: orbit framing is cached across frames and invalidated by model, orientation, location and viewport changes
+ok 2 - orbit framing is cached across frames and invalidated by model, orientation, location and viewport changes
+  ---
+  duration_ms: 26.771828
+  type: 'test'
+  ...
+# Subtest: low-zoom constraints cannot leave later framing trials centred away from the model
+ok 3 - low-zoom constraints cannot leave later framing trials centred away from the model
+  ---
+  duration_ms: 18.562167
+  type: 'test'
+  ...
+# Subtest: continuous orbit completes circles with one callback, preserving model settings and target elevation
+ok 4 - continuous orbit completes circles with one callback, preserving model settings and target elevation
+  ---
+  duration_ms: 8.479644
+  type: 'test'
+  ...
+# Subtest: hidden tabs and export pauses resume without elapsed-time jumps or unintended restarts
+ok 5 - hidden tabs and export pauses resume without elapsed-time jumps or unintended restarts
+  ---
+  duration_ms: 6.701238
+  type: 'test'
+  ...
+# Subtest: framing interpolates elevation and can pause without jumping to the end
+ok 6 - framing interpolates elevation and can pause without jumping to the end
+  ---
+  duration_ms: 6.858616
+  type: 'test'
+  ...
+# Subtest: camera-facing modes are temporary and orbit speed changes do not rebuild or restart animation
+ok 7 - camera-facing modes are temporary and orbit speed changes do not rebuild or restart animation
+  ---
+  duration_ms: 7.64064
+  type: 'test'
+  ...
+# Subtest: model swaps preserve orbit phase and smoothly zoom both out and in
+ok 8 - model swaps preserve orbit phase and smoothly zoom both out and in
+  ---
+  duration_ms: 12.859956
+  type: 'test'
+  ...
+# Subtest: rapid model changes replace zoom destinations from the current displayed zoom
+ok 9 - rapid model changes replace zoom destinations from the current displayed zoom
+  ---
+  duration_ms: 23.15785
+  type: 'test'
+  ...
+# Subtest: repeated updates and export pauses preserve a zoom transition clock
+ok 10 - repeated updates and export pauses preserve a zoom transition clock
+  ---
+  duration_ms: 13.773989
+  type: 'test'
+  ...
+# Subtest: model changes during initial framing accept closer targets without jumps or extending the flight
+ok 11 - model changes during initial framing accept closer targets without jumps or extending the flight
+  ---
+  duration_ms: 13.476841
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 163.827473

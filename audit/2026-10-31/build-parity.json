@@ -1,0 +1,48 @@
+{
+  "exitCode": 0,
+  "log": "Built development index and standalone GeoGlyph (21,150,660 bytes).\n",
+  "files": [
+    {
+      "path": "index.html",
+      "identical": true,
+      "bytes": 670384,
+      "sha256": "3af4397e02037dfd80081aa6442a98666c3222424eb53fb935ac9cab6ba028d8"
+    },
+    {
+      "path": "dist/GeoGlyph.html",
+      "identical": true,
+      "bytes": 21150660,
+      "sha256": "e71fc5a1b22cb9d8c04d16190a5b9ed79a4264cbb9814daabebaace6e6bbfe0f"
+    },
+    {
+      "path": "GeoGlyph_Locate_2026.html",
+      "identical": true,
+      "bytes": 21150660,
+      "sha256": "e71fc5a1b22cb9d8c04d16190a5b9ed79a4264cbb9814daabebaace6e6bbfe0f"
+    },
+    {
+      "path": "src/vendor/ground-3d.js",
+      "identical": true,
+      "bytes": 586379,
+      "sha256": "81197d5b7be153580485047aee387f124ae4a4463a6d46aa2cba456403ad4436"
+    },
+    {
+      "path": "src/vendor/extrusion-worker.js",
+      "identical": true,
+      "bytes": 301099,
+      "sha256": "85172cf6319bac9f60f91189f956a1ca4b9fc884d124ea77e6345e205a2b6ab5"
+    },
+    {
+      "path": "src/scripts/version.js",
+      "identical": true,
+      "bytes": 216,
+      "sha256": "2decbd772736d139d44889185a08d8555f186f5a1402400561628e9c6d91096f"
+    },
+    {
+      "path": "src/fonts/conference-font-data.js",
+      "identical": true,
+      "bytes": 17711696,
+      "sha256": "6a772e698dc051e36d8e9346a300c5ef465caca6147600702c5c90c05128327d"
+    }
+  ]
+}
