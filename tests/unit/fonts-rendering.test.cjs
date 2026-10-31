@@ -108,4 +108,5 @@ test('standalone worker protocol parses a real generated font, caches models and
   const first=request('model',{key:'one',text:'A',options:{quality:10}}); assert.ok(first.polygons.length);
   request('model',{key:'one',text:'A',options:{quality:10}}); assert.equal(request('stats',{}).models,1);
   request('prepare',{key:'two',buffer});request('prepare',{key:'three',buffer});assert.equal(request('stats',{}).fonts,2);
+  assert.deepEqual(request('model',{key:'one',text:'A',options:{quality:10}}),first,'complete cached outlines do not require the evicted parsed font');
 });

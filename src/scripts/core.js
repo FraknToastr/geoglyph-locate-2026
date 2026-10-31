@@ -1138,14 +1138,14 @@
     }
   }
 
-  async function renderPreview() {
+  async function renderPreview(options = {}) {
     const token = ++state.renderToken; syncSelection(); syncLogoStatus(); syncPaletteControls(); syncControlModuleVisibility(); syncQrControls();
     const canvas = document.createElement('canvas');
     try {
       if (state.preview === "symbol") await drawSymbolToCanvas(canvas, PREVIEW_SIZE, !state.symbolCanvasTransparent);
-      else if (state.preview === "qr") await drawQrToCanvas(canvas, PREVIEW_SIZE, false);
+      else if (state.preview === "qr") await drawQrToCanvas(canvas, PREVIEW_SIZE, false, options.qrContent);
       else if (state.preview === "magic-eye") await drawMagicEyeToCanvas(canvas, PREVIEW_SIZE);
-      else await drawQrToCanvas(canvas, PREVIEW_SIZE, true);
+      else await drawQrToCanvas(canvas, PREVIEW_SIZE, true, options.qrContent);
     } catch (error) {
       if(token===state.renderToken){console.error(error); drawMessage(canvas, "Preview unavailable");}
     }
@@ -1184,10 +1184,12 @@
     return`<circle cx="${formatNumber(cx)}" cy="${formatNumber(cy)}" r="${formatNumber(r)}" ${attrs}/>`;
   }
 
-  async function drawQrToCanvas(canvas, size, includeLogo) {
-    const stats = updateQrStats(); canvas.width = size; canvas.height = size; const ctx = canvas.getContext("2d"); ctx.clearRect(0,0,size,size);
+  async function drawQrToCanvas(canvas, size, includeLogo, qrContent) {
+    const content = qrContent === undefined ? $("qrInput").value : String(qrContent);
+    const stats = qrContent === undefined ? updateQrStats() : { over: Math.max(0, Array.from(content).length - (QR_LIMITS[state.qrLevel] || QR_LIMITS.H)) };
+    canvas.width = size; canvas.height = size; const ctx = canvas.getContext("2d"); ctx.clearRect(0,0,size,size);
     ctx.fillStyle = targetPaint(ctx, size, "qrBg"); ctx.fillRect(0,0,size,size);
-    const text = $("qrInput").value.trim(); if (!text) { drawMessage(canvas, "Enter QR content"); return; } if (stats.over > 0) { drawMessage(canvas, "QR content exceeds selected correction limit"); return; }
+    const text = content.trim(); if (!text) { drawMessage(canvas, "Enter QR content"); return; } if (stats.over > 0) { drawMessage(canvas, "QR content exceeds selected correction limit"); return; }
     if (!window.QRious) { drawMessage(canvas, "QRious library unavailable"); return; }
     const matrix = createQrMatrix(text, state.qrLevel); const fgStyle = targetPaint(ctx, size, "qrFg");
     drawQrMatrix(ctx, matrix, size, state.quietZone, state.qrMode, fgStyle);
@@ -1805,6 +1807,8 @@
       if (!code) break;
       detections.push({ rawValue: code.data || "", format: "qr_code" });
       maskQReverseRegion(context, code.location, canvas.width, canvas.height);
+      // Let input and animation run between full-resolution decoding passes.
+      if (attempt < 24) await new Promise(resolve => setTimeout(resolve, 0));
     }
     return detections;
   }
@@ -1905,18 +1909,26 @@
 
   function canvasToBlob(canvas) { return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("PNG encoding failed")), "image/png")); }
 
-  async function buildQReverseBatch() {
+  async function buildQReverseBatch(writeFile) {
     const values = selectedQReverseValues();
     if (!values.length) throw new Error("No selected QR values to export");
-    const original = $("qrInput").value, files = [], stub = sanitizeFilename(state.qreverse.stub || "geoglyph-batch");
-    try {
-      for (let index = 0; index < values.length; index += 1) {
-        $("qrInput").value = values[index]; setQReverseProgress(index, values.length, `Rendering ${index + 1} of ${values.length}`);
-        const canvas = document.createElement("canvas"); await drawQrToCanvas(canvas, 1024, state.qreverse.lastDesignPreview === "combined");
-        files.push({ name: `${stub}-${String(index + 1).padStart(3, "0")}.png`, blob: await canvasToBlob(canvas) });
-      }
-      return files;
-    } finally { $("qrInput").value = original; renderPreview(); }
+    const files = [], stub = sanitizeFilename(state.qreverse.stub || "geoglyph-batch");
+    const canvas = document.createElement("canvas");
+    for (let index = 0; index < values.length; index += 1) {
+      setQReverseProgress(index, values.length, `Rendering ${index + 1} of ${values.length}`);
+      await drawQrToCanvas(canvas, 1024, state.qreverse.lastDesignPreview === "combined", values[index]);
+      const file = { name: `${stub}-${String(index + 1).padStart(3, "0")}.png`, blob: await canvasToBlob(canvas) };
+      if (writeFile) await writeFile(file, index, values.length);
+      else files.push(file);
+    }
+    return { files, count: values.length };
+  }
+
+  async function writeQReverseFile(directory, file) {
+    const handle = await directory.getFileHandle(file.name, { create: true });
+    const writable = await handle.createWritable();
+    try { await writable.write(file.blob); await writable.close(); }
+    catch (error) { try { await writable.abort?.(); } catch {} throw error; }
   }
 
   async function zipQReverseFiles(files) {
@@ -1934,20 +1946,52 @@
         if (typeof window.showDirectoryPicker !== "function") { showToast("Folder output unsupported; downloading ZIP instead"); destination = "download"; }
         else { try { directory = await window.showDirectoryPicker({ mode: "readwrite" }); } catch (error) { if (error.name === "AbortError") throw error; showToast("Folder unavailable; downloading ZIP instead"); destination = "download"; } }
       }
-      const files = await buildQReverseBatch();
-      if (destination === "files" && directory) {
-        for (let index = 0; index < files.length; index += 1) { const handle = await directory.getFileHandle(files[index].name, { create: true }); const writable = await handle.createWritable(); await writable.write(files[index].blob); await writable.close(); setQReverseProgress(index + 1, files.length, `Writing ${files[index].name}`); }
-      } else {
+      const streamed = destination === "files" && directory;
+      const { files, count } = await buildQReverseBatch(streamed ? async (file, index, total) => {
+        await writeQReverseFile(directory, file);
+        setQReverseProgress(index + 1, total, `Writing ${file.name}`);
+      } : null);
+      if (!streamed) {
         const zipBlob = await zipQReverseFiles(files), zipName = `${sanitizeFilename(state.qreverse.stub || "geoglyph-batch")}.zip`;
-        if (destination === "zip-folder" && directory) { const handle = await directory.getFileHandle(zipName, { create: true }); const writable = await handle.createWritable(); await writable.write(zipBlob); await writable.close(); }
+        if (destination === "zip-folder" && directory) await writeQReverseFile(directory, { name: zipName, blob: zipBlob });
         else download(URL.createObjectURL(zipBlob), zipName, true);
       }
-      setQReverseProgress(files.length, files.length, "Batch export complete"); showToast(`${files.length} QR image${files.length === 1 ? "" : "s"} exported`);
+      setQReverseProgress(count, count, "Batch export complete"); showToast(`${count} QR image${count === 1 ? "" : "s"} exported`);
     } catch (error) { if (error?.name !== "AbortError") { console.error(error); showToast(error.message || "Batch export failed"); } }
     finally { state.qreverse.exporting = false; renderQReverse(); }
   }
 
   function setQReverseProgress(done, total, label) { $("qreverseProgress").firstChild.textContent = label; $("qreverseProgressCount").textContent = `${done} / ${total}`; }
+
+  const qreverseRowViews = new WeakMap();
+  function renderQReverseTable(rows) {
+    const body = $("qreverseBody");
+    if (!rows.length) {
+      if (!body.querySelector(".qreverse-empty")) body.innerHTML = '<tr><td class="qreverse-empty" colspan="6">Use <strong>Add Images</strong> to choose QR code images or a folder, then select <strong>Scan queued</strong> to reverse the QR codes and read their contents.</td></tr>';
+      return;
+    }
+    const retained = new Set();
+    let cursor = body.firstElementChild;
+    rows.forEach((row, index) => {
+      let view = qreverseRowViews.get(row);
+      if (!view) {
+        view = { element: document.createElement("tr") };
+        qreverseRowViews.set(row, view);
+      }
+      const previous = view.content;
+      if (!previous || previous.index !== index || previous.id !== row.id || previous.selected !== row.selected || previous.value !== row.value || previous.error !== row.error || previous.status !== row.status || previous.source !== row.source || previous.path !== row.path || previous.filename !== row.filename) {
+        const statusClass = row.status === "Processed" ? "ok" : ["Error", "No QR found", "Needs reattachment"].includes(row.status) ? "error" : "wait";
+        const displayValue = row.value || row.error || (row.status === "Queued" ? "Awaiting scan" : "—");
+        view.element.innerHTML = `<td class="select-col"><input aria-label="Include row ${index + 1}" data-qreverse-id="${row.id}" type="checkbox" ${row.selected ? "checked" : ""}></td><td class="index-col">${index + 1}</td><td title="${escapeAttr(displayValue)}">${escapeHtml(displayValue)}</td><td><span class="qreverse-source">${escapeHtml(row.source)}</span></td><td title="${escapeAttr(row.error || row.status)}"><span class="qreverse-status ${statusClass}">${escapeHtml(row.status)}</span></td><td title="${escapeAttr(row.path || row.filename || "")}">${escapeHtml(row.path || row.filename || "—")}</td>`;
+        view.content = { index, id: row.id, selected: row.selected, value: row.value, error: row.error, status: row.status, source: row.source, path: row.path, filename: row.filename };
+      }
+      view.element.classList.toggle("is-selected", Boolean(row.selected));
+      if (view.element !== cursor) body.insertBefore(view.element, cursor);
+      cursor = view.element.nextElementSibling;
+      retained.add(view.element);
+    });
+    for (const element of [...body.children]) if (!retained.has(element)) element.remove();
+  }
 
   function renderQReverse() {
     if (!$("qreverseBody")) return;
@@ -1956,11 +2000,7 @@
     $("qreverseSummary").textContent = `${rows.length} row${rows.length === 1 ? "" : "s"} · ${selected} selected`;
     $("qreverseSelectAll").checked = rows.length > 0 && selected === rows.length;
     $("qreverseSelectAll").indeterminate = selected > 0 && selected < rows.length;
-    $("qreverseBody").innerHTML = rows.length ? rows.map((row, index) => {
-      const statusClass = row.status === "Processed" ? "ok" : ["Error", "No QR found", "Needs reattachment"].includes(row.status) ? "error" : "wait";
-      const displayValue = row.value || row.error || (row.status === "Queued" ? "Awaiting scan" : "—");
-      return `<tr class="${row.selected ? "is-selected" : ""}"><td class="select-col"><input aria-label="Include row ${index + 1}" data-qreverse-id="${row.id}" type="checkbox" ${row.selected ? "checked" : ""}></td><td class="index-col">${index + 1}</td><td title="${escapeAttr(displayValue)}">${escapeHtml(displayValue)}</td><td><span class="qreverse-source">${escapeHtml(row.source)}</span></td><td title="${escapeAttr(row.error || row.status)}"><span class="qreverse-status ${statusClass}">${escapeHtml(row.status)}</span></td><td title="${escapeAttr(row.path || row.filename || "")}">${escapeHtml(row.path || row.filename || "—")}</td></tr>`;
-    }).join("") : '<tr><td class="qreverse-empty" colspan="6">Use <strong>Add Images</strong> to choose QR code images or a folder, then select <strong>Scan queued</strong> to reverse the QR codes and read their contents.</td></tr>';
+    renderQReverseTable(rows);
     const busy = isQReverseBusy();
     ["qreverseImportImagesBtn","qreverseImportFolderBtn","qreverseImportCsvBtn","qreverseScanBtn","qreverseResetBtn","qreverseExportCsvBtn","qreverseMakeQrBtn","qreverseDesignBtn","qreverseBatchDownloadBtn","qreverseBatchFolderBtn","qreverseBatchZipFolderBtn"].forEach(id => $(id).disabled = busy);
     $("qreverseScanBtn").disabled = busy || !state.qreverse.scanner || !rows.some(row => row.source === "Image" && row.status === "Queued" && row.file);

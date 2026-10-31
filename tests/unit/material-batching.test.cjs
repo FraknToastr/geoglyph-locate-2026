@@ -31,7 +31,7 @@ test('1000 islands use two solid groups while retaining all 2000 transparent ran
   assert.equal(mesh.solidGroups[0].start,0);assert.equal(mesh.solidGroups[1].start,mesh.solidGroups[0].count);
 });
 test('solid toggles select batched ranges and restore the original transparent draw sequence',()=>{
-  const source=fs.readFileSync(path.join(root,'src/scripts/ground-3d.js'),'utf8'),start=source.indexOf('    paint() {'),end=source.indexOf('    render(',start);
+  const source=fs.readFileSync(path.join(root,'src/scripts/ground-3d.js'),'utf8'),start=source.indexOf('    paint('),end=source.indexOf('    render(',start);
   const s={extrusionSolid:true,fill:'#fff',outline:'#000',opacity:.43,outlineWidth:2},data={solidGroups:[{start:0,count:3,materialIndex:0}],groups:[{start:3,count:3,materialIndex:1}]};
   const c=vm.createContext({state:()=>s,data,map:{getCanvas:()=>({width:100,height:100,clientWidth:100})},matrices:()=>({object:{}})});
   vm.runInContext('globalThis.layer={'+source.slice(start,end)+'};',c);

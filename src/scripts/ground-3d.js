@@ -12,6 +12,9 @@ const state=()=>engine()?.state;
 let layer=null,data=null,meshKey='',request=0,lastError='',queuedOrbit=null;
 const cache=createGroundModelCache((key,model)=>window.GeoGlyphFontService.mesh(key,model));
 let uploads=0,disposals=0;
+// Intermediate products never escape this synchronous calculation. Returned
+// camera poses retain independent matrices; only the render layer reuses outputs.
+const matrixScratch=new Matrix4();
 const camera=createGroundCamera(()=>{
   const s=state()||{};
   return {map:s.map,anchor:s.anchor,bearing:s.bearing,tilt:s.extrusionTilt,orientationMode:s.orientationMode||'fixed',period:s.orbitPeriodSeconds||30,bounds:data?.bounds,visible:isVisible()&&s.previewActive,restoredElevatedView:s.restoredCamera?.elevation>0,pose:matrices,cancelPending:()=>{queuedOrbit=null;refreshControls();}};
@@ -24,13 +27,13 @@ function message(text,compact=false) {
 function settings(angles=camera.getAngles()) {
   const s=state();return {heightMeters:s.baseHeightMeters*s.relativeSize/100,depthMeters:s.extrusionDepthMeters??30,tilt:angles.tilt,bearing:angles.bearing};
 }
-function matrices(angles=camera.getAngles()) {
+function matrices(angles=camera.getAngles(),output={geographic:new Matrix4(),object:new Matrix4()}) {
   const s=state(),values=settings(angles),p=window.GeoGlyphGroundTransform.parameters(values,data.bounds);
   const origin=window.maplibregl.MercatorCoordinate.fromLngLat(s.anchor,0),u=origin.meterInMercatorCoordinateUnits();
-  const geographic=new Matrix4().makeTranslation(origin.x,origin.y,origin.z)
-    .multiply(new Matrix4().makeScale(u,-u,u)).multiply(new Matrix4().makeRotationZ(-p.bearing));
-  const object=new Matrix4().makeTranslation(0,0,p.lift).multiply(new Matrix4().makeRotationX(p.tilt))
-    .multiply(new Matrix4().makeScale(p.height,p.height,p.depth));
+  const geographic=output.geographic.makeTranslation(origin.x,origin.y,origin.z)
+    .multiply(matrixScratch.makeScale(u,-u,u)).multiply(matrixScratch.makeRotationZ(-p.bearing));
+  const object=output.object.makeTranslation(0,0,p.lift).multiply(matrixScratch.makeRotationX(p.tilt))
+    .multiply(matrixScratch.makeScale(p.height,p.height,p.depth));
   const b=data.bounds,mid=[(b.minX+b.maxX)/2,(b.minY+b.maxY)/2,(b.minZ+b.maxZ)/2];
   const localCenter=window.GeoGlyphGroundTransform.point(mid,values,b);
   const centerMerc=new window.maplibregl.MercatorCoordinate(origin.x+localCenter[0]*u,origin.y-localCenter[1]*u,localCenter[2]*u);
@@ -55,6 +58,7 @@ function createLayer(map) {
     onAdd(_map,gl) {
       this.renderer=new WebGLRenderer({canvas:map.getCanvas(),context:gl,antialias:false});
       this.renderer.autoClear=false;this.scene=new Scene();this.camera=new Camera();this.group=new Group();
+      this.poseMatrices={geographic:new Matrix4(),object:new Matrix4()};
       this.group.matrixAutoUpdate=false;this.scene.add(this.group);
       this.scene.add(new AmbientLight(0xffffff,1.3));
       const light=new DirectionalLight(0xffffff,2);light.position.set(-1,-2,4);this.scene.add(light);
@@ -71,7 +75,7 @@ function createLayer(map) {
       this.geometry=item.geometry;this.lineGeometry=item.lineGeometry;
       this.mesh.geometry=item.geometry;this.lines.geometry=item.lineGeometry;uploads++;
     },
-    paint() {
+    paint(pose) {
       const s=state();if(!this.ready||!data)return;
       this.geometry.groups=s.extrusionSolid?(data.solidGroups||data.groups):data.groups;
       this.front.color.set(s.fill);this.side.color.set(s.fill).multiplyScalar(.62);
@@ -85,12 +89,13 @@ function createLayer(map) {
       const canvas=map.getCanvas(),ratio=canvas.width/Math.max(1,canvas.clientWidth);
       this.lineMaterial.linewidth=s.outlineWidth*ratio;this.lineMaterial.resolution.set(canvas.width,canvas.height);
       this.lines.visible=s.outlineWidth>0;
-      this.group.matrix.copy(matrices().object);this.group.matrixWorldNeedsUpdate=true;
+      this.group.matrix.copy((pose||matrices()).object);this.group.matrixWorldNeedsUpdate=true;
     },
     render(gl,args) {
       if(!isVisible()||!state()?.previewActive)return;
-      this.paint();
-      this.camera.projectionMatrix.fromArray(args.defaultProjectionData.mainMatrix).multiply(matrices().geographic);
+      const pose=matrices(undefined,this.poseMatrices);
+      this.paint(pose);
+      this.camera.projectionMatrix.fromArray(args.defaultProjectionData.mainMatrix).multiply(pose.geographic);
       this.camera.projectionMatrixInverse.copy(this.camera.projectionMatrix).invert();
       this.renderer.resetState();this.renderer.setViewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);
       this.renderer.render(this.scene,this.camera);this.renderer.resetState();

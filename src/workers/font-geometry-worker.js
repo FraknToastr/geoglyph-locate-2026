@@ -25,13 +25,22 @@
         const codes = Object.keys(cmap).map(Number).filter(code => code >= 0 && code <= 0x10FFFF && cmap[code] > 0).sort((a, b) => a - b);
         result = { name: entry.font.names?.fullName?.en || entry.font.names?.fontFamily?.en, codes, bytes: entry.bytes };
       } else if (type === 'model') {
-        const entry = fonts.get(payload.key); if (!entry) throw Error('FONT_EVICTED'); touch(fonts, payload.key, entry);
         const key = JSON.stringify([payload.key, payload.text, payload.options]); let cached = models.get(key);
-        if (!cached) { const model = self.GeoGlyphGeometry.model(entry.font, payload.text, payload.options); cached = { model, bytes: Math.max(128, model.vertices * 24) }; modelBytes += cached.bytes; }
+        const entry = fonts.get(payload.key); if (entry) touch(fonts, payload.key, entry);
+        // Complete models outlive parsed-font eviction; a cache hit needs no font.
+        if (!cached) {
+          if (!entry) throw Error('FONT_EVICTED');
+          const model = self.GeoGlyphGeometry.model(entry.font, payload.text, payload.options); cached = { model, bytes: Math.max(128, model.vertices * 24) }; modelBytes += cached.bytes;
+        }
         touch(models, key, cached); trim(payload.key); result = cached.model;
       } else if(type === 'mesh') {
         let entry=meshes.get(payload.key);
-        if(!entry){entry=self.GeoGlyphMesh.build(payload.model);meshes.set(payload.key,entry);meshBytes+=entry.bytes;meshBuilds++;}
+        if(!entry){
+          const cached=models.get(payload.key),model=payload.model||cached?.model;
+          if(!model)throw Error('MESH_MODEL_MISSING');
+          if(cached)touch(models,payload.key,cached);
+          entry=self.GeoGlyphMesh.build(model);meshes.set(payload.key,entry);meshBytes+=entry.bytes;meshBuilds++;
+        }
         touch(meshes,payload.key,entry);trim();result=entry;
       } else if (type === 'clear') { fonts.clear(); models.clear(); meshes.clear(); fontBytes = modelBytes = meshBytes = 0; result = true; }
       else if (type === 'stats') result = { fonts: fonts.size, fontBytes, models: models.size, modelBytes, meshes:meshes.size, meshBytes, meshBuilds };

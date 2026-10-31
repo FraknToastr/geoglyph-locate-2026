@@ -433,11 +433,7 @@
         sourceLayer.innerHTML = '<div class="preview-source-message">This row does not yet contain a QR value.</div>';
         return;
       }
-      const input = $("qrInput");
-      const original = input.value;
-      input.value = row.value;
-      await api.renderPreview();
-      input.value = original;
+      await api.renderPreview({ qrContent: row.value });
     }
 
     function scheduleOutputRefresh() {

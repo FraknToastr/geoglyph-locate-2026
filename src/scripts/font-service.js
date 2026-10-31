@@ -197,6 +197,18 @@
       }
     });
   }
+  function mesh(key, model) {
+    return recoverWorker(async epoch => {
+      // The model normally already belongs to this worker. Avoid cloning its
+      // nested polygons back into the worker, including on mesh-cache hits.
+      try { return await workerRequest('mesh', { key }); }
+      catch (error) {
+        if (epoch !== serviceEpoch) throw Error('Font service disposed');
+        if (error.message !== 'MESH_MODEL_MISSING') throw error;
+        return workerRequest('mesh', { key, model });
+      }
+    });
+  }
   async function catalog(records, onRecord, options = {}) {
     const generation = ++catalogGeneration; let sliceStart = performance.now(), lastProgress = 0, done = 0;
     for (const record of records) {
@@ -214,5 +226,5 @@
     resources.clear(); pins.clear(); for(const item of queue.splice(0))item.reject(Error('Font service disposed'));
     resetWorker(worker, Error('Font service disposed'));
   }
-  root.GeoGlyphFontService = Object.freeze({ keyFor, register, ensureFace, prepare, model, mesh:(key,model)=>recoverWorker(()=>workerRequest('mesh',{key,model})), catalog, cancelCatalog, yieldTask, pin, unpin:owner=>pins.delete(owner), dispose, stats: () => ({ ...counters, resources: resources.size, queued: queue.length, active, retainedBytes: [...resources.values()].reduce((sum, r) => sum + (r.buffer?.byteLength || 0), 0) }), workerStats: () => workerRequest('stats', {}) });
+  root.GeoGlyphFontService = Object.freeze({ keyFor, register, ensureFace, prepare, model, mesh, catalog, cancelCatalog, yieldTask, pin, unpin:owner=>pins.delete(owner), dispose, stats: () => ({ ...counters, resources: resources.size, queued: queue.length, active, retainedBytes: [...resources.values()].reduce((sum, r) => sum + (r.buffer?.byteLength || 0), 0) }), workerStats: () => workerRequest('stats', {}) });
 })(globalThis);
