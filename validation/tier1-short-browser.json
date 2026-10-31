@@ -1,0 +1,48 @@
+{
+  "applicationCommit": "16c1e05",
+  "runner": "Playwright 1.61.1 / Chromium",
+  "execution": "User-approved execution outside the sandbox; local static server; synthetic survey responses and fixture map tiles",
+  "workers": 1,
+  "retries": 0,
+  "globalTimeoutMsPerBatch": 120000,
+  "batches": [
+    {
+      "passed": 8,
+      "failed": 0,
+      "reportedDurationSeconds": 22.9,
+      "cases": [
+        "Modular startup: collapsed Map, emoji defaults and anonymous polling",
+        "HTTP bundled-font failure feedback",
+        "Portable startup: overview and historical-cue isolation",
+        "Automatic Fit preserves animation; explicit Fit stops it",
+        "Slow tiles do not block startup or first Fit",
+        "Solid 3D depth/opacity and preserved 2D opacity",
+        "Orbit centre/orientation modes without rebuilding",
+        "Export pauses/resumes orbit and manual facing"
+      ]
+    },
+    {
+      "passed": 5,
+      "failed": 0,
+      "reportedDurationSeconds": 9.8,
+      "cases": [
+        "Denied localStorage reads preserve startup and theme controls",
+        "Quota-failing storage writes preserve startup and theme controls",
+        "Manual selection during delayed cue releases rebuilding without another submission",
+        "Injected worker failure terminates failed worker and renders subsequent text",
+        "Start recovers HTTP 404 font startup without reload or duplicate font registration"
+      ]
+    }
+  ],
+  "totalPassed": 13,
+  "totalFailed": 0,
+  "applicationSourceChangedDuringChecks": false,
+  "fullSuiteRun": false,
+  "extendedRunOrSoakPerformed": false,
+  "limitations": [
+    "These are short functional browser regressions, not a long-running stability or GPU performance result.",
+    "No baseline screenshot-diff, physical-projector rehearsal or measured frame-time improvement is claimed.",
+    "Production survey service and venue network behavior were not exercised.",
+    "Extended browser runs and soaks still require explicit user approval."
+  ]
+}

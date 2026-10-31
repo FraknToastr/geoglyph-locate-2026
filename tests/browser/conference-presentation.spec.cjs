@@ -721,3 +721,83 @@ test('slow basemap tiles do not block startup, polling or the first glyph Fit', 
     expect(await page.evaluate(() => GeoGlyphMapEngine.state.initialFitCount)).toBe(1);
   } finally { server.releaseTiles(); }
 });
+
+for (const failure of ['read', 'write']) test(`Tier 1: denied storage ${failure} preserves startup and theme controls`, async ({ page }) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(kind => {
+    if (kind === 'read') Object.defineProperty(window, 'localStorage', { configurable:true,
+      get() { throw new DOMException('Synthetic denied storage', 'SecurityError'); } });
+    else Storage.prototype.setItem = function () { throw new DOMException('Synthetic full storage', 'QuotaExceededError'); };
+  }, failure);
+  await open(page, { overview:true });
+  await page.locator('#themeLightBtn').evaluate(button => button.click());
+  expect(await page.evaluate(() => GeoGlyphStudio.state.theme)).toBe('light');
+  expect(await page.evaluate(() => GeoGlyphConference.state.ready)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('Tier 1: manual selection during a delayed cue releases rebuilding without another submission', async ({ page }) => {
+  const server = await open(page, { records:[cue(1, { geoglyph_speaks:'INITIAL', _2d_or_3d:'3D' })] });
+  await gateModel(page, 'DELAYED CUE');
+  server.records.push(cue(2, { geoglyph_speaks:'DELAYED CUE' })); await poll(page);
+  await page.waitForFunction(() => window.conferenceModelEntered);
+  await page.evaluate(async () => {
+    await GeoGlyphMapEngine.selectFont(GeoGlyphConference.state.fontIds['Magneto']);
+    window.releaseConferenceModel();
+  });
+  await page.waitForFunction(() => {
+    const s=GeoGlyphMapEngine.state;
+    return !s.rebuilding && !s.conferenceApplying && !s.pendingBuild && s.displayedFontId===GeoGlyphConference.state.fontIds['Magneto'];
+  });
+  await page.evaluate(() => {
+    GeoGlyphMapEngine.state.message='MANUAL AFTER CUE';
+    GeoGlyphMapEngine.state.arcgisMessage='MANUAL AFTER CUE';
+    GeoGlyphMapEngine.queueRebuild(false);
+  });
+  await page.waitForFunction(() => {
+    const s=GeoGlyphMapEngine.state;
+    return !s.rebuilding && !s.pendingBuild && s.committedSelection?.message==='MANUAL AFTER CUE';
+  });
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.conferenceRebuildPending)).toBe(false);
+  expect(await page.evaluate(() => GeoGlyph3D.isVisible())).toBe(true);
+});
+
+test('Tier 1: worker failure replaces the worker and renders the next text', async ({ page }) => {
+  await page.addInitScript(() => {
+    const NativeWorker=window.Worker;
+    window.Worker=class extends NativeWorker {
+      terminate() { this.regressionTerminated=true; return super.terminate(); }
+      postMessage(message, ...rest) {
+        if (message?.type==='model' && window.failNextFontWorker) {
+          window.failNextFontWorker=false; window.regressionFailedWorker=this;
+          setTimeout(() => this.onerror?.({message:'Synthetic worker failure'}), 0); return;
+        }
+        return super.postMessage(message, ...rest);
+      }
+    };
+  });
+  const server=await open(page, { records:[cue(1, {geoglyph_speaks:'FIRST', _2d_or_3d:'3D'})] });
+  await page.evaluate(() => { window.failNextFontWorker=true; });
+  await submit(page, server, cue(2, {geoglyph_speaks:'WORKER RECOVERED'}));
+  expect(await page.evaluate(() => window.regressionFailedWorker?.regressionTerminated)).toBe(true);
+  expect((await snapshot(page)).content.message).toBe('WORKER RECOVERED');
+  expect(await page.evaluate(() => GeoGlyph3D.isVisible())).toBe(true);
+});
+
+test('Tier 1: Start recovers failed font startup without duplicate fonts or reload', async ({ page }) => {
+  let unavailable=true, attempts=0;
+  await page.route('**/src/fonts/seguiemj.ttf', route => {
+    attempts++;
+    return unavailable ? route.fulfill({status:404,body:'Synthetic font failure'}) : route.continue();
+  });
+  await expect(open(page, {overview:true})).rejects.toThrow(/HTTP 404/);
+  expect(attempts).toBe(1); unavailable=false;
+  await page.locator('#mapArcgisStartBtn').evaluate(button => button.click());
+  await page.waitForFunction(() => GeoGlyphConference.state.ready && GeoGlyphConference.state.baselined);
+  expect(attempts).toBe(2);
+  expect(await page.evaluate(() => GeoGlyphStudio.state.fonts.filter(font => font.source==='conference').length)).toBe(6);
+  expect(await page.evaluate(() => GeoGlyphConference.state.error)).toBe('');
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.arcgisPolling)).toBe(true);
+  expect(await page.evaluate(() => GeoGlyphConference.retryStartup())).toBe(true);
+  expect(attempts).toBe(2);
+});
