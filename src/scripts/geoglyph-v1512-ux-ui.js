@@ -204,10 +204,10 @@
     let favouriteOwners={};
     try{const stored=JSON.parse(localStorage.getItem(FAVOURITE_OWNERS_KEY)||"{}");if(stored&&typeof stored==="object")favouriteOwners=stored;}catch{}
     state.favourites.forEach(code=>{const key=String(code);if(!Array.isArray(favouriteOwners[key])||!favouriteOwners[key].length)favouriteOwners[key]=[state.selectedFontId];});
-    function saveFavouriteOwners(){localStorage.setItem(FAVOURITE_OWNERS_KEY,JSON.stringify(favouriteOwners));}
+    function saveFavouriteOwners(){try{localStorage.setItem(FAVOURITE_OWNERS_KEY,JSON.stringify(favouriteOwners));}catch{}}
     function favouritesForFont(fontId=state.selectedFontId){return Object.entries(favouriteOwners).filter(([,owners])=>Array.isArray(owners)&&owners.includes(fontId)).map(([code])=>Number(code)).filter(Number.isInteger).sort((a,b)=>a-b);}
     function allFavouritePairs(){return Object.entries(favouriteOwners).flatMap(([code,owners])=>(Array.isArray(owners)?owners:[]).map(fontId=>({code:Number(code),fontId}))).filter(pair=>Number.isInteger(pair.code)&&state.fonts.some(font=>font.id===pair.fontId)).sort((a,b)=>a.fontId.localeCompare(b.fontId)||a.code-b.code);}
-    function syncCurrentFontFavourites(){const codes=favouritesForFont();state.favourites.splice(0,state.favourites.length,...codes);localStorage.setItem("geoglyph-locate2026.geoglyph-favourites",JSON.stringify(codes));return codes;}
+    function syncCurrentFontFavourites(){const codes=favouritesForFont();state.favourites.splice(0,state.favourites.length,...codes);try{localStorage.setItem("geoglyph-locate2026.geoglyph-favourites",JSON.stringify(codes));}catch{}return codes;}
     function selectedOwnsFavourite(code=Number(state.selectedCode)){return(favouriteOwners[String(code)]||[]).includes(state.selectedFontId);}
     function applyFavouriteColours(){
       const favouriteCodes=new Set(favouritesForFont());

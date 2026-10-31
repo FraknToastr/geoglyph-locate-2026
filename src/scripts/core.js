@@ -46,7 +46,7 @@
   const state = {
     fonts: [], selectedFontId: null, selectedCode: 65, selectedKey: { base: "a", shifted: "A" }, selectedLabel: "A",
     qualifiers: { shift: false }, drawerMode: "grid", detailSize: 9, gridPreviewSize: 12, characterSet: "all", rangeStart: 32, rangeCount: 224, density: 96, colourView: "palette", gridView: "grid",
-    favourites: loadStoredFavourites(), theme: localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark",
+    favourites: loadStoredFavourites(), theme: loadStoredTheme(),
     preview: "symbol", qrMode: "square", qrLevel: "H", quietZone: 4, exportSize: 1024,
     logoMode: "symbol", externalLogoDataUrl: "", logoName: "Font symbol", logoCrop: true, logoCropBufferPercent: 5, logoCropCorner: "sharp", logoCropEdgeColor: "#000000", logoCropEdgeWidth: 0, logoSize: 20, safeSize: 8, zone: "logo",
     magicEyeDataUrl: "", magicEyeName: "", magicEyeImage: null,
@@ -413,7 +413,7 @@
   function setTheme(theme, persist = true) {
     state.theme = theme === "light" ? "light" : "dark";
     document.documentElement.dataset.theme = state.theme;
-    if (persist) localStorage.setItem(THEME_STORAGE_KEY, state.theme);
+    if (persist) { try { localStorage.setItem(THEME_STORAGE_KEY, state.theme); } catch (_) {} }
     syncThemeControls();
     renderGlyphGrid();
     renderGridSelectionPreview();
@@ -441,6 +441,11 @@
     $("aboutBtn").focus();
   }
 
+  function loadStoredTheme() {
+    try { return localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark"; }
+    catch (_) { return "dark"; }
+  }
+
   function loadStoredFavourites() {
     try {
       const values = JSON.parse(localStorage.getItem(FAVOURITES_STORAGE_KEY) || "[]");
@@ -449,7 +454,7 @@
   }
 
   function persistFavourites() {
-    localStorage.setItem(FAVOURITES_STORAGE_KEY, JSON.stringify(state.favourites));
+    try { localStorage.setItem(FAVOURITES_STORAGE_KEY, JSON.stringify(state.favourites)); } catch (_) {}
   }
 
   function setGridView(view) {

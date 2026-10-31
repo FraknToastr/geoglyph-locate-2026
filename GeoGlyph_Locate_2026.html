@@ -13981,7 +13981,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
   const state = {
     fonts: [], selectedFontId: null, selectedCode: 65, selectedKey: { base: "a", shifted: "A" }, selectedLabel: "A",
     qualifiers: { shift: false }, drawerMode: "grid", detailSize: 9, gridPreviewSize: 12, characterSet: "all", rangeStart: 32, rangeCount: 224, density: 96, colourView: "palette", gridView: "grid",
-    favourites: loadStoredFavourites(), theme: localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark",
+    favourites: loadStoredFavourites(), theme: loadStoredTheme(),
     preview: "symbol", qrMode: "square", qrLevel: "H", quietZone: 4, exportSize: 1024,
     logoMode: "symbol", externalLogoDataUrl: "", logoName: "Font symbol", logoCrop: true, logoCropBufferPercent: 5, logoCropCorner: "sharp", logoCropEdgeColor: "#000000", logoCropEdgeWidth: 0, logoSize: 20, safeSize: 8, zone: "logo",
     magicEyeDataUrl: "", magicEyeName: "", magicEyeImage: null,
@@ -14348,7 +14348,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
   function setTheme(theme, persist = true) {
     state.theme = theme === "light" ? "light" : "dark";
     document.documentElement.dataset.theme = state.theme;
-    if (persist) localStorage.setItem(THEME_STORAGE_KEY, state.theme);
+    if (persist) { try { localStorage.setItem(THEME_STORAGE_KEY, state.theme); } catch (_) {} }
     syncThemeControls();
     renderGlyphGrid();
     renderGridSelectionPreview();
@@ -14376,6 +14376,11 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
     $("aboutBtn").focus();
   }
 
+  function loadStoredTheme() {
+    try { return localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark"; }
+    catch (_) { return "dark"; }
+  }
+
   function loadStoredFavourites() {
     try {
       const values = JSON.parse(localStorage.getItem(FAVOURITES_STORAGE_KEY) || "[]");
@@ -14384,7 +14389,7 @@ const api=Object.freeze({parameters,point,facing,advanceOrbit,framingPadding});
   }
 
   function persistFavourites() {
-    localStorage.setItem(FAVOURITES_STORAGE_KEY, JSON.stringify(state.favourites));
+    try { localStorage.setItem(FAVOURITES_STORAGE_KEY, JSON.stringify(state.favourites)); } catch (_) {}
   }
 
   function setGridView(view) {
@@ -17936,10 +17941,10 @@ window.addEventListener("DOMContentLoaded",()=>{
     let favouriteOwners={};
     try{const stored=JSON.parse(localStorage.getItem(FAVOURITE_OWNERS_KEY)||"{}");if(stored&&typeof stored==="object")favouriteOwners=stored;}catch{}
     state.favourites.forEach(code=>{const key=String(code);if(!Array.isArray(favouriteOwners[key])||!favouriteOwners[key].length)favouriteOwners[key]=[state.selectedFontId];});
-    function saveFavouriteOwners(){localStorage.setItem(FAVOURITE_OWNERS_KEY,JSON.stringify(favouriteOwners));}
+    function saveFavouriteOwners(){try{localStorage.setItem(FAVOURITE_OWNERS_KEY,JSON.stringify(favouriteOwners));}catch{}}
     function favouritesForFont(fontId=state.selectedFontId){return Object.entries(favouriteOwners).filter(([,owners])=>Array.isArray(owners)&&owners.includes(fontId)).map(([code])=>Number(code)).filter(Number.isInteger).sort((a,b)=>a-b);}
     function allFavouritePairs(){return Object.entries(favouriteOwners).flatMap(([code,owners])=>(Array.isArray(owners)?owners:[]).map(fontId=>({code:Number(code),fontId}))).filter(pair=>Number.isInteger(pair.code)&&state.fonts.some(font=>font.id===pair.fontId)).sort((a,b)=>a.fontId.localeCompare(b.fontId)||a.code-b.code);}
-    function syncCurrentFontFavourites(){const codes=favouritesForFont();state.favourites.splice(0,state.favourites.length,...codes);localStorage.setItem("geoglyph-locate2026.geoglyph-favourites",JSON.stringify(codes));return codes;}
+    function syncCurrentFontFavourites(){const codes=favouritesForFont();state.favourites.splice(0,state.favourites.length,...codes);try{localStorage.setItem("geoglyph-locate2026.geoglyph-favourites",JSON.stringify(codes));}catch{}return codes;}
     function selectedOwnsFavourite(code=Number(state.selectedCode)){return(favouriteOwners[String(code)]||[]).includes(state.selectedFontId);}
     function applyFavouriteColours(){
       const favouriteCodes=new Set(favouritesForFont());
