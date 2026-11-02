@@ -17,8 +17,17 @@ let uploads=0,disposals=0;
 const matrixScratch=new Matrix4();
 const camera=createGroundCamera(()=>{
   const s=state()||{};
-  return {map:s.map,anchor:s.anchor,bearing:s.bearing,tilt:s.extrusionTilt,orientationMode:s.orientationMode||'fixed',period:s.orbitPeriodSeconds||30,bounds:data?.bounds,visible:isVisible()&&s.previewActive,restoredElevatedView:s.restoredCamera?.elevation>0,pose:matrices,cancelPending:()=>{queuedOrbit=null;refreshControls();}};
+  return {map:s.map,anchor:s.anchor,bearing:s.bearing,tilt:s.extrusionTilt,orientationMode:s.orientationMode||'fixed',period:s.orbitPeriodSeconds||30,bounds:data?.bounds,visible:isVisible()&&s.previewActive,restoredElevatedView:s.restoredCamera?.elevation>0,pose:matrices,
+    renderedAngles:layer?.ready&&layer.hasRenderedPose?layer.renderedAngles:null,freezePose,
+    cancelPending:()=>{queuedOrbit=null;refreshControls();}};
 },()=>refreshControls());
+
+function freezePose(angles) {
+  const s=state();if(!s||!Number.isFinite(angles.bearing)||!Number.isFinite(angles.tilt))return;
+  Object.assign(s,{bearing:angles.bearing%360,extrusionTilt:angles.tilt,orientationMode:'fixed'});
+  // A capture-phase stop must not overwrite the value an input event is still applying.
+  queueMicrotask(()=>engine()?.refreshControls?.());
+}
 
 function message(text,compact=false) {
   const node=$('map3DStatus');if(node)node.textContent=text;
@@ -60,6 +69,7 @@ function createLayer(map) {
       this.renderer=new WebGLRenderer({canvas:map.getCanvas(),context:gl,antialias:false});
       this.renderer.autoClear=false;this.scene=new Scene();this.camera=new Camera();this.group=new Group();
       this.poseMatrices={geographic:new Matrix4(),object:new Matrix4()};
+      this.renderedAngles={bearing:0,tilt:90};this.hasRenderedPose=false;
       this.group.matrixAutoUpdate=false;this.scene.add(this.group);
       this.scene.add(new AmbientLight(0xffffff,1.3));
       const light=new DirectionalLight(0xffffff,2);light.position.set(-1,-2,4);this.scene.add(light);
@@ -73,6 +83,7 @@ function createLayer(map) {
       this.ready=true;uploads++;this.paint();
     },
     replace(item) {
+      this.hasRenderedPose=false;
       this.geometry=item.geometry;this.lineGeometry=item.lineGeometry;
       this.mesh.geometry=item.geometry;this.lines.geometry=item.lineGeometry;uploads++;
     },
@@ -94,12 +105,13 @@ function createLayer(map) {
     },
     render(gl,args) {
       if(!isVisible()||!state()?.previewActive)return;
-      const pose=matrices(undefined,this.poseMatrices);
+      const angles=camera.getAngles(),pose=matrices(angles,this.poseMatrices);
       this.paint(pose);
       this.camera.projectionMatrix.fromArray(args.defaultProjectionData.mainMatrix).multiply(pose.geographic);
       this.camera.projectionMatrixInverse.copy(this.camera.projectionMatrix).invert();
       this.renderer.resetState();this.renderer.setViewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);
       this.renderer.render(this.scene,this.camera);this.renderer.resetState();
+      this.renderedAngles.bearing=angles.bearing;this.renderedAngles.tilt=angles.tilt;this.hasRenderedPose=true;
     },
     onRemove() {
       this.ready=false;
@@ -153,13 +165,13 @@ function setEnabled(enabled,{manual=true}={}) {
   if(enabled&&s.extrusionDepthMeters==null)s.extrusionDepthMeters=Math.max(.1,Math.min(100000,s.baseHeightMeters*s.relativeSize/1000));
   if(!enabled)clear();refreshControls();engine().queueRebuild(false);
 }
-function stopMotion(){queuedOrbit=null;camera.stop();refreshControls();}
+function stopMotion(options){queuedOrbit=null;camera.stop(options);refreshControls();}
 function manualChange(){if(engine()?.notifyManualMapChange)engine().notifyManualMapChange();else document.dispatchEvent(new CustomEvent('geoglyph:manual-map-change'));}
-function exitCamera(){queuedOrbit=null;camera.exit();refreshControls();}
+function exitCamera({freezePose=true}={}){queuedOrbit=null;camera.stop({freezePose});camera.exit();refreshControls();}
 function toggleOrbit(mode=state().orientationMode) {
   const s=state();
   if(queuedOrbit===mode){queuedOrbit=null;refreshControls();return;}
-  if(camera.isRunning()&&s.orientationMode===mode){camera.stop();return;}
+  if(camera.isRunning()&&s.orientationMode===mode){camera.stop({freezePose:true});return;}
   s.orientationMode=mode;
   if(!s.extrusionEnabled||!isVisible()){
     queuedOrbit=mode;camera.enter();setEnabled(true,{manual:false});refreshControls();return;
@@ -234,13 +246,13 @@ function initialise() {
   $('map3DOrientation').addEventListener('change',event=>{manualChange();s.orientationMode=event.target.value;if(queuedOrbit)queuedOrbit=s.orientationMode;camera.retarget();refreshControls();syncVisibility();});
   $('map3DOrbitPeriod').addEventListener('input',event=>{manualChange();s.orbitPeriodSeconds=Math.max(10,Math.min(120,Number(event.target.value)||30));refreshControls();});
   $('map3DOrbit').addEventListener('click',()=>{manualChange();toggleOrbit();});
-  $('map3DDepth').addEventListener('input',event=>{const n=Number(event.target.value);if(!Number.isFinite(n)||n<.1)return;manualChange();s.extrusionDepthMeters=Math.min(100000,n);stopMotion();syncVisibility();});
+  $('map3DDepth').addEventListener('input',event=>{const n=Number(event.target.value);if(!Number.isFinite(n)||n<.1)return;manualChange();stopMotion({freezePose:true});s.extrusionDepthMeters=Math.min(100000,n);syncVisibility();});
   $('map3DDepth').addEventListener('change',event=>{event.target.value=String(s.extrusionDepthMeters??30);});
-  $('map3DTilt').addEventListener('input',event=>{manualChange();s.extrusionTilt=Math.max(0,Math.min(90,Number(event.target.value)||0));stopMotion();syncVisibility();});
+  $('map3DTilt').addEventListener('input',event=>{const tilt=Math.max(0,Math.min(90,Number(event.target.value)||0));manualChange();stopMotion({freezePose:true});s.extrusionTilt=tilt;syncVisibility();});
   $('map3DView').addEventListener('click',()=>{manualChange();engine().fit();});
   const geometryInputs=new Set(['mapMessage','mapHeight','mapRelativeSize','mapTracking','mapLineHeight','mapBearing','mapQuality','mapNativeColor']);
-  for(const type of ['input','change'])document.addEventListener(type,event=>{if(geometryInputs.has(event.target.id))stopMotion();},true);
-  document.addEventListener('click',event=>{if(state()?.previewActive&&event.target.closest?.('[data-map-mode],[data-map-code],[data-code],.key-button[data-base]'))stopMotion();},true);
+  for(const type of ['input','change'])document.addEventListener(type,event=>{if(geometryInputs.has(event.target.id))stopMotion({freezePose:true});},true);
+  document.addEventListener('click',event=>{if(state()?.previewActive&&event.target.closest?.('[data-map-mode],[data-map-code],[data-code],.key-button[data-base]'))stopMotion({freezePose:true});},true);
   const shortcuts=document.createElement('div');shortcuts.className='map-motion-actions';shortcuts.setAttribute('aria-label','Model and animation shortcuts');
   shortcuts.innerHTML=[['Model','box','model','2D'],['Orbit','orbit','orbit','Orbit'],['Turn','rotate-3d','turn','Turn'],['Face','scan-eye','face','Face'],['Random','shuffle','random','Random']].map(([id,icon,accent,caption])=>`<button id="mapQuick${id}" class="map-motion-action" data-accent="${accent}" type="button" ${id==='Random'?'aria-label="Choose a random font"':'aria-pressed="false"'}>${groundIcons[icon]}<span>${caption}</span></button>`).join('');
   $('geoglyphMapEditor').querySelector('.map-editor-head').append(shortcuts);

@@ -2100,6 +2100,7 @@
     if (!mapState.previewActive) throw Error('Map is not active');
     const keys = ['mode','message','arcgisMessage','selectedFontId','nativeColor','extrusionEnabled','mirrorX','orientationMode','fill','outline','outlineWidth','opacity','bearing','tracking','lineHeight','quality','relativeSize','extrusionTilt','extrusionSolid','anchor','anchorInitialised','anchorPinned','baseHeightMeters','extrusionDepthMeters','lastLocalModel','lastGeoJSON','lastDecal','lastRenderMode','lastMetrics','displayedFontId','committedSelection'];
     const previous = Object.fromEntries(keys.map(key => [key, mapState[key]]));
+    const anchorChanged = Boolean(patch.anchor && (patch.anchor.lng !== previous.anchor?.lng || patch.anchor.lat !== previous.anchor?.lat));
     cancelRandomSearch();
     const choice = ++mapState.fontChoiceVersion;
     const current = () => mapState.fontChoiceVersion === choice && mapState.previewActive && (!options.isCurrent || options.isCurrent());
@@ -2142,7 +2143,7 @@
       await waitForGroundFrame(current);
       options.onDrawn?.();
       const first = mapState.initialFitStatus === 'pending';
-      const fitting = !options.suppressFit && !mapState.conferenceOverview && Boolean(patch.fit || patch.hasNewContent || patch.random || first);
+      const fitting = !options.suppressFit && !mapState.conferenceOverview && Boolean(patch.fit || patch.hasNewContent || patch.random || anchorChanged || first);
       if (fitting) {
         await fitDrawnGeometry(current,{explicit:Boolean(patch.fit),orbit:Boolean(patch.animation)});
         options.onFit?.();
@@ -2496,7 +2497,7 @@
   }
   function requestFit() {
     notifyManualMapChange();
-    cancelInitialFit();window.GeoGlyph3D?.stopOrbit();
+    cancelInitialFit();window.GeoGlyph3D?.stopOrbit({freezePose:true});
     if(!mapState.previewActive||!mapState.mapReady)return false;
     if(mapState.pendingBuild||mapState.rebuilding||mapState.randomSearching){mapState.explicitFitPending=true;return true;}
     return fitGeometry();

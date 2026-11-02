@@ -176,3 +176,56 @@ test('model changes during initial framing accept closer targets without jumps o
   assert.equal(h.camera.stats().phase,'orbiting');
   assert.equal(h.map.getCenterElevation(),170);assert.equal(h.frames.size,1);h.camera.dispose();
 });
+
+function enablePoseFreeze(h){
+  const captured=[];
+  h.environment.freezePose=angles=>{
+    captured.push({...angles});
+    Object.assign(h.environment,{bearing:angles.bearing,tilt:angles.tilt,orientationMode:'fixed'});
+  };
+  return captured;
+}
+test('user Stop holds the last drawn Turn/Face pose through camera movement and permits angle edits',()=>{
+  for(const mode of ['yaw','billboard']){
+    const h=harness(),captured=enablePoseFreeze(h);h.environment.orientationMode=mode;
+    h.camera.start({framed:true});h.step();h.step();
+    const drawn={bearing:123,tilt:mode==='billboard'?55:75};h.environment.renderedAngles={...drawn};
+    assert.notEqual(h.camera.getAngles().bearing,drawn.bearing,'rendered pose may lag the latest camera tick');
+    h.camera.stop({freezePose:true});
+    assert.deepEqual(captured,[drawn]);assert.equal(h.frames.size,0);assert.equal(h.camera.isRunning(),false);
+    h.environment.renderedAngles.bearing=200;
+    h.map.jumpTo({bearing:-120,pitch:20,center:[140,-34],zoom:12});
+    assert.deepEqual(JSON.parse(JSON.stringify(h.camera.getAngles())),drawn);
+    h.environment.bearing=34;h.environment.tilt=40;
+    assert.deepEqual(JSON.parse(JSON.stringify(h.camera.getAngles())),{bearing:34,tilt:40});
+    h.environment.orientationMode=mode;h.camera.start({framed:true});
+    assert.equal(h.camera.isRunning(),true);assert.equal(h.environment.orientationMode,mode);assert.equal(captured.length,1);
+    h.camera.dispose();
+  }
+});
+test('only original user map gestures freeze a running model',()=>{
+  for(const type of ['movestart','dragstart','zoomstart','rotatestart','pitchstart']){
+    const h=harness(),captured=enablePoseFreeze(h);h.environment.orientationMode='yaw';
+    h.camera.start({framed:true});h.step();h.environment.renderedAngles={bearing:25,tilt:75};
+    h.events.get(type)({});assert.equal(h.camera.isRunning(),true);assert.equal(captured.length,0);
+    h.events.get(type)({originalEvent:{}});assert.equal(h.camera.isRunning(),false);
+    assert.deepEqual(captured,[{bearing:25,tilt:75}]);assert.equal(h.environment.orientationMode,'fixed');h.camera.dispose();
+  }
+});
+test('internal starts, automatic Fit, visibility, pause and cleanup never commit a temporary pose',()=>{
+  const h=harness(),captured=enablePoseFreeze(h);h.environment.orientationMode='billboard';
+  h.camera.start();h.finish();h.camera.start();h.finish();
+  h.camera.fit({preserveOrbit:true});h.finish();
+  const resume=h.camera.pause();resume();h.hidden(true);h.hidden(false);
+  h.camera.stop();assert.equal(h.environment.orientationMode,'billboard');
+  h.camera.start({framed:true});h.camera.exit();h.camera.dispose();
+  assert.deepEqual(captured,[]);
+});
+test('a first-frame interruption can use current angles but hidden/unavailable models are not frozen',()=>{
+  const h=harness(),captured=enablePoseFreeze(h);h.environment.orientationMode='yaw';
+  h.camera.start({framed:true});h.step();const expected=h.camera.getAngles();
+  h.camera.stop({freezePose:true});assert.equal(captured.length,1);
+  assert.equal(captured[0].bearing,expected.bearing);assert.equal(captured[0].tilt,expected.tilt);
+  h.environment.orientationMode='yaw';h.camera.start({framed:true});h.environment.visible=false;
+  h.camera.stop({freezePose:true});assert.equal(captured.length,1);h.camera.dispose();
+});

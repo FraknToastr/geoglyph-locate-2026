@@ -271,7 +271,7 @@
     if (!current || !value || typeof value !== "object" || Array.isArray(value)) return false;
     restoring = true;
     try {
-      if(options.history&&value.extrusionEnabled)window.GeoGlyph3D?.stopOrbit();else window.GeoGlyph3D?.exitCamera();
+      if(options.history&&value.extrusionEnabled)window.GeoGlyph3D?.stopOrbit();else window.GeoGlyph3D?.exitCamera({freezePose:false});
       if (!options.history) {
         $("mapArcgisStopBtn")?.click();
         window.GeoGlyphArcgisSession?.disconnect?.();

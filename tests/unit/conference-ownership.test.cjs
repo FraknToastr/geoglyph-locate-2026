@@ -102,3 +102,27 @@ test('cancelling after the artwork commits retains the visible step', async () =
   h.context.cancelConferenceWork();
   assert.equal(h.state.message,'cue-1');release();await result;
 });
+
+test('a changed location fits only after its rendered frame; an unchanged location does not Fit again', async () => {
+  const h=harness(),order=[];h.state.anchor={lng:138.6,lat:-34.9};
+  h.context.waitForGroundFrame=async()=>{order.push('frame');};
+  h.context.fitDrawnGeometry=async(current,options)=>{assert.equal(current(),true);assert.equal(options.explicit,false);order.push('fit');};
+  const patch={objectId:184,fontId:'cue',message:'Where are you Josh?',hasNewContent:false,
+    extrusionEnabled:true,nativeColor:false,anchor:{lng:138.529318747,lat:-34.882387214}};
+  const callbacks={onDrawn:()=>order.push('drawn'),onFit:()=>order.push('fitted')};
+  assert.equal((await h.context.applyConferenceCue(patch,callbacks)).fitted,true);
+  assert.deepEqual(order,['frame','drawn','fit','fitted']);assert.equal(h.orbitStops(),0);
+  order.length=0;
+  assert.equal((await h.context.applyConferenceCue({...patch,objectId:185,anchor:{...patch.anchor}},callbacks)).fitted,false);
+  assert.deepEqual(order,['frame','drawn']);assert.equal(h.orbitStops(),0);
+});
+
+test('location changes retain opening and overview Fit suppression', async () => {
+  for(const overview of [true,false]){
+    const h=harness();h.state.anchor={lng:138,lat:-35};h.state.conferenceOverview=overview;
+    h.context.fitDrawnGeometry=async()=>{assert.fail('Opening/overview location must not Fit');};
+    const result=await h.context.applyConferenceCue({fontId:'cue',message:'same',extrusionEnabled:true,
+      anchor:{lng:139,lat:-34}},{suppressFit:!overview});
+    assert.equal(result.fitted,false);
+  }
+});

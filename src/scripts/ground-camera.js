@@ -5,15 +5,16 @@ export function createGroundCamera(environment, changed) {
   let active=false,phase='stopped',frame=0,lastTime=0,bearing=0,zoom=0,frames=0,pauseDepth=0;
   let mapRef=null,savedCameraMode=null,flight=null,zoomTransition=null;
   let orbitFitCache=null;
+  const manualEvents=['movestart','dragstart','zoomstart','rotatestart','pitchstart'];
   const motionReduced=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cancelFrame=()=>{if(frame)cancelAnimationFrame(frame);frame=0;lastTime=0;};
   function bindMap(map) {
     if(mapRef===map)return;
-    if(mapRef){for(const type of ['dragstart','zoomstart','rotatestart','pitchstart'])mapRef.off(type,manual);mapRef.off('resize',resized);}
+    if(mapRef){for(const type of manualEvents)mapRef.off(type,manual);mapRef.off('resize',resized);}
     mapRef=map;
-    if(map){for(const type of ['dragstart','zoomstart','rotatestart','pitchstart'])map.on(type,manual);map.on('resize',resized);}
+    if(map){for(const type of manualEvents)map.on(type,manual);map.on('resize',resized);}
   }
-  function manual(event){if(event.originalEvent){environment().cancelPending?.();stop();}}
+  function manual(event){if(event.originalEvent){environment().cancelPending?.();stop({freezePose:true});}}
   function resized(){if(active)retarget();}
   function getAngles() {
     const e=environment(),base={bearing:e.bearing||0,tilt:e.tilt??90};
@@ -36,10 +37,13 @@ export function createGroundCamera(environment, changed) {
     const map=environment().map;enter();
     map.setCenterClampedToGround(false);
   }
-  function stop() {
-    const map=environment().map,wasActive=active;
+  function stop({freezePose=false}={}) {
+    const e=environment(),map=e.map,wasActive=active;
+    // User interruption freezes what was drawn, not an ahead-of-render camera tick.
+    const angles=freezePose&&wasActive&&e.visible&&e.bounds?{...(e.renderedAngles||getAngles())}:null;
     active=false;phase='stopped';cancelFrame();
     flight=null;zoomTransition=null;
+    if(angles)e.freezePose?.(angles);
     if(wasActive){map?.triggerRepaint();changed();}
   }
   function exit() {

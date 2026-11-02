@@ -55,13 +55,29 @@ test('camera poses keep independent matrices while render outputs can be reused 
   assert.equal(h.allocations(),0);
 });
 test('custom render shares one coherent pose between paint and projection and retains GL resets',()=>{
-  let solves=0,paintPose,projectionPose,resets=0,draws=0;
-  const pose={object:{},geographic:{}},c=vm.createContext({isVisible:()=>true,state:()=>({previewActive:true}),matrices:(angles,output)=>{solves++;assert.equal(output,c.layer.poseMatrices);return pose;}});
+  let solves=0,angleReads=0,paintPose,projectionPose,resets=0,draws=0;
+  const expectedAngles={bearing:20,tilt:55},pose={object:{},geographic:{}},c=vm.createContext({isVisible:()=>true,state:()=>({previewActive:true}),
+    camera:{getAngles(){angleReads++;return expectedAngles;}},matrices:(angles,output)=>{solves++;assert.equal(angles,expectedAngles);assert.equal(output,c.layer.poseMatrices);return pose;}});
   const start=source.indexOf('    render(gl,args) {'),end=source.indexOf('    onRemove()',start);
   vm.runInContext('globalThis.layer={'+source.slice(start,end)+'};',c);
-  Object.assign(c.layer,{poseMatrices:{},paint:p=>{paintPose=p;},camera:{projectionMatrix:{fromArray(){return this;},multiply:p=>{projectionPose=p;}},projectionMatrixInverse:{copy(){return this;},invert(){}}},renderer:{resetState(){resets++;},setViewport(){},render(){draws++;}}});
+  Object.assign(c.layer,{poseMatrices:{},renderedAngles:{bearing:0,tilt:90},hasRenderedPose:false,paint:p=>{paintPose=p;},camera:{projectionMatrix:{fromArray(){return this;},multiply:p=>{projectionPose=p;}},projectionMatrixInverse:{copy(){return this;},invert(){}}},renderer:{resetState(){resets++;},setViewport(){},render(){assert.equal(c.layer.hasRenderedPose,false);draws++;}}});
   c.layer.render({drawingBufferWidth:800,drawingBufferHeight:600},{defaultProjectionData:{mainMatrix:[]}});
-  assert.equal(solves,1);assert.equal(paintPose,pose);assert.equal(projectionPose,pose.geographic);assert.equal(resets,2);assert.equal(draws,1);
+  assert.equal(solves,1);assert.equal(angleReads,1);assert.equal(paintPose,pose);assert.equal(projectionPose,pose.geographic);assert.equal(resets,2);assert.equal(draws,1);
+  assert.equal(c.layer.hasRenderedPose,true);assert.deepEqual(c.layer.renderedAngles,{bearing:20,tilt:55});
+  expectedAngles.bearing=30;c.layer.renderer.render=()=>{throw Error('draw failed');};
+  assert.throws(()=>c.layer.render({drawingBufferWidth:800,drawingBufferHeight:600},{defaultProjectionData:{mainMatrix:[]}}),/draw failed/);
+  assert.deepEqual(c.layer.renderedAngles,{bearing:20,tilt:55},'failed draws cannot replace the last successfully rendered pose');
+});
+
+test('freezing stores a fixed pose with bounded bearing and defers UI refresh until input edits finish',()=>{
+  const anchor={lng:138,lat:-35},s={bearing:0,extrusionTilt:90,orientationMode:'yaw',anchor,baseHeightMeters:300,extrusionDepthMeters:30};
+  const pending=[],seen=[],c=vm.createContext({state:()=>s,queueMicrotask:fn=>pending.push(fn),engine:()=>({refreshControls:()=>seen.push({bearing:s.bearing,tilt:s.extrusionTilt})})});
+  vm.runInContext(source.slice(source.indexOf('function freezePose('),source.indexOf('function message(')),c);
+  c.freezePose({bearing:733,tilt:55});assert.equal(s.bearing,13);assert.equal(s.extrusionTilt,55);assert.equal(s.orientationMode,'fixed');
+  assert.equal(s.anchor,anchor);assert.equal(s.baseHeightMeters,300);assert.equal(s.extrusionDepthMeters,30);assert.equal(seen.length,0);
+  s.bearing=45;s.extrusionTilt=37;pending.shift()();assert.deepEqual(seen,[{bearing:45,tilt:37}]);
+  c.freezePose({bearing:-747,tilt:55});assert.equal(s.bearing,-27);pending.shift()();
+  c.freezePose({bearing:NaN,tilt:55});assert.equal(s.bearing,-27);assert.equal(pending.length,0);
 });
 
 test('horizontal reflection affects faces and outlines around their shared centre without moving the camera target',()=>{

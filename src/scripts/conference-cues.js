@@ -46,12 +46,22 @@
     }
 
     if (key(get('special_commands'))) warnings.push(`Unknown special_commands value: ${text(get('special_commands'))}`);
+    let anchor, invalidPoint = false;
+    if (raw.geometry != null) {
+      const { x, y, spatialReference } = raw.geometry;
+      const wkid = spatialReference && (spatialReference.latestWkid || spatialReference.wkid);
+      if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y) &&
+          x >= -180 && x <= 180 && y >= -85.051129 && y <= 85.051129 && (!wkid || wkid === 4326)) {
+        // (0,0) is the survey's unanswered location. Either zero ordinate alone is valid.
+        if (x !== 0 || y !== 0) anchor = { lng: x, lat: y };
+      } else invalidPoint = true;
+    }
     const emoji = text(get('emojis'));
     const speech = text(get('geoglyph_speaks')), legacy = text(get('whats_on_your_mind'));
     // The survey can retain its sleeping placeholder on a controls-only submission.
     // Do not mistake it for new text and try to extrude it in the last text font.
-    const legacyPlaceholder = !emoji && !speech && legacy === '😴' && Object.entries(controlOptions)
-      .some(([name, choices]) => Object.prototype.hasOwnProperty.call(choices, key(get(name))));
+    const legacyPlaceholder = !emoji && !speech && legacy === '😴' && (Boolean(anchor) || Object.entries(controlOptions)
+      .some(([name, choices]) => Object.prototype.hasOwnProperty.call(choices, key(get(name)))));
     const message = emoji || speech || (legacyPlaceholder ? '' : legacy);
     const previous = context.content || { kind: 'emoji', message: '' };
     const kind = message ? (emoji ? 'emoji' : 'text') : previous.kind === 'text' ? 'text' : 'emoji';
@@ -74,17 +84,8 @@
     if (size) [result.height, result.depth] = size;
     result.fit = option('fit') === true;
 
-    if (raw.geometry != null) {
-      const { x, y, spatialReference } = raw.geometry;
-      const wkid = spatialReference && (spatialReference.latestWkid || spatialReference.wkid);
-      if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y) &&
-          x >= -180 && x <= 180 && y >= -85.051129 && y <= 85.051129 && (!wkid || wkid === 4326)) {
-        // Survey123 can store (0,0) when the location question is unanswered.
-        // For this conference feed it means retain the current anchor. Either
-        // zero ordinate alone remains valid (equator and Greenwich points).
-        if (x !== 0 || y !== 0) result.anchor = { lng: x, lat: y };
-      } else warnings.push('Invalid survey point; retaining the current anchor.');
-    }
+    if (anchor) result.anchor = anchor;
+    if (invalidPoint) warnings.push('Invalid survey point; retaining the current anchor.');
 
     // An existing emoji also keeps these restrictions for controls-only cues.
     if (kind === 'emoji') return result;

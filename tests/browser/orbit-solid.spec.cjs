@@ -55,8 +55,9 @@ test('continuous orbit locks the elevated centre in all orientation modes withou
   }
   await page.locator('#map3DOrbitPeriod').fill('10');expect(await page.evaluate(()=>GeoGlyphMapEngine.state.orbitPeriodSeconds)).toBe(10);
   expect((await page.evaluate(()=>GeoGlyphFontService.workerStats())).meshBuilds).toBe(builds);
-  await page.locator('#map3DOrbit').click();expect((await sample(page)).a.scheduled).toBe(false);
-  await page.locator('#map3DOrientation').selectOption('fixed');expect((await sample(page)).a.angles).toEqual({bearing:initial.savedBearing,tilt:72});expect(errors).toEqual([]);
+  await page.locator('#map3DOrbit').click();const stopped=await sample(page);expect(stopped.a.scheduled).toBe(false);
+  await expect(page.locator('#map3DOrientation')).toHaveValue('fixed');expect(stopped.savedTilt).toBe(55);
+  await page.locator('#map3DOrientation').selectOption('fixed');expect((await sample(page)).a.angles).toEqual(stopped.a.angles);expect(errors).toEqual([]);
 });
 
 test('navigation, edits and leaving Map stop the orbit and restore the ground camera',async({page})=>{

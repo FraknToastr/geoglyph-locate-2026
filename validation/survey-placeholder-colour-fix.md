@@ -18,3 +18,5 @@ Explicit emoji selections, explicit speech, other legacy messages and Begin/Rese
 - The local modular build and syntax/whitespace checks passed. No extended browser run or soak. All browser service operations were mocked; no real survey records were changed.
 
 Only the local modular application was rebuilt. Portable copies and GitHub remain at their preceding versions; no commit or push performed. This fixes the confirmed Response 169 case. Earlier Response 145 was not independently inspected, and unrelated genuinely unsupported font/character combinations still produce their existing diagnostics.
+
+Subsequent release rebuild/publication is documented separately. A later location-only variant (Response 184) exposed the missing point-control case and was corrected locally; see [survey-location-placeholder-fix.md](survey-location-placeholder-fix.md). The colour-only regression remains covered.

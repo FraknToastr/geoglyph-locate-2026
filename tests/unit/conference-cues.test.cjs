@@ -89,6 +89,46 @@ test('Response 169 colour control retains the final Begin text instead of its le
   assert.deepEqual(result.warnings,[]);assert.equal(JSON.stringify({raw,context}),before);
 });
 
+test('Response 184 location-only cue preserves the final Begin block and carries its validated anchor', () => {
+  const context={content:{kind:'text',message:'Where are you Josh?'},lastTextFont:'Gill Sans',extrusionEnabled:true};
+  const raw=feature({objectid:184,whats_on_your_mind:'😴',emojis:null,geoglyph_speaks:null,
+    choose_a_colour_colour:null,choose_a_font_font:null,random_font:null,_size_size:null,fit:null,
+    special_commands:null,_2d_or_3d:null,animation:null},{x:138.529318747,y:-34.882387214});
+  const before=JSON.stringify({raw,context}),result=resolve(raw,context);
+  assert.equal(result.objectId,184);assert.equal(result.message,'Where are you Josh?');assert.equal(result.hasNewContent,false);
+  assert.deepEqual(result.nextContent,context.content);assert.deepEqual(result.anchor,{lng:138.529318747,lat:-34.882387214});
+  assert.equal(result.font,'Gill Sans');assert.equal(result.nativeColor,false);assert.equal(result.extrusionEnabled,true);
+  for(const field of ['fill','height','depth','animation'])assert.equal(result[field],undefined);
+  assert.equal(result.fit,false);assert.deepEqual(result.warnings,[]);assert.equal(JSON.stringify({raw,context}),before);
+});
+
+test('location controls require a valid non-default point, including equator and Greenwich points', () => {
+  const attributes={whats_on_your_mind:'😴'};
+  for(const geometry of [{x:0,y:-34},{x:138,y:0},{x:-180,y:85.051129,spatialReference:{wkid:4326}}]){
+    const result=resolve(feature(attributes,geometry),textContext);
+    assert.equal(result.message,'Previous');assert.equal(result.hasNewContent,false);
+    assert.deepEqual(result.anchor,{lng:geometry.x,lat:geometry.y});assert.deepEqual(result.warnings,[]);
+  }
+  for(const geometry of [null,{x:0,y:0},{},{x:181,y:0},{x:0,y:-86},{x:NaN,y:0},{x:'138',y:-34},
+    {x:138,y:-34,spatialReference:{wkid:3857}}]){
+    const result=resolve(feature(attributes,geometry),textContext);
+    assert.equal(result.anchor,undefined);assert.equal(result.message,'😴');assert.equal(result.hasNewContent,true);
+    assert.equal(result.warnings.length,geometry===null||(geometry.x===0&&geometry.y===0)?0:1);
+    const colour=resolve(feature({...attributes,choose_a_colour_colour:'Yellow'},geometry),textContext);
+    assert.equal(colour.message,'Previous');assert.equal(colour.fill,'#FFDF3A');assert.equal(colour.anchor,undefined);
+  }
+});
+
+test('location controls preserve explicit content and Begin/Reset precedence', () => {
+  const point={x:138.529318747,y:-34.882387214},attributes={whats_on_your_mind:'😴'};
+  for(const [field,value]of [['emojis','😴'],['geoglyph_speaks','New speech'],['whats_on_your_mind','New legacy message']]){
+    const result=resolve(feature({...attributes,[field]:value},point),textContext);
+    assert.equal(result.message,value);assert.equal(result.hasNewContent,true);assert.deepEqual(result.anchor,{lng:point.x,lat:point.y});
+    if(field==='emojis'){assert.equal(result.font,'Segoe UI Emoji');assert.equal(result.nativeColor,true);assert.equal(result.extrusionEnabled,false);}
+  }
+  for(const command of ['begin','reset'])assert.deepEqual(resolve(feature({...attributes,special_commands:command},point)),{command,objectId:undefined,warnings:[]});
+});
+
 test('only recognised controls can suppress the exact sleeping placeholder in the legacy field', () => {
   for(const [field,value]of [['choose_a_colour_colour','Yellow'],['choose_a_font_font','Forte'],['random_font','Yes'],['random_font','No'],
     ['_size_size','Medium'],['fit','Fit'],['fit',false],['_2d_or_3d','2D'],['animation','Turn']]){

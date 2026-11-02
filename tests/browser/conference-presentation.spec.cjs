@@ -137,7 +137,7 @@ async function expectAustralia(page) {
   }
 }
 
-test(`Begin scripted introduction renders Medium 3D Turn and retains final text for Response 169 colour control [${hostedSmoke?'hosted':'disk'}]`,async({page})=>{
+test(`Begin scripted introduction renders Medium 3D Turn and retains final text for Response 169 colour control and Response 184 location control [${hostedSmoke?'hosted':'disk'}]`,async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   const server=await open(page,{overview:true,localModular:!hostedSmoke});
@@ -182,7 +182,41 @@ test(`Begin scripted introduction renders Medium 3D Turn and retains final text 
   });
   expect(rendered.message).toBe('Where are you Josh?');expect(rendered.frontColour).toBe('ffdf3a');
   expect(rendered.error).toBe('');expect(rendered.geometry).toEqual(before);
-  await submit(page,server,cue(170,{special_commands:'Reset',whats_on_your_mind:'😴',choose_a_colour_colour:'Yellow'}));
+  const point=[138.529318747,-34.882387214];
+  const location={whats_on_your_mind:'😴',emojis:null,geoglyph_speaks:null,choose_a_colour_colour:null,
+    choose_a_font_font:null,random_font:null,_size_size:null,fit:null,special_commands:null,_2d_or_3d:null,animation:null};
+  await submit(page,server,cue(184,location,point));await page.clock.runFor(100);
+  const moved=await snapshot(page);
+  expect(moved.content).toEqual(after.content);expect(moved.font).toBe(after.font);expect(moved.displayedFont).toBe(after.displayedFont);
+  expect(moved.anchor).toEqual({lng:point[0],lat:point[1]});expect(moved.fill).toBe('#FFDF3A');
+  expect(moved.nativeColor).toBe(false);expect(moved.extrusion).toBe(true);expect(moved.height).toBe(3000);expect(moved.depth).toBe(300);
+  expect(moved.orientation).toBe('yaw');expect(moved.animation.orbiting).toBe(true);expect(moved.animation.phase).toBe('orbiting');
+  expect(moved.animation.frames).toBeGreaterThan(after.animation.frames);
+  expect(moved.history.filter(item=>item.objectId===184&&item.phase==='fit')).toHaveLength(1);
+  const view=await page.evaluate(async()=>{
+    const s=GeoGlyphMapEngine.state,map=s.map,b=GeoGlyph3D.getBounds(),stats=GeoGlyph3D.stats();
+    const origin=maplibregl.MercatorCoordinate.fromLngLat(s.anchor),u=origin.meterInMercatorCoordinateUnits();
+    const values={heightMeters:s.baseHeightMeters*s.relativeSize/100,depthMeters:s.extrusionDepthMeters,...stats.animation.angles};
+    const matrix=map.transform.getProjectionDataForCustomLayer().mainMatrix;
+    const project=local=>{
+      const p=GeoGlyphGroundTransform.point(local,values,b),world=[origin.x+p[0]*u,origin.y-p[1]*u,p[2]*u,1];
+      const clip=[0,1,2,3].map(i=>world.reduce((sum,value,j)=>sum+matrix[j*4+i]*value,0));
+      return {x:(clip[0]/clip[3]+1)/2,y:(1-clip[1]/clip[3])/2,w:clip[3]};
+    };
+    const corners=[];for(const x of [b.minX,b.maxX])for(const y of [b.minY,b.maxY])for(const z of [b.minZ,b.maxZ])corners.push(project([x,y,z]));
+    return {center:project([(b.minX+b.maxX)/2,(b.minY+b.maxY)/2,(b.minZ+b.maxZ)/2]),corners,error:GeoGlyphConference.state.error,
+      geometry:{uploads:stats.uploads,disposals:stats.disposals,meshKey:stats.meshKey,meshBuilds:(await GeoGlyphFontService.workerStats()).meshBuilds}};
+  });
+  expect(view.center.x).toBeCloseTo(.5,4);expect(view.center.y).toBeCloseTo(.5,4);
+  for(const corner of view.corners){expect(corner.w).toBeGreaterThan(0);expect(Math.min(corner.x,1-corner.x,corner.y,1-corner.y)).toBeGreaterThanOrEqual(.095);}
+  expect(view.error).toBe('');expect(view.geometry).toEqual(before);
+  await submit(page,server,cue(185,location,point));await page.clock.runFor(100);
+  const repeated=await snapshot(page);
+  expect(repeated.content).toEqual(moved.content);expect(repeated.anchor).toEqual(moved.anchor);expect(repeated.fill).toBe('#FFDF3A');
+  expect(repeated.animation.orbiting).toBe(true);expect(repeated.animation.frames).toBeGreaterThan(moved.animation.frames);
+  expect(repeated.history.filter(item=>item.objectId===185&&item.phase==='fit')).toHaveLength(0);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.error)).toBe('');
+  await submit(page,server,cue(186,{special_commands:'Reset',whats_on_your_mind:'😴',choose_a_colour_colour:'Yellow'}));
   const reset=await snapshot(page);
   expect(reset.content).toEqual({kind:'emoji',message:'😴'});
   expect(reset.font).toBe(await page.evaluate(()=>GeoGlyphConference.state.fontIds['Segoe UI Emoji']));
