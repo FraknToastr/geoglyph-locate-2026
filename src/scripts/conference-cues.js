@@ -11,6 +11,12 @@
   const animations = Object.freeze({ orbit: 'fixed', turn: 'yaw', face: 'billboard' });
   const text = value => value == null ? '' : String(value).trim();
   const key = value => text(value).toLowerCase();
+  const yesNo = Object.freeze({ yes:true, no:false, true:true, false:false });
+  const controlOptions = Object.freeze({
+    '_size_size':sizes, fit:Object.freeze({fit:true,...yesNo}), random_font:yesNo,
+    choose_a_font_font:Object.freeze(Object.fromEntries(fonts.map(font=>[key(font),font]))),
+    choose_a_colour_colour:colours, '_2d_or_3d':Object.freeze({'2d':false,'3d':true}), animation:animations
+  });
 
   function command(raw) {
     const attributes = raw?.attributes || raw || {};
@@ -31,7 +37,7 @@
     // Commands own the entire submission, including submissions with emoji content.
     const special = command(raw);
     if (special) return { command: special, objectId: raw.objectId ?? get('objectid') ?? get('object_id'), warnings };
-    function option(name, choices) {
+    function option(name, choices = controlOptions[name]) {
       const value = key(get(name));
       if (!value) return undefined;
       if (Object.prototype.hasOwnProperty.call(choices, value)) return choices[value];
@@ -41,7 +47,12 @@
 
     if (key(get('special_commands'))) warnings.push(`Unknown special_commands value: ${text(get('special_commands'))}`);
     const emoji = text(get('emojis'));
-    const message = emoji || text(get('geoglyph_speaks')) || text(get('whats_on_your_mind'));
+    const speech = text(get('geoglyph_speaks')), legacy = text(get('whats_on_your_mind'));
+    // The survey can retain its sleeping placeholder on a controls-only submission.
+    // Do not mistake it for new text and try to extrude it in the last text font.
+    const legacyPlaceholder = !emoji && !speech && legacy === '😴' && Object.entries(controlOptions)
+      .some(([name, choices]) => Object.prototype.hasOwnProperty.call(choices, key(get(name))));
+    const message = emoji || speech || (legacyPlaceholder ? '' : legacy);
     const previous = context.content || { kind: 'emoji', message: '' };
     const kind = message ? (emoji ? 'emoji' : 'text') : previous.kind === 'text' ? 'text' : 'emoji';
     const result = {
@@ -59,9 +70,9 @@
     };
     result.nextContent = { kind: result.kind, message: result.message };
 
-    const size = option('_size_size', sizes);
+    const size = option('_size_size');
     if (size) [result.height, result.depth] = size;
-    result.fit = option('fit', { fit: true, yes: true, no: false, true: true, false: false }) === true;
+    result.fit = option('fit') === true;
 
     if (raw.geometry != null) {
       const { x, y, spatialReference } = raw.geometry;
@@ -78,17 +89,16 @@
     // An existing emoji also keeps these restrictions for controls-only cues.
     if (kind === 'emoji') return result;
 
-    result.random = option('random_font', { yes: true, no: false, true: true, false: false }) === true;
+    result.random = option('random_font') === true;
     if (!result.random) {
-      const fontChoices = Object.fromEntries(fonts.map(font => [key(font), font]));
-      const font = option('choose_a_font_font', fontChoices);
+      const font = option('choose_a_font_font');
       if (font) result.font = font;
     }
-    const fill = option('choose_a_colour_colour', colours);
+    const fill = option('choose_a_colour_colour');
     if (fill) result.fill = fill;
-    const extrusion = option('_2d_or_3d', { '2d': false, '3d': true });
+    const extrusion = option('_2d_or_3d');
     if (extrusion !== undefined) result.extrusionEnabled = extrusion;
-    const animation = option('animation', animations);
+    const animation = option('animation');
     if (animation) {
       result.animation = animation;
       result.extrusionEnabled = true;

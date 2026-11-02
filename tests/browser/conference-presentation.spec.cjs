@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { config } = require('../../src/scripts/survey-results.js');
+const hostedSmoke=process.env.GEOGLYPH_HOSTED_SMOKE==='1';
 
 test.setTimeout(90_000);
 const tile = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', 'base64');
@@ -85,9 +86,9 @@ async function completeIntroduction(page,id){
   await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='flight'),id);
   await page.clock.fastForward(30000);
   await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='fit'),id);
-  for(let index=0;index<13;index++){
+  for(let index=0;index<14;index++){
     const done=await page.evaluate(({id,index})=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase===`introduction-${index}`),{id,index});
-    if(!done)await page.clock.fastForward(5000);
+    if(!done)await page.clock.fastForward([0,5000,5000,3000,3000,3000,5000,5000,5000,5000,5000,5000,5000,5000][index]);
     await page.waitForFunction(({id,index})=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase===`introduction-${index}`),{id,index});
   }
   await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='applied'),id);
@@ -136,10 +137,11 @@ async function expectAustralia(page) {
   }
 }
 
-test('Begin scripted introduction renders ordered mirrored emoji and finishes Large 3D Turn',async({page})=>{
+test(`Begin scripted introduction renders Medium 3D Turn and retains final text for Response 169 colour control [${hostedSmoke?'hosted':'disk'}]`,async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
-  const server=await open(page,{overview:true});
+  const server=await open(page,{overview:true,localModular:!hostedSmoke});
+  expect(new URL(page.url()).protocol).toBe(hostedSmoke?'http:':'file:');
   await installIntroductionClock(page);
   await page.evaluate(()=>{
     const api=GeoGlyphMapEngine;window.introductionFrames=[];
@@ -154,12 +156,38 @@ test('Begin scripted introduction renders ordered mirrored emoji and finishes La
   await completeIntroduction(page,1);
   const result=await page.evaluate(()=>({frames:window.introductionFrames,phase:GeoGlyphConference.state.phase,
     font:GeoGlyphConference.state.fontIds['Gill Sans'],animation:GeoGlyph3D.stats().animation,mirrorX:GeoGlyphMapEngine.state.mirrorX}));
-  expect(result.frames.map(frame=>frame.message)).toEqual(['🥱','😶','😏','😏','🙂','Hello',"I'm Geoglyph",'Call me Geo','I was made by ChatGPT','Today I will be presenting','with my best friend','Josh Roberts','Where are you Josh?']);
-  expect(result.frames.map(frame=>frame.mirrorX)).toEqual(Array.from({length:13},(_,i)=>i===3));
-  expect(result.frames.slice(0,5).every(frame=>frame.nativeColor&&!frame.extrusion)).toBe(true);
-  expect(result.frames.slice(5).every(frame=>frame.font===result.font&&!frame.nativeColor)).toBe(true);
-  expect(result.frames.at(-1)).toMatchObject({height:30000,depth:3000,extrusion:true});
+  expect(result.frames.map(frame=>frame.message)).toEqual(['🥱','😶','🫣','😏','😏','🤗','Hello',"I'm Geoglyph",'Call me Geo','I was made by ChatGPT','Today I will be presenting','with my best friend','Josh Roberts','Where are you Josh?']);
+  expect(result.frames.map(frame=>frame.mirrorX)).toEqual(Array.from({length:14},(_,i)=>i===4));
+  expect(result.frames.slice(0,6).every(frame=>frame.nativeColor&&!frame.extrusion)).toBe(true);
+  expect(result.frames.slice(6).every(frame=>frame.font===result.font&&!frame.nativeColor)).toBe(true);
+  expect(result.frames.at(-1)).toMatchObject({height:3000,depth:300,extrusion:true});
   expect(result.phase).toBe('live');expect(result.animation.orbiting).toBe(true);expect(result.mirrorX).toBe(false);
+  const before=await page.evaluate(async()=>({uploads:GeoGlyph3D.stats().uploads,disposals:GeoGlyph3D.stats().disposals,
+    meshKey:GeoGlyph3D.stats().meshKey,meshBuilds:(await GeoGlyphFontService.workerStats()).meshBuilds}));
+  await submit(page,server,cue(169,{whats_on_your_mind:'😴',emojis:null,geoglyph_speaks:null,
+    choose_a_colour_colour:'Yellow',special_commands:null,_2d_or_3d:null,animation:null}));
+  await page.clock.runFor(100);
+  const after=await snapshot(page);
+  expect(after.content).toEqual({kind:'text',message:'Where are you Josh?'});
+  expect(after.font).toBe(result.font);expect(after.displayedFont).toBe(result.font);
+  expect(after.fill).toBe('#FFDF3A');expect(after.nativeColor).toBe(false);
+  expect(after.extrusion).toBe(true);expect(after.height).toBe(3000);expect(after.depth).toBe(300);
+  expect(after.orientation).toBe('yaw');expect(after.animation.orbiting).toBe(true);
+  expect(after.animation.phase).toBe('orbiting');expect(after.animation.frames).toBeGreaterThan(result.animation.frames);
+  expect(after.history.filter(item=>item.objectId===169).some(item=>item.phase==='fit')).toBe(false);
+  const rendered=await page.evaluate(async()=>{
+    const s=GeoGlyphMapEngine.state,stats=GeoGlyph3D.stats(),layer=s.map.getLayer('geoglyph-extruded-font').implementation;
+    return {message:s.message,frontColour:layer.front.color.getHexString(),error:GeoGlyphConference.state.error,
+      geometry:{uploads:stats.uploads,disposals:stats.disposals,meshKey:stats.meshKey,meshBuilds:(await GeoGlyphFontService.workerStats()).meshBuilds}};
+  });
+  expect(rendered.message).toBe('Where are you Josh?');expect(rendered.frontColour).toBe('ffdf3a');
+  expect(rendered.error).toBe('');expect(rendered.geometry).toEqual(before);
+  await submit(page,server,cue(170,{special_commands:'Reset',whats_on_your_mind:'😴',choose_a_colour_colour:'Yellow'}));
+  const reset=await snapshot(page);
+  expect(reset.content).toEqual({kind:'emoji',message:'😴'});
+  expect(reset.font).toBe(await page.evaluate(()=>GeoGlyphConference.state.fontIds['Segoe UI Emoji']));
+  expect(reset.nativeColor).toBe(true);expect(reset.extrusion).toBe(false);expect(reset.animation.orbiting).toBe(false);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.error)).toBe('');
   expect(errors).toEqual([]);
 });
 

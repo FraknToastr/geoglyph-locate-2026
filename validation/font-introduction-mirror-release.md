@@ -14,24 +14,29 @@ Bundled conference fonts and uploaded font files retain their established paths.
 
 ### Begin introduction
 
-The Survey123 Begin command draws the sleeping emoji and requests the existing 30-second descent. After arrival, each visible step holds for five seconds before the next step; the hold starts after the committed artwork and automatic Fit complete:
+The Survey123 Begin command draws the sleeping emoji and requests the existing 30-second descent. 🥱 appears immediately after arrival. Subsequent pauses start after the committed artwork and automatic Fit complete:
 
-1. 😴 during descent, then five-second hold
-2. 🥱
-3. 😶
-4. 😏
-5. Horizontally mirrored 😏
-6. 🙂 (mirror off)
-7. Hello
-8. I'm Geoglyph
-9. Call me Geo
-10. I was made by ChatGPT
-11. Today I will be presenting
-12. with my best friend
-13. Josh Roberts
-14. Where are you Josh?
+1. 😴 during descent
+2. 🥱 immediately after descent
+3. 😶 after five seconds
+4. 🫣 (U+1FAE3) after five seconds
+5. 😏 after three seconds
+6. Horizontally mirrored 😏 after three seconds
+7. 🤗 (U+1F917, mirror off) after three seconds
+8. Hello after five seconds
+9. I'm Geoglyph after five seconds
+10. Call me Geo after five seconds
+11. I was made by ChatGPT after five seconds
+12. Today I will be presenting after five seconds
+13. with my best friend after five seconds
+14. Josh Roberts after five seconds
+15. Where are you Josh? after five seconds
 
-Emoji use native-colour 2D. Text uses bundled Gill Sans Ultra Bold Condensed at opening size in 2D until the final message. The final message commits Large (height 30,000 metres, depth 3,000 metres, relative size 100%), 3D, completes Fit, then starts Turn. It remains turning until subsequent input changes it.
+Timing follow-up: 11 focused introduction unit cases passed with exact transition-time assertions, pause/visibility handling and interruption checks. One accelerated browser regression passed (3.7 seconds), verifying all 14 post-descent cues, native emoji colour, mirroring and the final Medium 3D/Turn state. Both added emoji code points were verified in the bundled font. Only the local modular entry point was rebuilt; no publication or soak performed.
+
+Emoji use native-colour 2D. Text uses bundled Gill Sans Ultra Bold Condensed at opening size in 2D until the final message. The final message now commits Medium (height 3,000 metres, depth 300 metres, relative size 100%), 3D, completes Fit, then starts Turn. It remains turning until subsequent input changes it.
+
+Follow-up: the Medium size change passed 18 focused unit cases, including an explicit Reset opening check for the emoji font, native colour and 2D. Generated releases were rebuilt. At that stage the intermittent U+1F634 report remained unconfirmed; those checks did not reproduce the user's browser state, and no browser run was performed for that size follow-up. A later confirmed instance (Response 169) was traced to a carried-over legacy survey placeholder and fixed; see [survey-placeholder-colour-fix.md](survey-placeholder-colour-fix.md).
 
 The runner is sequential and cancellable. Ordinary survey submissions remain FIFO behind it; duplicate Begin is ignored while running. Reset interrupts and restores the existing overview, including mirror off. Stop pauses the remaining hold and prevents another step; a render/camera movement already started may finish. Resume continues the remaining hold. Hidden time does not consume a hold. Manual artwork changes cancel the introduction before applying the edit; queued responses resume normal processing after the synchronous edit handler. Leaving Map cancels pending work. A failed step retains the last valid display and releases busy state. Internal script steps do not create survey submissions or alter the survey cursor.
 

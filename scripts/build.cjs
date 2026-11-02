@@ -52,7 +52,10 @@ function render(inline) {
     return html.replace(marker, () => tag);
   }, template);
 }
-const development = render(false), standalone = render(true);
+const development = render(false);
+put('index.html', development);
+if(process.argv.includes('--modular-only')) { console.log('Built local modular index.html.'); process.exit(0); }
+const standalone = render(true);
 if (/<!-- GE0GLYPH_ASSET:/.test(standalone)) throw new Error('Unresolved asset marker');
 put('index.html', development);
 put('dist/GeoGlyph.html', standalone);

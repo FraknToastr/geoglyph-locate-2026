@@ -4,7 +4,8 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const cues=require('../../src/scripts/conference-cues.js');
 const source=fs.readFileSync(path.join(__dirname,'../../src/scripts/conference-presentation.js'),'utf8');
 const flush=()=>new Promise(setImmediate);
-const transcript=['🥱','😶','😏','😏','🙂','Hello',"I'm Geoglyph",'Call me Geo','I was made by ChatGPT','Today I will be presenting','with my best friend','Josh Roberts','Where are you Josh?'];
+const transcript=['🥱','😶','🫣','😏','😏','🤗','Hello',"I'm Geoglyph",'Call me Geo','I was made by ChatGPT','Today I will be presenting','with my best friend','Josh Roberts','Where are you Josh?'];
+const delays=[0,5000,5000,3000,3000,3000,5000,5000,5000,5000,5000,5000,5000,5000];
 function harness(options={}){
   let now=0,seq=0;const timers=new Map(),listeners={},calls=[],doc={hidden:false,addEventListener:(type,fn)=>{listeners[type]=fn;}};
   const map={previewActive:true,mode:'arcgis',extrusionEnabled:false,map:{stop(){}},fontRecords:new Map()};
@@ -25,40 +26,43 @@ function harness(options={}){
     async hidden(value){doc.hidden=value;listeners.visibilitychange();await flush();},
     steps:()=>calls.filter(c=>c.type==='cue')};
 }
-test('Begin renders the exact transcript and final Large 3D Turn after thirteen visible holds',async()=>{
+test('Begin renders immediately after zoom, uses three-second emoji holds and ends in Medium 3D Turn',async()=>{
   const h=harness();await h.begin();assert.equal(h.calls[0].type,'opening');assert.equal(h.calls[1].type,'flight');
-  for(let i=0;i<13;i++){await h.advance(4999);assert.equal(h.steps().length,i);await h.advance(1);assert.equal(h.steps().length,i+1);}
+  assert.equal(h.steps().length,1);assert.equal(h.steps()[0].time,0);
+  for(let i=1;i<transcript.length;i++){await h.advance(delays[i]-1);assert.equal(h.steps().length,i);await h.advance(1);assert.equal(h.steps().length,i+1);}
   assert.deepEqual(h.steps().map(c=>c.patch.message),transcript);
-  assert.deepEqual(h.steps().map(c=>c.time),transcript.map((_,i)=>(i+1)*5000));
-  assert.deepEqual(h.steps().map(c=>c.patch.mirrorX),transcript.map((_,i)=>i===3));
+  let elapsed=0;assert.deepEqual(h.steps().map(c=>c.time),delays.map(ms=>elapsed+=ms));
+  assert.deepEqual(h.steps().map(c=>c.patch.mirrorX),transcript.map((_,i)=>i===4));
+  assert.ok(h.steps().slice(0,6).every(c=>c.patch.nativeColor));
+  assert.ok(h.steps().slice(6).every(c=>!c.patch.nativeColor));
   for(const {patch}of h.steps().slice(0,-1)){assert.equal(patch.extrusionEnabled,false);assert.equal(patch.height,300);assert.equal(patch.depth,30);assert.equal(patch.relativeSize,100);}
-  const final=h.steps().at(-1).patch;assert.equal(final.fontId,'gill');assert.equal(final.height,30000);assert.equal(final.depth,3000);assert.equal(final.animation,'yaw');
+  const final=h.steps().at(-1).patch;assert.equal(final.fontId,'gill');assert.equal(final.height,3000);assert.equal(final.depth,300);assert.equal(final.animation,'yaw');
   assert.equal(final.extrusionEnabled,true);assert.equal(h.calls.at(-2).type,'orbit');assert.equal(h.calls.at(-2).mode,'yaw');assert.equal(h.calls.at(-1).type,'camera');
   assert.equal(h.api.state.phase,'live');assert.equal(h.api.state.lastAppliedId,1);assert.equal(h.api.state.content.message,'Where are you Josh?');assert.equal(h.timers.size,0);
 });
 test('Stop and Resume preserve remaining hold time rather than consuming paused time',async()=>{
-  const h=harness();await h.begin();await h.advance(2000);h.api.pause();await h.advance(100000);assert.equal(h.steps().length,0);
-  h.api.resume();await h.advance(2999);assert.equal(h.steps().length,0);await h.advance(1);assert.equal(h.steps().length,1);
+  const h=harness();await h.begin();await h.advance(2000);h.api.pause();await h.advance(100000);assert.equal(h.steps().length,1);
+  h.api.resume();await h.advance(2999);assert.equal(h.steps().length,1);await h.advance(1);assert.equal(h.steps().length,2);
 });
 test('hidden time cannot consume introduction holds',async()=>{
-  const h=harness();await h.begin();await h.advance(2000);await h.hidden(true);await h.advance(100000);assert.equal(h.steps().length,0);
-  await h.hidden(false);await h.advance(3000);assert.equal(h.steps().length,1);
+  const h=harness();await h.begin();await h.advance(2000);await h.hidden(true);await h.advance(100000);assert.equal(h.steps().length,1);
+  await h.hidden(false);await h.advance(3000);assert.equal(h.steps().length,2);
 });
-test('the first hold starts after the descent and later holds after artwork/Fit completion',async()=>{
+test('first emoji follows descent immediately and the next hold waits for artwork/Fit completion',async()=>{
   let arrive,draw;const flight=new Promise(r=>{arrive=r;}),first=new Promise(r=>{draw=r;});
   const h=harness({flight:()=>flight,apply:p=>p.message==='🥱'?first:undefined});await h.begin();await h.advance(100000);assert.equal(h.steps().length,0);
-  arrive();await flush();await h.advance(5000);assert.equal(h.steps().length,1);await h.advance(50000);assert.equal(h.steps().length,1);
+  arrive();await flush();assert.equal(h.steps().length,1);await h.advance(50000);assert.equal(h.steps().length,1);
   draw();await flush();await h.advance(4999);assert.equal(h.steps().length,1);await h.advance(1);assert.equal(h.steps().length,2);
 });
 test('Reset interrupts a hold, clears queued responses and cannot revive old timers',async()=>{
-  const h=harness(),layer={url:'fixture',pageSize:25};await h.api.poll(layer);await h.begin();await h.advance(5000);
+  const h=harness(),layer={url:'fixture',pageSize:25};await h.api.poll(layer);await h.begin();
   h.api.state.queue.push({objectId:2,attributes:{geoglyph_speaks:'queued'}});
   h.client.afterCues=async()=>[{objectId:3,attributes:{special_commands:'reset'}}];await h.api.poll(layer);await flush();
   assert.equal(h.api.state.phase,'overview');assert.equal(h.api.state.lastAppliedId,3);assert.equal(h.api.state.queue.length,0);
   await h.advance(100000);assert.equal(h.steps().length,1);assert.equal(h.timers.size,0);assert.equal(h.api.state.applying,false);
 });
 test('manual artwork changes cancel the script without returning to the overview',async()=>{
-  const h=harness();await h.begin();await h.advance(5000);const overviews=h.calls.filter(c=>c.type==='overview').length;
+  const h=harness();await h.begin();const overviews=h.calls.filter(c=>c.type==='overview').length;
   h.listeners['geoglyph:manual-map-change']();await flush();await h.advance(100000);
   assert.equal(h.steps().length,1);assert.equal(h.api.state.phase,'live');assert.equal(h.api.state.applying,false);
   assert.equal(h.calls.filter(c=>c.type==='overview').length,overviews);assert.equal(h.timers.size,0);
@@ -66,7 +70,7 @@ test('manual artwork changes cancel the script without returning to the overview
 test('manual change dispatch lets its caller mutate artwork before queued survey work starts',async()=>{
   let manualMutationFinished=false;
   const h=harness({apply:p=>{if(p.message==='manual-followup')assert.equal(manualMutationFinished,true);}});
-  await h.begin();await h.advance(5000);
+  await h.begin();
   h.api.state.queue.push({objectId:2,attributes:{geoglyph_speaks:'manual-followup'}});
   h.listeners['geoglyph:manual-map-change']();
   assert.equal(h.steps().length,1);
@@ -84,8 +88,8 @@ test('ordinary responses remain queued during introduction and a duplicate Begin
   const h=harness(),layer={url:'fixture',pageSize:25};await h.api.poll(layer);await h.begin();
   h.client.afterCues=async()=>[{objectId:2,attributes:{special_commands:'begin'}},{objectId:3,attributes:{geoglyph_speaks:'next'}}];
   await h.api.poll(layer);assert.equal(h.api.state.queue.length,1);assert.equal(h.api.state.queue[0].objectId,3);
-  for(let i=0;i<13;i++)await h.advance(5000);
-  assert.equal(h.steps().length,14);assert.equal(h.steps().at(-1).patch.message,'next');assert.equal(h.api.state.lastAppliedId,3);
+  for(const ms of delays.slice(1))await h.advance(ms);
+  assert.equal(h.steps().length,15);assert.equal(h.steps().at(-1).patch.message,'next');assert.equal(h.api.state.lastAppliedId,3);
 });
 test('failed introduction step keeps prior successful content and releases the busy flag',async()=>{
   const h=harness({apply:p=>{if(p.message==='😶')throw Error('fixture draw failed');}});await h.begin();await h.advance(5000);await h.advance(5000);
@@ -93,5 +97,5 @@ test('failed introduction step keeps prior successful content and releases the b
   await h.advance(100000);assert.equal(h.steps().length,2);assert.equal(h.timers.size,0);
 });
 test('leaving Map invalidates the held step without further rendering',async()=>{
-  const h=harness();await h.begin();h.map.previewActive=false;await h.advance(100);assert.equal(h.steps().length,0);assert.equal(h.api.state.applying,false);assert.equal(h.timers.size,0);
+  const h=harness();await h.begin();h.map.previewActive=false;await h.advance(100);assert.equal(h.steps().length,1);assert.equal(h.api.state.applying,false);assert.equal(h.timers.size,0);
 });

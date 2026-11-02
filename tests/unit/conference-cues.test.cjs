@@ -76,6 +76,46 @@ test('controls-only submissions retain content and protect an existing emoji', (
   assert.equal(resolve({}).kind, 'emoji');
 });
 
+test('Response 169 colour control retains the final Begin text instead of its legacy sleeping placeholder', () => {
+  const context={content:{kind:'text',message:'Where are you Josh?'},lastTextFont:'Gill Sans',extrusionEnabled:true};
+  const raw=feature({objectid:169,whats_on_your_mind:'😴',emojis:null,geoglyph_speaks:null,
+    choose_a_colour_colour:'Yellow',special_commands:null,_2d_or_3d:null,animation:null});
+  const before=JSON.stringify({raw,context}),result=resolve(raw,context);
+  assert.equal(result.objectId,169);assert.equal(result.message,'Where are you Josh?');
+  assert.deepEqual(result.nextContent,context.content);assert.equal(result.hasNewContent,false);
+  assert.equal(result.kind,'text');assert.equal(result.font,'Gill Sans');assert.equal(result.nativeColor,false);
+  assert.equal(result.extrusionEnabled,true);assert.equal(result.fill,'#FFDF3A');
+  assert.equal(result.animation,undefined);assert.equal(result.height,undefined);assert.equal(result.depth,undefined);assert.equal(result.fit,false);
+  assert.deepEqual(result.warnings,[]);assert.equal(JSON.stringify({raw,context}),before);
+});
+
+test('only recognised controls can suppress the exact sleeping placeholder in the legacy field', () => {
+  for(const [field,value]of [['choose_a_colour_colour','Yellow'],['choose_a_font_font','Forte'],['random_font','Yes'],['random_font','No'],
+    ['_size_size','Medium'],['fit','Fit'],['fit',false],['_2d_or_3d','2D'],['animation','Turn']]){
+    const result=resolve({WHATS_ON_YOUR_MIND:' 😴 ',[field.toUpperCase()]:value},textContext);
+    assert.equal(result.message,'Previous',field);assert.equal(result.hasNewContent,false,field);
+  }
+  for(const raw of [{whats_on_your_mind:'😴'},{whats_on_your_mind:'😴',choose_a_colour_colour:'beige'},
+    {whats_on_your_mind:'😴',unrecognised_control:'Yellow'}]){
+    assert.equal(resolve(raw,textContext).message,'😴');assert.equal(resolve(raw,textContext).hasNewContent,true);
+  }
+});
+
+test('placeholder handling preserves explicit content, ordinary legacy text and command priority', () => {
+  const control={whats_on_your_mind:'😴',choose_a_colour_colour:'Yellow'};
+  const emoji=resolve({...control,emojis:'😴'},textContext);
+  assert.equal(emoji.message,'😴');assert.equal(emoji.font,'Segoe UI Emoji');assert.equal(emoji.kind,'emoji');
+  assert.equal(emoji.nativeColor,true);assert.equal(emoji.extrusionEnabled,false);assert.equal(emoji.hasNewContent,true);
+  for(const value of ['Hello','😴']){
+    const explicit=resolve({...control,geoglyph_speaks:value},textContext);assert.equal(explicit.message,value);assert.equal(explicit.hasNewContent,true);
+  }
+  const legacy=resolve({...control,whats_on_your_mind:'New legacy message'},textContext);
+  assert.equal(legacy.message,'New legacy message');assert.equal(legacy.hasNewContent,true);assert.equal(legacy.fill,'#FFDF3A');
+  for(const command of ['begin','reset'])assert.deepEqual(resolve({...control,special_commands:command}),{command,objectId:undefined,warnings:[]});
+  const existingEmoji=resolve(control,{content:{kind:'emoji',message:'🤗'}});
+  assert.equal(existingEmoji.message,'🤗');assert.equal(existingEmoji.nativeColor,true);assert.equal(existingEmoji.extrusionEnabled,false);
+});
+
 test('all explicit fonts resolve and Random Yes overrides the explicit font', () => {
   for (const font of fonts) assert.equal(resolve({ choose_a_font_font: ` ${font.toUpperCase()} ` }, textContext).font, font);
   const result = resolve({ choose_a_font_font: 'Chiller', random_font: ' YES ' }, textContext);

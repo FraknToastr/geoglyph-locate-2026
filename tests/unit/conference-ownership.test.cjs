@@ -39,6 +39,18 @@ function harness() {
   return { context, state, draws, jobs, gate, cue, rollbacks, orbitStops: () => orbitStops,
     flush() { const pending = [...jobs.values()]; jobs.clear(); pending.forEach(fn => fn()); } };
 }
+test('Reset opening explicitly selects colour emoji in 2D', async () => {
+  let applied;
+  const context = vm.createContext({ DEFAULT_ANCHOR:{lng:138,lat:-35},
+    applyConferenceCue(patch, options) { applied={patch,options}; return Promise.resolve(); } });
+  vm.runInContext(extract('drawConferenceOpening'), context);
+  await context.drawConferenceOpening('bundled-emoji', {resetAnchor:true,objectId:145});
+  assert.equal(applied.patch.fontId,'bundled-emoji');
+  assert.equal(applied.patch.message,'😴');
+  assert.equal(applied.patch.nativeColor,true);
+  assert.equal(applied.patch.extrusionEnabled,false);
+  assert.equal(applied.options.opening,true);
+});
 const entered = () => new Promise(setImmediate);
 
 test('manual font selection releases the superseded cue lock and draws without a later survey', async () => {

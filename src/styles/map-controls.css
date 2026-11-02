@@ -60,3 +60,14 @@
 .map-section-head .map-section-collapse:focus-visible {
   outline-color: var(--map-orange);
 }
+.arcgis-token-actions{display:flex;flex-wrap:wrap;gap:4px}
+.arcgis-poll-actions{display:flex;flex-wrap:wrap;align-items:end}
+.arcgis-poll-actions>.map-action{flex:1 0 46px}
+.arcgis-poll-interval{display:grid;grid-template-columns:28px 48px 28px;gap:3px;margin-left:auto}
+.arcgis-poll-interval>span{grid-column:1/-1}
+.arcgis-poll-interval input{-moz-appearance:textfield}
+.arcgis-poll-interval input::-webkit-inner-spin-button,.arcgis-poll-interval input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#mapArcgisAuth[hidden],#mapArcgisReset123Btn[hidden]{display:none!important}
+.map-font-filter-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.map-font-filter-row label{display:flex;align-items:center;gap:4px;min-width:0}
+.map-font-filter-row .map-action{flex:none}

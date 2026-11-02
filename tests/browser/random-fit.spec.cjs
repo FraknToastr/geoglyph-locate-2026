@@ -124,6 +124,35 @@ for(const mode of ['2D','static3D','fixed','yaw','billboard']){
   });
 }
 
+test('Random overrides conference overview Fit suppression without stopping Turn',async({page})=>{
+  const ids=await openMap(page,'yaw');
+  await page.evaluate(()=>{GeoGlyphMapEngine.state.conferenceOverview=true;});
+  const before=await snapshot(page);
+  await page.locator('#mapQuickRandom').click();await settled(page);
+  const after=await snapshot(page);
+  expect(after.font).toBe(ids[1]);expectOnePostDrawFit(after,ids[1]);
+  expect(after.animation.orbiting).toBe(true);expect(after.animation.frames).toBeGreaterThan(before.animation.frames);
+  expect(after.animation.phase).toBe('orbiting');expect(after.zoom).not.toBe(before.zoom);
+  const margins=await page.evaluate(()=>{
+    const s=GeoGlyphMapEngine.state,map=s.map,b=GeoGlyph3D.getBounds(),margins=[];
+    for(let heading=0;heading<360;heading+=15){
+      const values={heightMeters:s.baseHeightMeters*s.relativeSize/100,depthMeters:s.extrusionDepthMeters,tilt:s.extrusionTilt,bearing:heading};
+      const origin=maplibregl.MercatorCoordinate.fromLngLat(s.anchor),u=origin.meterInMercatorCoordinateUnits();
+      const convert=p=>{const q=GeoGlyphGroundTransform.point(p,values,b);return [origin.x+q[0]*u,origin.y-q[1]*u,q[2]*u,1];};
+      const center=new maplibregl.MercatorCoordinate(...convert([(b.minX+b.maxX)/2,(b.minY+b.maxY)/2,(b.minZ+b.maxZ)/2]).slice(0,3));
+      const transform=map.transform.clone();transform.setRenderWorldCopies(true);transform.setPitch(55);transform.setBearing(heading);transform.setCenter(center.toLngLat());transform.setElevation(center.toAltitude());
+      const matrix=transform.getProjectionDataForCustomLayer().mainMatrix;
+      for(const x of [b.minX,b.maxX])for(const y of [b.minY,b.maxY])for(const z of [b.minZ,b.maxZ]){
+        const p=convert([x,y,z]),clip=[0,1,2,3].map(i=>p.reduce((sum,v,j)=>sum+matrix[j*4+i]*v,0));
+        if(clip[3]<=0)return [-1];
+        const px=(clip[0]/clip[3]+1)/2,py=(1-clip[1]/clip[3])/2;margins.push(Math.min(px,1-px,py,1-py));
+      }
+    }
+    return margins;
+  });
+  expect(Math.min(...margins)).toBeGreaterThanOrEqual(.095);
+});
+
 test('a Fit clicked while Random waits for its new 3D draw performs one post-draw Fit',async({page})=>{
   const ids=await openMap(page,'billboard');
   await page.emulateMedia({reducedMotion:'no-preference'});

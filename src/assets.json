@@ -212,6 +212,18 @@
     "type": "script"
   },
   {
+    "key": "arcgis-admin",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/arcgis-admin.js"
+  },
+  {
+    "key": "font-compatibility",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/font-compatibility.js"
+  },
+  {
     "key": "conference-cues",
     "type": "script",
     "attrs": "",

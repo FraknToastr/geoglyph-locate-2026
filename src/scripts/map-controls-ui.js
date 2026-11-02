@@ -3,7 +3,7 @@
 
   const sectionDefinitions = [
     ['.map-control-grid', 'mapFontSection', 'Font'],
-    ['[data-map-pane="arcgis"]', 'mapArcgisSection', 'Content · ArcGIS'],
+    ['[data-map-pane="arcgis"]', 'mapArcgisSection', 'Content · Survey123'],
     ['[data-map-pane="message"]', 'mapMessageSection', 'Content · Message'],
     ['[data-map-pane="glyph"]', 'mapGlyphSection', 'Content · Character'],
     ['.map-style-panel', 'mapStyleSection', 'Style'],
@@ -58,9 +58,10 @@
 
     for (const definition of sectionDefinitions) enhanceSection(editor, definition);
 
-    // Message and Character are mutually exclusive; ArcGIS also shows Message.
-    // Let the shared widget recalculate its active scope after mode changes.
+    // Recalculate active sections when modes change or the whole editor reopens.
+    // A refresh while the editor is collapsed disables both bulk actions.
     const modeObserver = new MutationObserver(() => controls.sync());
+    modeObserver.observe(editor, { attributes: true, attributeFilter: ['class'] });
     editor.querySelectorAll('[data-map-pane]').forEach(pane => {
       modeObserver.observe(pane, { attributes: true, attributeFilter: ['hidden'] });
     });

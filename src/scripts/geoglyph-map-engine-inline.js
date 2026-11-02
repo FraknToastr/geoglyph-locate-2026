@@ -200,18 +200,31 @@
           <div class="map-mode-switch" role="group" aria-label="Projection mode">
             <button class="map-chip is-active" type="button" data-map-mode="message">Message</button>
             <button class="map-chip" type="button" data-map-mode="glyph">Character</button>
-            <button class="map-chip" type="button" data-map-mode="arcgis">ArcGIS</button>
+            <button class="map-chip" type="button" data-map-mode="arcgis">Geoglyph</button>
+            <button class="map-chip" type="button" data-map-mode="admin">ArcGIS</button>
           </div>
         </div>
 
         <section class="map-pane map-arcgis-pane" data-map-pane="arcgis" hidden>
           <div class="arcgis-grid">
+            <div id="mapArcgisAuth" hidden>
+              <div class="arcgis-token-actions">
+                <button class="map-action" id="mapArcgisRequestTokenBtn" type="button">Open ArcGIS sign-in</button>
+                <button class="map-action" id="mapArcgisExchangeCodeBtn" type="button">Exchange code</button>
+                <button class="map-action" id="mapArcgisUseTokenBtn" type="button">Use token</button>
+                <button class="map-action" id="mapArcgisClearTokenBtn" type="button">Clear</button>
+              </div>
+              <label class="map-field"><span>ArcGIS token / returned code</span><input id="mapArcgisToken" type="password" autocomplete="off" spellcheck="false" placeholder="Paste returned authorization code or access token"></label>
+              <p>Open sign-in → Allow → copy the returned code → paste it here → Exchange code.</p>
+              <span id="mapArcgisAuthStatus" role="status">Not signed in</span>
+            </div>
             <label class="map-field" id="mapArcgisLayerField" hidden><span>Results layer</span><select id="mapArcgisLayerSelect"><option value="">Choose a results layer</option></select></label>
           <div class="arcgis-actions arcgis-poll-actions">
               <button class="map-action" id="mapArcgisStartBtn" type="button">Start</button>
               <button class="map-action" id="mapArcgisPollBtn" type="button">Fetch</button>
               <button class="map-action" id="mapArcgisStopBtn" type="button" disabled>Stop</button>
-            <label class="arcgis-poll-interval"><span>Poll (s)</span><input id="mapArcgisInterval" type="number" min="1" max="3600" step="1" value="5" aria-label="ArcGIS poll interval in seconds" title="Seconds between checks; changes apply while polling"></label>
+              <button class="map-action" id="mapArcgisReset123Btn" type="button" hidden>Reset 123</button>
+            <label class="arcgis-poll-interval"><span>Poll (s)</span><button class="map-action" id="mapArcgisIntervalMinus" type="button" aria-label="Decrease poll interval">−</button><input id="mapArcgisInterval" type="number" min="1" max="3600" step="1" value="5" aria-label="ArcGIS poll interval in seconds" title="Seconds between checks; changes apply while polling"><button class="map-action" id="mapArcgisIntervalPlus" type="button" aria-label="Increase poll interval">+</button></label>
             </div>
             <div class="arcgis-live"><strong>Survey123 results</strong><span id="mapArcgisLiveValue" role="status" aria-live="polite">Ready · Fetch once or Start live updates</span></div>
             <div class="arcgis-note">Latest non-empty response · whats_on_your_mind</div>
@@ -220,6 +233,11 @@
 
         <div class="map-control-grid">
           <label class="map-field map-span-2"><span>Font</span><select id="mapFontSelect"></select></label>
+          <div class="map-font-filter-row map-span-2">
+            <label><input id="mapFont3DFilter" type="checkbox"> 3D compatible</label>
+            <button id="mapFontRescanBtn" class="map-action" type="button">Rescan</button>
+          </div>
+          <span class="map-span-2" id="mapFontFilterStatus" role="status" hidden></span>
           <button class="map-action" id="mapScanSystemBtn" type="button">Allow local fonts</button>
           <button class="map-action" id="mapCopyEsriPathBtn" type="button">Copy Esri Path</button>
           <button class="map-action" id="mapLoadEsriBtn" type="button">Load Esri Fonts</button>
@@ -332,8 +350,9 @@
     document.querySelectorAll("[data-map-mode]").forEach(button => button.addEventListener("click", async () => {
       notifyManualMapChange();
       const nextMode = button.dataset.mapMode;
+      mapState.adminMode = nextMode === 'admin';
       if (mapState.mode === "arcgis" && nextMode !== "arcgis") stopArcgisPolling({ quiet: true });
-      mapState.mode = nextMode;
+      mapState.mode = mapState.adminMode ? 'arcgis' : nextMode;
       syncModeUi();
       if (mapState.mode === "glyph") {
         await activateSelectedFont({ buildIndex: true, syncLegacy: false });
@@ -361,6 +380,14 @@
     $("mapFontSelect")?.addEventListener("change", async event => {
       await selectFont(event.target.value);
     });
+    $('mapFont3DFilter')?.addEventListener('change',event=>{
+      fontFilterEnabled=event.target.checked;
+      renderFontChooser();
+    });
+    $('mapFontRescanBtn')?.addEventListener('click',()=>{
+      renderFontChooser();compatibilityFilter().rescan();renderFontChooser();
+    });
+    window.addEventListener('pagehide',()=>fontFilter?.flush());
 
     $("mapScanSystemBtn")?.addEventListener("click", scanSystemFonts);
     $("mapCopyEsriPathBtn")?.addEventListener("click",()=>geoGlyphApi()?.copyEsriFontPath());
@@ -435,6 +462,10 @@
     $("mapArcgisStartBtn")?.addEventListener("click", startArcgisPolling);
     $("mapArcgisPollBtn")?.addEventListener("click", () => pollArcgisOnce());
     $("mapArcgisStopBtn")?.addEventListener("click", () => stopArcgisPolling());
+    bindArcgisAdministration();
+    for(const [id,delta] of [['mapArcgisIntervalMinus',-1],['mapArcgisIntervalPlus',1]]) $(id)?.addEventListener('click',()=>{
+      $('mapArcgisInterval').value=clamp(arcgisSettings().seconds+delta,1,3600);scheduleArcgisPoll();
+    });
     $("mapArcgisInterval")?.addEventListener("input", () => {
       if ($("mapArcgisInterval").validity.valid) scheduleArcgisPoll();
     });
@@ -625,7 +656,9 @@
   }
 
   function syncModeUi() {
-    document.querySelectorAll("[data-map-mode]").forEach(button => button.classList.toggle("is-active", button.dataset.mapMode === mapState.mode));
+    document.querySelectorAll("[data-map-mode]").forEach(button => button.classList.toggle("is-active", button.dataset.mapMode === (mapState.adminMode && mapState.mode==='arcgis' ? 'admin' : mapState.mode)));
+    if($('mapArcgisAuth'))$('mapArcgisAuth').hidden=!(mapState.adminMode&&mapState.mode==='arcgis');
+    syncArcgisAuthentication();
     document.querySelectorAll("[data-map-pane]").forEach(pane => {
       const paneMode = pane.dataset.mapPane;
       pane.hidden = mapState.mode === "arcgis" ? !["arcgis", "message"].includes(paneMode) : paneMode !== mapState.mode;
@@ -635,6 +668,7 @@
       messageBox.readOnly = mapState.mode === "arcgis";
       messageBox.title = mapState.mode === "arcgis" ? "Live ArcGIS attribute value" : "Ground message";
     }
+    window.GeoGlyphControls?.sync();
   }
 
   function setStatus(message, kind = "") {
@@ -680,11 +714,31 @@
     return id;
   }
 
+  let fontFilterEnabled=false,fontFilter=null;
+  function compatibilityFilter(){
+    return fontFilter ||= window.GeoGlyphFontCompatibility.create({
+      changed:()=>renderFontChooser(),
+      canWork:()=>mapState.previewActive&&!document.hidden&&!mapState.rebuilding&&!mapState.randomSearching&&!mapState.conferenceApplying,
+      yieldTask:()=>window.GeoGlyphFontService.yieldTask(),
+      check:(item,current)=>window.GeoGlyphFontCompatibility.probe(item,current,{service:window.GeoGlyphFontService,prefersBrowser:shouldPreferDecal})
+    });
+  }
   function renderFontChooser() {
     const select = $("mapFontSelect");
     if (!select) return;
     const current = mapState.selectedFontId;
-    const records = [...mapState.fontRecords.values()].sort((a, b) => `${a.source} ${a.name}`.localeCompare(`${b.source} ${b.name}`));
+    let records = [...mapState.fontRecords.values()].sort((a, b) => `${a.source} ${a.name}`.localeCompare(`${b.source} ${b.name}`));
+    const filterStatus=$('mapFontFilterStatus');
+    const filter=compatibilityFilter(),service=window.GeoGlyphFontService;
+    filter.update(records.map(record=>({id:record.id,record,accessible:hasFontBytes(record),key:window.GeoGlyphFontCompatibility.identity(record,service.keyFor(record))})));
+    const p=filter.progress();
+    if($('mapFontRescanBtn'))$('mapFontRescanBtn').disabled=p.scanning;
+    if(filterStatus){
+      filterStatus.hidden=!(fontFilterEnabled||p.scanning||p.storageError);
+      filterStatus.textContent=(p.scanning?'Scanning · ':'')+(!p.hasScan?'No saved scan — click Rescan.':`${p.compatible} compatible · ${p.checked}/${p.total} checked`)
+        +(p.notScanned?` · ${p.notScanned} not scanned`:'')+(p.inaccessible?` · ${p.inaccessible} need font access`:'')+(p.unverified?` · ${p.unverified} unverified`:'')+(p.storageError?` · ${p.storageError}`:'');
+    }
+    if(fontFilterEnabled)records=records.filter(record=>filter.result(record.id)==='compatible');
     const groupOrder = ["esri", "system", "windows", "file", "preset", "geoglyph"];
     const groups = new Map();
     for (const record of records) {
@@ -701,6 +755,11 @@
       return `<optgroup label="${esc(label)}">${groups.get(source).map(record => `<option value="${esc(record.id)}">${esc(record.name)}${record.style ? ` — ${esc(record.style)}` : ""}</option>`).join("")}</optgroup>`;
     }).join("");
     if (records.some(record => record.id === current)) select.value = current;
+    else if(fontFilterEnabled){
+      const currentRecord=mapState.fontRecords.get(current),label=currentRecord?.name||'No font selected';
+      const option=new Option(`${label} — current selection (${compatibilityFilter().result(current)})`,current,true,true);
+      option.disabled=true;select.prepend(option);select.value=current;
+    }
   }
 
   async function scanSystemFonts() {
@@ -1085,6 +1144,46 @@
     }
   }
 
+  let arcgisAdminClient=null,arcgisAdminBusy=false,arcgisAuthTimer=0;
+  function adminClient(){return arcgisAdminClient ||= window.GeoGlyphArcgisAdmin.create();}
+  function syncArcgisAuthentication(){
+    const button=$('mapArcgisReset123Btn');
+    if(button){button.hidden=!(mapState.adminMode&&mapState.mode==='arcgis'&&arcgisAdminClient?.authenticated());button.disabled=arcgisAdminBusy;}
+    for(const id of ['mapArcgisRequestTokenBtn','mapArcgisExchangeCodeBtn','mapArcgisUseTokenBtn','mapArcgisClearTokenBtn'])if($(id))$(id).disabled=arcgisAdminBusy;
+    if(arcgisAdminBusy)for(const id of ['mapArcgisStartBtn','mapArcgisPollBtn'])if($(id))$(id).disabled=true;
+  }
+  function bindArcgisAdministration(){
+    const status=(text)=>{$('mapArcgisAuthStatus').textContent=text;};
+    const action=async(job)=>{
+      if(arcgisAdminBusy)return;arcgisAdminBusy=true;syncArcgisAuthentication();
+      try{await job();}catch(error){status(error instanceof TypeError?'ArcGIS network request failed. Check connectivity and retry.':error.message);}
+      finally{arcgisAdminBusy=false;syncArcgisControls();syncArcgisAuthentication();if(mapState.arcgisPolling)scheduleArcgisPoll();}
+    };
+    $('mapArcgisRequestTokenBtn').addEventListener('click',()=>{
+      // Open synchronously to retain the browser's popup permission during SHA-256.
+      const popup=window.open('about:blank','geoglyph-arcgis-signin','popup=yes,width=760,height=760,resizable=yes,scrollbars=yes');
+      void action(async()=>{if(!popup)throw Error('Allow popups for GeoGlyph, then open sign-in again.');
+        try{popup.location=await adminClient().authorize();}catch(error){popup.close();throw error;}
+        status('Sign in to ArcGIS, then paste the returned code and choose Exchange code.');
+      });
+    });
+    for(const [id,exchange] of [['mapArcgisExchangeCodeBtn',true],['mapArcgisUseTokenBtn',false]])$(id).addEventListener('click',()=>void action(async()=>{
+      const input=$('mapArcgisToken'),value=input.value;input.value='';
+      const name=await adminClient().login(value,{exchange});status('Signed in as '+name);
+      clearTimeout(arcgisAuthTimer);arcgisAuthTimer=setTimeout(()=>{adminClient().authenticated();syncArcgisAuthentication();status('Session expired. Sign in again.');},Math.max(1,adminClient().expiresAt-Date.now()));
+    }));
+    $('mapArcgisClearTokenBtn').addEventListener('click',()=>{adminClient().clear();clearTimeout(arcgisAuthTimer);$('mapArcgisToken').value='';status('Not signed in');syncArcgisAuthentication();});
+    $('mapArcgisReset123Btn').addEventListener('click',()=>void action(async()=>{
+      status('Checking survey and deletion permissions…');
+      const plan=await adminClient().prepare(window.GeoGlyphSurveyResults.config.serviceUrl);
+      if(!plan.ids.length){status('The survey has no records to delete.');return;}
+      if(!window.confirm(`Reset 123: permanently delete ${plan.ids.length} survey responses from ${plan.name}?\n${plan.url}\nRelated attachments may also be removed. This cannot be undone.`)){status('Reset 123 cancelled.');return;}
+      stopArcgisPolling({quiet:true});window.GeoGlyphConference?.clearSurveyQueue();
+      status('Deleting confirmed survey responses…');
+      try{const count=await adminClient().remove(plan);status(`Deleted and verified ${count} survey responses. Polling is stopped.`);}
+      finally{window.GeoGlyphConference?.clearSurveyQueue();mapState.arcgisLayers=null;mapState.arcgisLastValue=null;}
+    }));
+  }
   function arcgisSettings() {
     return { seconds: Math.round(clamp($("mapArcgisInterval")?.value || 5, 1, 3600)) };
   }
@@ -1117,6 +1216,7 @@
   }
 
   async function startArcgisPolling() {
+    if(arcgisAdminBusy)return;
     if (presentation && window.GeoGlyphConference && !window.GeoGlyphConference.state.ready)
       return window.GeoGlyphConference.retryStartup();
     stopArcgisPolling({ quiet: true });
@@ -1158,6 +1258,7 @@
   }
 
   async function pollArcgisOnce() {
+    if(arcgisAdminBusy)return false;
     if (mapState.arcgisPollBusy) return false;
     if (mapState.arcgisTimer) window.clearTimeout(mapState.arcgisTimer);
     mapState.arcgisTimer = 0;
@@ -1623,6 +1724,7 @@
   }
 
   function queueRebuild(fit = false) {
+    if($('mapFont3DFilter')?.checked)renderFontChooser();
     if (mapState.conferenceRenderSuspended) return;
     if (mapState.conferenceApplying) { mapState.conferenceRebuildPending = true; return; }
     if(!window.GeoGlyphUi?.isRestoring?.())mapState.historyRestoreChoice=null;
@@ -1840,7 +1942,8 @@
           await waitForGroundFrame(()=>current()&&mapState.displayedFontId===id);
           const explicit=mapState.explicitFitPending;
           mapState.explicitFitPending=false;
-          await fitDrawnGeometry(current,{explicit});
+          // Manual Random must frame its block even while the survey remains in overview.
+          await fitDrawnGeometry(current,{explicit,force:true});
           if(current()&&mapState.explicitFitPending){
             mapState.explicitFitPending=false;
             await fitDrawnGeometry(current,{explicit:true});
@@ -1978,9 +2081,9 @@
 
   // Call only after the new artwork has reached its own map frame. Automatic
   // Fits preserve animation; an explicit Fit retains the manual stop policy.
-  async function fitDrawnGeometry(current, { explicit = false, orbit = false, introduction = false } = {}) {
+  async function fitDrawnGeometry(current, { explicit = false, orbit = false, introduction = false, force = false } = {}) {
     if (!current()) throw Error('Artwork was superseded before Fit');
-    if (mapState.conferenceOverview && !explicit && !introduction) return false;
+    if (mapState.conferenceOverview && !explicit && !introduction && !force) return false;
     const first = mapState.initialFitStatus === 'pending';
     const preserveOrbit = !explicit && mapState.extrusionEnabled && Boolean(window.GeoGlyph3D?.stats().animation.orbiting);
     if (!preserveOrbit) window.GeoGlyph3D?.stopOrbit();

@@ -12,8 +12,9 @@
   let source = '', epoch = 0, activeRun = null;
   let introWait = null;
   const introduction = Object.freeze([
-    {message:'🥱',emoji:true}, {message:'😶',emoji:true}, {message:'😏',emoji:true},
-    {message:'😏',emoji:true,mirrorX:true}, {message:'🙂',emoji:true},
+{message:'🥱',emoji:true,delayBefore:0}, {message:'😶',emoji:true}, {message:'🫣',emoji:true},
+{message:'😏',emoji:true,delayBefore:3000}, {message:'😏',emoji:true,mirrorX:true,delayBefore:3000},
+{message:'🤗',emoji:true,delayBefore:3000},
     {message:'Hello'}, {message:"I'm Geoglyph"}, {message:'Call me Geo'},
     {message:'I was made by ChatGPT'}, {message:'Today I will be presenting'},
     {message:'with my best friend'}, {message:'Josh Roberts'}, {message:'Where are you Josh?',final:true}
@@ -84,13 +85,14 @@
       state.content = { kind:'emoji', message:'😴' };
       state.lastTextFont = 'Gill Sans';
       for(let index=0;index<introduction.length;index++){
-        await waitIntroduction(5000,current);
+        const step=introduction[index];
+        await waitIntroduction(step.delayBefore??5000,current);
         if(!current())return;
-        const step=introduction[index],kind=step.emoji?'emoji':'text';
+        const kind=step.emoji?'emoji':'text';
         const cue={objectId:patch.objectId,kind,message:step.message,hasNewContent:true,
           fontId:state.fontIds[step.emoji?'Segoe UI Emoji':'Gill Sans'],nativeColor:Boolean(step.emoji),
           mirrorX:Boolean(step.mirrorX),extrusionEnabled:Boolean(step.final),relativeSize:100,
-          height:step.final?30000:300,depth:step.final?3000:30,fit:false,
+          height:step.final?3000:300,depth:step.final?300:30,fit:false,
           ...(step.final?{animation:'yaw'}:{})};
         const result=await api.applyConferenceCue(cue,{isCurrent:current});
         if(!current())return;
@@ -239,6 +241,10 @@
   }
   window.GeoGlyphConference = Object.freeze({
     state, poll, retryStartup,
+    clearSurveyQueue() {
+      state.phase='live';engine().state.conferenceOverview=false;
+      interrupt();state.queue.length=0;source='';state.lastQueuedId=null;state.lastAppliedId=null;state.baselined=false;
+    },
     pause() { state.paused = true; introWait?.wake(); },
     resume() { state.paused = false; introWait?.wake(); void drain(); }
   });

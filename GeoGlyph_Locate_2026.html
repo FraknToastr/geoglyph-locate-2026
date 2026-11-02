@@ -12153,6 +12153,17 @@ body[data-workflow="symbol"] :is(#sharedColourModule,#symbolControlModule):not(.
 .map-section-head .map-section-collapse:focus-visible {
   outline-color: var(--map-orange);
 }
+.arcgis-token-actions{display:flex;flex-wrap:wrap;gap:4px}
+.arcgis-poll-actions{display:flex;flex-wrap:wrap;align-items:end}
+.arcgis-poll-actions>.map-action{flex:1 0 46px}
+.arcgis-poll-interval{display:grid;grid-template-columns:28px 48px 28px;gap:3px;margin-left:auto}
+.arcgis-poll-interval>span{grid-column:1/-1}
+.arcgis-poll-interval input{-moz-appearance:textfield}
+.arcgis-poll-interval input::-webkit-inner-spin-button,.arcgis-poll-interval input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#mapArcgisAuth[hidden],#mapArcgisReset123Btn[hidden]{display:none!important}
+.map-font-filter-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.map-font-filter-row label{display:flex;align-items:center;gap:4px;min-width:0}
+.map-font-filter-row .map-action{flex:none}
 </style>
 
 
@@ -18664,6 +18675,241 @@ return maplibregl$1;
   return Object.freeze({ config, create, ResultsError });
 });
 </script>
+<script data-geoglyph-asset="arcgis-admin">(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.GeoGlyphArcgisAdmin=api;})(globalThis,function(){
+'use strict';
+const CLIENT='2i8ErWnjyQES93El', REDIRECT='urn:ietf:wg:oauth:2.0:oob', PORTAL='https://www.arcgis.com/sharing/rest';
+function create({fetch:request=globalThis.fetch,crypto=globalThis.crypto,now=Date.now,timeoutMs=20000}={}){
+  let token='',expires=0,pending=null,generation=0,username='',fullEdit=false;
+  function clear(){generation++;token='';expires=0;pending=null;username='';fullEdit=false;}
+  function authenticated(){if(token&&expires<=now())clear();return Boolean(token);}
+  async function post(url,params={},credential=token){
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
+    try{
+      const response=await request(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:new URLSearchParams({f:'json',...params,...(credential?{token:credential}:{})}).toString(),cache:'no-store',signal:controller.signal});
+      if(!response.ok)throw Error('ArcGIS request failed (HTTP '+response.status+').');
+      const json=await response.json();
+      if(json.error){if([498,499].includes(json.error.code))clear();throw Error('ArcGIS rejected the request'+(json.error.code?' ('+json.error.code+')':'')+'. Check sign-in and permissions.');}
+      return json;
+    }catch(error){if(error.name==='AbortError')throw Error('ArcGIS request timed out; its outcome may be unknown.');throw error;}finally{clearTimeout(timer);}
+  }
+  function base64(bytes){return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+  async function authorize(){
+    if(!crypto?.getRandomValues)throw Error('This browser cannot create a secure sign-in request.');
+    const owner=++generation,verifier=base64(crypto.getRandomValues(new Uint8Array(64)));
+    const challenge=crypto.subtle?.digest?base64(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier)))):verifier;
+    if(owner!==generation)throw Error('Sign-in was cancelled.');
+    pending={verifier,created:now(),owner};
+    return PORTAL+'/oauth2/authorize?'+new URLSearchParams({client_id:CLIENT,redirect_uri:REDIRECT,response_type:'code',code_challenge:challenge,code_challenge_method:challenge===verifier?'plain':'S256',state:base64(crypto.getRandomValues(new Uint8Array(24))),expiration:'120'});
+  }
+  async function login(value,{exchange=true}={}){
+    const owner=generation;let candidate=value.trim(),lifetime=7200;
+    if(!candidate)throw Error('Paste the returned code or access token.');
+    if(exchange){const p=pending;if(!p||now()-p.created>900000)throw Error('Open ArcGIS sign-in again before exchanging a code.');
+      const result=await post(PORTAL+'/oauth2/token',{client_id:CLIENT,grant_type:'authorization_code',code:candidate,redirect_uri:REDIRECT,code_verifier:p.verifier},'');
+      if(!result.access_token)throw Error('ArcGIS returned no access token.');candidate=result.access_token;lifetime=Number(result.expires_in)||7200;
+    }
+    const user=await post(PORTAL+'/community/self',{},candidate);
+    if(!user.username)throw Error('ArcGIS could not validate this account.');
+    if(owner!==generation)throw Error('Sign-in was cancelled.');
+    token=candidate;expires=now()+lifetime*1000;username=user.username;fullEdit=user.role==='org_admin'||user.privileges?.includes('features:user:fullEdit');pending=null;return username;
+  }
+  async function prepare(serviceUrl){
+    if(!authenticated())throw Error('Sign in to ArcGIS first.');
+    const owner=generation,service=await post(serviceUrl),layers=service.layers||[];
+    if(layers.length!==1)throw Error('Expected one survey response layer; deletion target is ambiguous.');
+    let url=serviceUrl+'/'+layers[0].id,meta=await post(url);
+    if(!String(meta.capabilities).split(',').includes('Delete')){
+      if(!meta.isView)throw Error('This survey layer does not permit deletion for this account.');
+      const admin=await post(url.replace('/rest/services/','/rest/admin/services/'));
+      const definition=admin.adminLayerInfo?.viewLayerDefinition;
+      if(!definition?.sourceServiceName||!Number.isInteger(definition.sourceLayerId))throw Error('Cannot verify the survey source layer.');
+      const name=definition.sourceServiceName;
+      if(!/^[A-Za-z0-9_-]+$/.test(name))throw Error('Unsupported survey source service name.');
+      url=serviceUrl.replace(/\/[^/]+\/FeatureServer$/, '/'+name+'/FeatureServer')+'/'+definition.sourceLayerId;
+      meta=await post(url);
+      if(meta.isView||!String(meta.capabilities).split(',').includes('Delete'))throw Error('The survey source does not permit deletion for this account.');
+    }
+    const ownership=meta.ownershipBasedAccessControlForFeatures;
+    if(!fullEdit&&(ownership?.allowOthersToQuery===false||ownership?.allowOthersToDelete===false)){
+      if(!meta.serviceItemId)throw Error('Cannot verify permission to delete all survey responses.');
+      const item=await post(PORTAL+'/content/items/'+encodeURIComponent(meta.serviceItemId));
+      if(item.owner!==username)throw Error('This survey requires its owner or an administrator to delete all responses.');
+    }
+    const result=await post(url+'/query',{where:'1=1',returnIdsOnly:'true'});
+    if(result.exceededTransferLimit||!Array.isArray(result.objectIds)||!result.objectIds.every(Number.isSafeInteger))throw Error('Could not obtain the complete survey record list.');
+    if(owner!==generation||!authenticated())throw Error('Sign-in changed while preparing deletion.');
+    return Object.freeze({url,name:meta.name||layers[0].name,ids:Object.freeze([...new Set(result.objectIds)]),owner});
+  }
+  async function remove(plan){
+    if(!authenticated()||plan.owner!==generation)throw Error('Sign-in changed; prepare Reset 123 again.');
+    let deleted=0;
+    for(let i=0;i<plan.ids.length;i+=200){
+      if(!authenticated()||plan.owner!==generation)throw Error('Sign-in changed during deletion.');
+      const ids=plan.ids.slice(i,i+200);
+      const result=await post(plan.url+'/deleteFeatures',{objectIds:ids.join(','),rollbackOnFailure:'true'});
+      if(!Array.isArray(result.deleteResults)||result.deleteResults.length!==ids.length||new Set(result.deleteResults.map(r=>r.objectId)).size!==ids.length||result.deleteResults.some(r=>!r.success)||result.deleteResults.some(r=>!ids.includes(r.objectId)))throw Error('Deletion was incomplete. Verify the survey before trying again.');
+      deleted+=ids.length;
+    }
+    for(let i=0;i<plan.ids.length;i+=200){const remaining=await post(plan.url+'/query',{objectIds:plan.ids.slice(i,i+200).join(','),returnIdsOnly:'true'});if(!Array.isArray(remaining.objectIds)||remaining.objectIds.length)throw Error('Could not verify deletion. Inspect the survey before trying again.');}
+    return deleted;
+  }
+  return {authorize,login,clear,authenticated,prepare,remove,get expiresAt(){return expires;},get username(){return authenticated()?username:'';}};
+}
+return {create};
+});
+</script>
+<script data-geoglyph-asset="font-compatibility">(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.GeoGlyphFontCompatibility=api;})(globalThis,function(){
+'use strict';
+const STORAGE_KEY='geoglyph-locate2026.3d-font-results',VERSION=1;
+const definitive=value=>value==='compatible'||value==='incompatible';
+const normal=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+// Only source metadata is inspected here. Restoring a scan must not read font files.
+function identity(record,resourceKey){
+  const ref=record.geoGlyphRef||record,file=record.file||ref.file,buffer=record.arrayBuffer||ref.arrayBuffer;
+  const descriptor=record.localDescriptor||record.metadata||ref.metadata;
+  if(file)return JSON.stringify(['file',resourceKey,file.webkitRelativePath||file.name,file.size,file.lastModified||0]);
+  if(buffer)return JSON.stringify(['buffer',resourceKey,buffer.byteLength]);
+  if(descriptor?.postscriptName)return JSON.stringify(['local',normal(descriptor.postscriptName),normal(descriptor.style||'Regular')]);
+  return JSON.stringify(['face',resourceKey,normal(record.style||ref.style||'Regular')]);
+}
+function probeCodes(codes){
+  const result=[],add=code=>{
+    if(result.length>=8||result.includes(code)||!Number.isInteger(code)||code<0||code>0x10FFFF)return;
+    if(!/[\p{Cc}\p{Cf}\p{Cs}\p{Cn}\p{Z}\p{M}]/u.test(String.fromCodePoint(code)))result.push(code);
+  };
+  for(const code of [65,97,77,48])if(codes.includes(code))add(code);
+  for(const code of codes){add(code);if(result.length===8)break;}
+  return result;
+}
+async function probe({record},current,{service,prefersBrowser=()=>false}){
+  const metadata=await service.prepare(record,{priority:10,retry:true});
+  if(!current())return 'unverified';
+  if(record.hasColor)return 'incompatible';
+  // Fixed probe settings deliberately exclude the displayed message, size and quality.
+  const options={tracking:0,lineHeight:1.15,quality:10,symbol:true,tolerance:2/11};
+  for(const code of probeCodes(metadata.codes||[])){
+    if(!current())return 'unverified';
+    const text=String.fromCodePoint(code);if(prefersBrowser(record,text))continue;
+    try{
+      const model=await service.model(record,text,options);
+      if(!current())return 'unverified';
+      if(record.hasColor)return 'incompatible';
+      if(model.missing.length||!model.polygons.length||!model.bounds.height)continue;
+      const key=JSON.stringify([service.keyFor(record),text,options]),mesh=await service.mesh(key,model);
+      if(!current())return 'unverified';
+      const bytes=mesh.bytes+mesh.outline.byteLength+(model.vertices||0)*16;
+      if(mesh.position?.length&&bytes<=32*1024*1024)return 'compatible';
+    }catch(error){if(error.workerFailure||!current())return 'unverified';}
+    await service.yieldTask();
+  }
+  // A bounded sample cannot prove that every other glyph is unusable.
+  return 'unverified';
+}
+function create({check,changed=()=>{},canWork=()=>true,yieldTask=()=>new Promise(r=>setTimeout(r,0)),storage,cacheLimit=4000,byteLimit=1024*1024}={}){
+  let catalogue=[],jobs=[],index=0,generation=0,active=false,scanning=false,disposed=false;
+  let timer=0,notification=0,saveTimer=0,dirty=false,hasScan=false,storageError='';
+  const byId=new Map(),cache=new Map(),results=new Map(),jobKeys=new Set();
+  const store=()=>storage===undefined?globalThis.localStorage:storage;
+  const size=text=>Math.max(text.length*2,new TextEncoder().encode(text).byteLength);
+  function encode(){return JSON.stringify({version:VERSION,scanned:hasScan,entries:[...cache]});}
+  let cacheBytes=0;
+  const overhead=size(JSON.stringify({version:VERSION,scanned:false,entries:[]}));
+  const entryCost=(key,value)=>size(JSON.stringify([key,value]))+2;
+  function drop(key){if(cache.has(key)){cacheBytes-=entryCost(key,cache.get(key));cache.delete(key);}}
+  function put(key,value){
+    drop(key);cache.set(key,value);cacheBytes+=entryCost(key,value);
+    while(cache.size&&(cache.size>cacheLimit||cacheBytes+overhead>byteLimit))drop(cache.keys().next().value);
+  }
+  try{
+    const raw=store().getItem(STORAGE_KEY);
+    if(raw!==null){
+      if(typeof raw!=='string'||size(raw)>byteLimit)throw Error('Invalid scan');
+      const data=JSON.parse(raw);
+      if(data?.version!==VERSION||typeof data.scanned!=='boolean'||!Array.isArray(data.entries)||data.entries.length>cacheLimit)throw Error('Invalid scan');
+      for(const entry of data.entries){
+        if(!Array.isArray(entry)||entry.length!==2||typeof entry[0]!=='string'||!definitive(entry[1]))throw Error('Invalid scan');
+      }
+      for(const [key,result]of data.entries)put(key,result);
+      hasScan=data.scanned;
+    }
+  }catch(_){storageError='Saved results unavailable; using this session only.';}
+  function notify(){if(!disposed&&!notification)notification=setTimeout(()=>{notification=0;changed();},150);}
+  function flush(){
+    clearTimeout(saveTimer);saveTimer=0;if(!dirty)return;
+    const text=encode();
+    try{store().setItem(STORAGE_KEY,text);storageError='';}
+    catch(_){storageError='Results kept for this session; browser storage unavailable.';}
+    dirty=false;
+  }
+  function saveSoon(){dirty=true;if(!saveTimer)saveTimer=setTimeout(()=>{saveTimer=0;flush();notify();},500);}
+  function update(next){
+    byId.clear();const unique=new Map();
+    for(const item of next){
+      byId.set(item.id,item);
+      const previous=unique.get(item.key);
+      if(!previous||(!previous.accessible&&item.accessible))unique.set(item.key,item);
+    }
+    catalogue=[...unique.values()];
+  }
+  function finish(){scanning=false;flush();notify();}
+  function schedule(delay=100){if(scanning&&!active&&!timer&&!disposed)timer=setTimeout(()=>{timer=0;void work();},delay);}
+  async function work(){
+    if(active||!scanning||disposed)return;
+    if(index>=jobs.length){finish();return;}
+    if(!canWork()){schedule(500);return;}
+    const owner=generation,item=jobs[index++];active=true;
+    const current=()=>!disposed&&owner===generation;
+    try{
+      let result;
+      if(!item.accessible)result='inaccessible';
+      else{
+        try{result=await check(item,current);if(typeof result==='boolean')result=result?'compatible':'incompatible';}
+        catch(_){result=item.record?.hasColor?'incompatible':'unverified';}
+        if(!definitive(result)&&result!=='inaccessible')result='unverified';
+      }
+      if(current()){
+        results.set(item.key,result);
+        if(definitive(result)){put(item.key,result);saveSoon();}
+        notify();
+      }
+    }finally{
+      await yieldTask();active=false;
+      if(current()){if(index>=jobs.length)finish();else schedule();}
+    }
+  }
+  function rescan(){
+    if(scanning||disposed)return false;
+    generation++;scanning=true;hasScan=true;jobs=catalogue.filter(item=>item.accessible);index=0;
+    jobKeys.clear();
+    for(const item of catalogue){
+      jobKeys.add(item.key);drop(item.key);results.delete(item.key);
+      // Missing access is already known from metadata; do not wait one timer per alias.
+      if(!item.accessible)results.set(item.key,'inaccessible');
+    }
+    saveSoon();if(jobs.length)schedule();else finish();return true;
+  }
+  function result(id){
+    const item=byId.get(id);if(!item)return 'not scanned';
+    return results.get(item.key)||cache.get(item.key)||(scanning&&jobKeys.has(item.key)?'checking':!item.accessible?'inaccessible':'not scanned');
+  }
+  function progress(){
+    const count={total:catalogue.length,checked:0,compatible:0,incompatible:0,inaccessible:0,unverified:0,notScanned:0,scanning,hasScan,storageError};
+    for(const item of catalogue){
+      if(results.has(item.key)||cache.has(item.key))count.checked++;
+      const status=result(item.id);
+      if(status==='compatible')count.compatible++;
+      if(status==='incompatible')count.incompatible++;
+      if(status==='unverified')count.unverified++;
+      if(status==='not scanned')count.notScanned++;
+      if(!item.accessible)count.inaccessible++;
+    }
+    return count;
+  }
+  return {update,rescan,result,progress,flush,dispose(){flush();disposed=true;generation++;scanning=false;clearTimeout(timer);clearTimeout(notification);}};
+}
+return {create,identity,probeCodes,probe,STORAGE_KEY};
+});
+</script>
 <script data-geoglyph-asset="conference-cues">(function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -18677,6 +18923,12 @@ return maplibregl$1;
   const animations = Object.freeze({ orbit: 'fixed', turn: 'yaw', face: 'billboard' });
   const text = value => value == null ? '' : String(value).trim();
   const key = value => text(value).toLowerCase();
+  const yesNo = Object.freeze({ yes:true, no:false, true:true, false:false });
+  const controlOptions = Object.freeze({
+    '_size_size':sizes, fit:Object.freeze({fit:true,...yesNo}), random_font:yesNo,
+    choose_a_font_font:Object.freeze(Object.fromEntries(fonts.map(font=>[key(font),font]))),
+    choose_a_colour_colour:colours, '_2d_or_3d':Object.freeze({'2d':false,'3d':true}), animation:animations
+  });
 
   function command(raw) {
     const attributes = raw?.attributes || raw || {};
@@ -18697,7 +18949,7 @@ return maplibregl$1;
     // Commands own the entire submission, including submissions with emoji content.
     const special = command(raw);
     if (special) return { command: special, objectId: raw.objectId ?? get('objectid') ?? get('object_id'), warnings };
-    function option(name, choices) {
+    function option(name, choices = controlOptions[name]) {
       const value = key(get(name));
       if (!value) return undefined;
       if (Object.prototype.hasOwnProperty.call(choices, value)) return choices[value];
@@ -18707,7 +18959,12 @@ return maplibregl$1;
 
     if (key(get('special_commands'))) warnings.push(`Unknown special_commands value: ${text(get('special_commands'))}`);
     const emoji = text(get('emojis'));
-    const message = emoji || text(get('geoglyph_speaks')) || text(get('whats_on_your_mind'));
+    const speech = text(get('geoglyph_speaks')), legacy = text(get('whats_on_your_mind'));
+    // The survey can retain its sleeping placeholder on a controls-only submission.
+    // Do not mistake it for new text and try to extrude it in the last text font.
+    const legacyPlaceholder = !emoji && !speech && legacy === '😴' && Object.entries(controlOptions)
+      .some(([name, choices]) => Object.prototype.hasOwnProperty.call(choices, key(get(name))));
+    const message = emoji || speech || (legacyPlaceholder ? '' : legacy);
     const previous = context.content || { kind: 'emoji', message: '' };
     const kind = message ? (emoji ? 'emoji' : 'text') : previous.kind === 'text' ? 'text' : 'emoji';
     const result = {
@@ -18725,9 +18982,9 @@ return maplibregl$1;
     };
     result.nextContent = { kind: result.kind, message: result.message };
 
-    const size = option('_size_size', sizes);
+    const size = option('_size_size');
     if (size) [result.height, result.depth] = size;
-    result.fit = option('fit', { fit: true, yes: true, no: false, true: true, false: false }) === true;
+    result.fit = option('fit') === true;
 
     if (raw.geometry != null) {
       const { x, y, spatialReference } = raw.geometry;
@@ -18744,17 +19001,16 @@ return maplibregl$1;
     // An existing emoji also keeps these restrictions for controls-only cues.
     if (kind === 'emoji') return result;
 
-    result.random = option('random_font', { yes: true, no: false, true: true, false: false }) === true;
+    result.random = option('random_font') === true;
     if (!result.random) {
-      const fontChoices = Object.fromEntries(fonts.map(font => [key(font), font]));
-      const font = option('choose_a_font_font', fontChoices);
+      const font = option('choose_a_font_font');
       if (font) result.font = font;
     }
-    const fill = option('choose_a_colour_colour', colours);
+    const fill = option('choose_a_colour_colour');
     if (fill) result.fill = fill;
-    const extrusion = option('_2d_or_3d', { '2d': false, '3d': true });
+    const extrusion = option('_2d_or_3d');
     if (extrusion !== undefined) result.extrusionEnabled = extrusion;
-    const animation = option('animation', animations);
+    const animation = option('animation');
     if (animation) {
       result.animation = animation;
       result.extrusionEnabled = true;
@@ -18967,18 +19223,31 @@ return maplibregl$1;
           <div class="map-mode-switch" role="group" aria-label="Projection mode">
             <button class="map-chip is-active" type="button" data-map-mode="message">Message</button>
             <button class="map-chip" type="button" data-map-mode="glyph">Character</button>
-            <button class="map-chip" type="button" data-map-mode="arcgis">ArcGIS</button>
+            <button class="map-chip" type="button" data-map-mode="arcgis">Geoglyph</button>
+            <button class="map-chip" type="button" data-map-mode="admin">ArcGIS</button>
           </div>
         </div>
 
         <section class="map-pane map-arcgis-pane" data-map-pane="arcgis" hidden>
           <div class="arcgis-grid">
+            <div id="mapArcgisAuth" hidden>
+              <div class="arcgis-token-actions">
+                <button class="map-action" id="mapArcgisRequestTokenBtn" type="button">Open ArcGIS sign-in</button>
+                <button class="map-action" id="mapArcgisExchangeCodeBtn" type="button">Exchange code</button>
+                <button class="map-action" id="mapArcgisUseTokenBtn" type="button">Use token</button>
+                <button class="map-action" id="mapArcgisClearTokenBtn" type="button">Clear</button>
+              </div>
+              <label class="map-field"><span>ArcGIS token / returned code</span><input id="mapArcgisToken" type="password" autocomplete="off" spellcheck="false" placeholder="Paste returned authorization code or access token"></label>
+              <p>Open sign-in → Allow → copy the returned code → paste it here → Exchange code.</p>
+              <span id="mapArcgisAuthStatus" role="status">Not signed in</span>
+            </div>
             <label class="map-field" id="mapArcgisLayerField" hidden><span>Results layer</span><select id="mapArcgisLayerSelect"><option value="">Choose a results layer</option></select></label>
           <div class="arcgis-actions arcgis-poll-actions">
               <button class="map-action" id="mapArcgisStartBtn" type="button">Start</button>
               <button class="map-action" id="mapArcgisPollBtn" type="button">Fetch</button>
               <button class="map-action" id="mapArcgisStopBtn" type="button" disabled>Stop</button>
-            <label class="arcgis-poll-interval"><span>Poll (s)</span><input id="mapArcgisInterval" type="number" min="1" max="3600" step="1" value="5" aria-label="ArcGIS poll interval in seconds" title="Seconds between checks; changes apply while polling"></label>
+              <button class="map-action" id="mapArcgisReset123Btn" type="button" hidden>Reset 123</button>
+            <label class="arcgis-poll-interval"><span>Poll (s)</span><button class="map-action" id="mapArcgisIntervalMinus" type="button" aria-label="Decrease poll interval">−</button><input id="mapArcgisInterval" type="number" min="1" max="3600" step="1" value="5" aria-label="ArcGIS poll interval in seconds" title="Seconds between checks; changes apply while polling"><button class="map-action" id="mapArcgisIntervalPlus" type="button" aria-label="Increase poll interval">+</button></label>
             </div>
             <div class="arcgis-live"><strong>Survey123 results</strong><span id="mapArcgisLiveValue" role="status" aria-live="polite">Ready · Fetch once or Start live updates</span></div>
             <div class="arcgis-note">Latest non-empty response · whats_on_your_mind</div>
@@ -18987,6 +19256,11 @@ return maplibregl$1;
 
         <div class="map-control-grid">
           <label class="map-field map-span-2"><span>Font</span><select id="mapFontSelect"></select></label>
+          <div class="map-font-filter-row map-span-2">
+            <label><input id="mapFont3DFilter" type="checkbox"> 3D compatible</label>
+            <button id="mapFontRescanBtn" class="map-action" type="button">Rescan</button>
+          </div>
+          <span class="map-span-2" id="mapFontFilterStatus" role="status" hidden></span>
           <button class="map-action" id="mapScanSystemBtn" type="button">Allow local fonts</button>
           <button class="map-action" id="mapCopyEsriPathBtn" type="button">Copy Esri Path</button>
           <button class="map-action" id="mapLoadEsriBtn" type="button">Load Esri Fonts</button>
@@ -19099,8 +19373,9 @@ return maplibregl$1;
     document.querySelectorAll("[data-map-mode]").forEach(button => button.addEventListener("click", async () => {
       notifyManualMapChange();
       const nextMode = button.dataset.mapMode;
+      mapState.adminMode = nextMode === 'admin';
       if (mapState.mode === "arcgis" && nextMode !== "arcgis") stopArcgisPolling({ quiet: true });
-      mapState.mode = nextMode;
+      mapState.mode = mapState.adminMode ? 'arcgis' : nextMode;
       syncModeUi();
       if (mapState.mode === "glyph") {
         await activateSelectedFont({ buildIndex: true, syncLegacy: false });
@@ -19128,6 +19403,14 @@ return maplibregl$1;
     $("mapFontSelect")?.addEventListener("change", async event => {
       await selectFont(event.target.value);
     });
+    $('mapFont3DFilter')?.addEventListener('change',event=>{
+      fontFilterEnabled=event.target.checked;
+      renderFontChooser();
+    });
+    $('mapFontRescanBtn')?.addEventListener('click',()=>{
+      renderFontChooser();compatibilityFilter().rescan();renderFontChooser();
+    });
+    window.addEventListener('pagehide',()=>fontFilter?.flush());
 
     $("mapScanSystemBtn")?.addEventListener("click", scanSystemFonts);
     $("mapCopyEsriPathBtn")?.addEventListener("click",()=>geoGlyphApi()?.copyEsriFontPath());
@@ -19202,6 +19485,10 @@ return maplibregl$1;
     $("mapArcgisStartBtn")?.addEventListener("click", startArcgisPolling);
     $("mapArcgisPollBtn")?.addEventListener("click", () => pollArcgisOnce());
     $("mapArcgisStopBtn")?.addEventListener("click", () => stopArcgisPolling());
+    bindArcgisAdministration();
+    for(const [id,delta] of [['mapArcgisIntervalMinus',-1],['mapArcgisIntervalPlus',1]]) $(id)?.addEventListener('click',()=>{
+      $('mapArcgisInterval').value=clamp(arcgisSettings().seconds+delta,1,3600);scheduleArcgisPoll();
+    });
     $("mapArcgisInterval")?.addEventListener("input", () => {
       if ($("mapArcgisInterval").validity.valid) scheduleArcgisPoll();
     });
@@ -19392,7 +19679,9 @@ return maplibregl$1;
   }
 
   function syncModeUi() {
-    document.querySelectorAll("[data-map-mode]").forEach(button => button.classList.toggle("is-active", button.dataset.mapMode === mapState.mode));
+    document.querySelectorAll("[data-map-mode]").forEach(button => button.classList.toggle("is-active", button.dataset.mapMode === (mapState.adminMode && mapState.mode==='arcgis' ? 'admin' : mapState.mode)));
+    if($('mapArcgisAuth'))$('mapArcgisAuth').hidden=!(mapState.adminMode&&mapState.mode==='arcgis');
+    syncArcgisAuthentication();
     document.querySelectorAll("[data-map-pane]").forEach(pane => {
       const paneMode = pane.dataset.mapPane;
       pane.hidden = mapState.mode === "arcgis" ? !["arcgis", "message"].includes(paneMode) : paneMode !== mapState.mode;
@@ -19402,6 +19691,7 @@ return maplibregl$1;
       messageBox.readOnly = mapState.mode === "arcgis";
       messageBox.title = mapState.mode === "arcgis" ? "Live ArcGIS attribute value" : "Ground message";
     }
+    window.GeoGlyphControls?.sync();
   }
 
   function setStatus(message, kind = "") {
@@ -19447,11 +19737,31 @@ return maplibregl$1;
     return id;
   }
 
+  let fontFilterEnabled=false,fontFilter=null;
+  function compatibilityFilter(){
+    return fontFilter ||= window.GeoGlyphFontCompatibility.create({
+      changed:()=>renderFontChooser(),
+      canWork:()=>mapState.previewActive&&!document.hidden&&!mapState.rebuilding&&!mapState.randomSearching&&!mapState.conferenceApplying,
+      yieldTask:()=>window.GeoGlyphFontService.yieldTask(),
+      check:(item,current)=>window.GeoGlyphFontCompatibility.probe(item,current,{service:window.GeoGlyphFontService,prefersBrowser:shouldPreferDecal})
+    });
+  }
   function renderFontChooser() {
     const select = $("mapFontSelect");
     if (!select) return;
     const current = mapState.selectedFontId;
-    const records = [...mapState.fontRecords.values()].sort((a, b) => `${a.source} ${a.name}`.localeCompare(`${b.source} ${b.name}`));
+    let records = [...mapState.fontRecords.values()].sort((a, b) => `${a.source} ${a.name}`.localeCompare(`${b.source} ${b.name}`));
+    const filterStatus=$('mapFontFilterStatus');
+    const filter=compatibilityFilter(),service=window.GeoGlyphFontService;
+    filter.update(records.map(record=>({id:record.id,record,accessible:hasFontBytes(record),key:window.GeoGlyphFontCompatibility.identity(record,service.keyFor(record))})));
+    const p=filter.progress();
+    if($('mapFontRescanBtn'))$('mapFontRescanBtn').disabled=p.scanning;
+    if(filterStatus){
+      filterStatus.hidden=!(fontFilterEnabled||p.scanning||p.storageError);
+      filterStatus.textContent=(p.scanning?'Scanning · ':'')+(!p.hasScan?'No saved scan — click Rescan.':`${p.compatible} compatible · ${p.checked}/${p.total} checked`)
+        +(p.notScanned?` · ${p.notScanned} not scanned`:'')+(p.inaccessible?` · ${p.inaccessible} need font access`:'')+(p.unverified?` · ${p.unverified} unverified`:'')+(p.storageError?` · ${p.storageError}`:'');
+    }
+    if(fontFilterEnabled)records=records.filter(record=>filter.result(record.id)==='compatible');
     const groupOrder = ["esri", "system", "windows", "file", "preset", "geoglyph"];
     const groups = new Map();
     for (const record of records) {
@@ -19468,6 +19778,11 @@ return maplibregl$1;
       return `<optgroup label="${esc(label)}">${groups.get(source).map(record => `<option value="${esc(record.id)}">${esc(record.name)}${record.style ? ` — ${esc(record.style)}` : ""}</option>`).join("")}</optgroup>`;
     }).join("");
     if (records.some(record => record.id === current)) select.value = current;
+    else if(fontFilterEnabled){
+      const currentRecord=mapState.fontRecords.get(current),label=currentRecord?.name||'No font selected';
+      const option=new Option(`${label} — current selection (${compatibilityFilter().result(current)})`,current,true,true);
+      option.disabled=true;select.prepend(option);select.value=current;
+    }
   }
 
   async function scanSystemFonts() {
@@ -19852,6 +20167,46 @@ return maplibregl$1;
     }
   }
 
+  let arcgisAdminClient=null,arcgisAdminBusy=false,arcgisAuthTimer=0;
+  function adminClient(){return arcgisAdminClient ||= window.GeoGlyphArcgisAdmin.create();}
+  function syncArcgisAuthentication(){
+    const button=$('mapArcgisReset123Btn');
+    if(button){button.hidden=!(mapState.adminMode&&mapState.mode==='arcgis'&&arcgisAdminClient?.authenticated());button.disabled=arcgisAdminBusy;}
+    for(const id of ['mapArcgisRequestTokenBtn','mapArcgisExchangeCodeBtn','mapArcgisUseTokenBtn','mapArcgisClearTokenBtn'])if($(id))$(id).disabled=arcgisAdminBusy;
+    if(arcgisAdminBusy)for(const id of ['mapArcgisStartBtn','mapArcgisPollBtn'])if($(id))$(id).disabled=true;
+  }
+  function bindArcgisAdministration(){
+    const status=(text)=>{$('mapArcgisAuthStatus').textContent=text;};
+    const action=async(job)=>{
+      if(arcgisAdminBusy)return;arcgisAdminBusy=true;syncArcgisAuthentication();
+      try{await job();}catch(error){status(error instanceof TypeError?'ArcGIS network request failed. Check connectivity and retry.':error.message);}
+      finally{arcgisAdminBusy=false;syncArcgisControls();syncArcgisAuthentication();if(mapState.arcgisPolling)scheduleArcgisPoll();}
+    };
+    $('mapArcgisRequestTokenBtn').addEventListener('click',()=>{
+      // Open synchronously to retain the browser's popup permission during SHA-256.
+      const popup=window.open('about:blank','geoglyph-arcgis-signin','popup=yes,width=760,height=760,resizable=yes,scrollbars=yes');
+      void action(async()=>{if(!popup)throw Error('Allow popups for GeoGlyph, then open sign-in again.');
+        try{popup.location=await adminClient().authorize();}catch(error){popup.close();throw error;}
+        status('Sign in to ArcGIS, then paste the returned code and choose Exchange code.');
+      });
+    });
+    for(const [id,exchange] of [['mapArcgisExchangeCodeBtn',true],['mapArcgisUseTokenBtn',false]])$(id).addEventListener('click',()=>void action(async()=>{
+      const input=$('mapArcgisToken'),value=input.value;input.value='';
+      const name=await adminClient().login(value,{exchange});status('Signed in as '+name);
+      clearTimeout(arcgisAuthTimer);arcgisAuthTimer=setTimeout(()=>{adminClient().authenticated();syncArcgisAuthentication();status('Session expired. Sign in again.');},Math.max(1,adminClient().expiresAt-Date.now()));
+    }));
+    $('mapArcgisClearTokenBtn').addEventListener('click',()=>{adminClient().clear();clearTimeout(arcgisAuthTimer);$('mapArcgisToken').value='';status('Not signed in');syncArcgisAuthentication();});
+    $('mapArcgisReset123Btn').addEventListener('click',()=>void action(async()=>{
+      status('Checking survey and deletion permissions…');
+      const plan=await adminClient().prepare(window.GeoGlyphSurveyResults.config.serviceUrl);
+      if(!plan.ids.length){status('The survey has no records to delete.');return;}
+      if(!window.confirm(`Reset 123: permanently delete ${plan.ids.length} survey responses from ${plan.name}?\n${plan.url}\nRelated attachments may also be removed. This cannot be undone.`)){status('Reset 123 cancelled.');return;}
+      stopArcgisPolling({quiet:true});window.GeoGlyphConference?.clearSurveyQueue();
+      status('Deleting confirmed survey responses…');
+      try{const count=await adminClient().remove(plan);status(`Deleted and verified ${count} survey responses. Polling is stopped.`);}
+      finally{window.GeoGlyphConference?.clearSurveyQueue();mapState.arcgisLayers=null;mapState.arcgisLastValue=null;}
+    }));
+  }
   function arcgisSettings() {
     return { seconds: Math.round(clamp($("mapArcgisInterval")?.value || 5, 1, 3600)) };
   }
@@ -19884,6 +20239,7 @@ return maplibregl$1;
   }
 
   async function startArcgisPolling() {
+    if(arcgisAdminBusy)return;
     if (presentation && window.GeoGlyphConference && !window.GeoGlyphConference.state.ready)
       return window.GeoGlyphConference.retryStartup();
     stopArcgisPolling({ quiet: true });
@@ -19925,6 +20281,7 @@ return maplibregl$1;
   }
 
   async function pollArcgisOnce() {
+    if(arcgisAdminBusy)return false;
     if (mapState.arcgisPollBusy) return false;
     if (mapState.arcgisTimer) window.clearTimeout(mapState.arcgisTimer);
     mapState.arcgisTimer = 0;
@@ -20390,6 +20747,7 @@ return maplibregl$1;
   }
 
   function queueRebuild(fit = false) {
+    if($('mapFont3DFilter')?.checked)renderFontChooser();
     if (mapState.conferenceRenderSuspended) return;
     if (mapState.conferenceApplying) { mapState.conferenceRebuildPending = true; return; }
     if(!window.GeoGlyphUi?.isRestoring?.())mapState.historyRestoreChoice=null;
@@ -20607,7 +20965,8 @@ return maplibregl$1;
           await waitForGroundFrame(()=>current()&&mapState.displayedFontId===id);
           const explicit=mapState.explicitFitPending;
           mapState.explicitFitPending=false;
-          await fitDrawnGeometry(current,{explicit});
+          // Manual Random must frame its block even while the survey remains in overview.
+          await fitDrawnGeometry(current,{explicit,force:true});
           if(current()&&mapState.explicitFitPending){
             mapState.explicitFitPending=false;
             await fitDrawnGeometry(current,{explicit:true});
@@ -20745,9 +21104,9 @@ return maplibregl$1;
 
   // Call only after the new artwork has reached its own map frame. Automatic
   // Fits preserve animation; an explicit Fit retains the manual stop policy.
-  async function fitDrawnGeometry(current, { explicit = false, orbit = false, introduction = false } = {}) {
+  async function fitDrawnGeometry(current, { explicit = false, orbit = false, introduction = false, force = false } = {}) {
     if (!current()) throw Error('Artwork was superseded before Fit');
-    if (mapState.conferenceOverview && !explicit && !introduction) return false;
+    if (mapState.conferenceOverview && !explicit && !introduction && !force) return false;
     const first = mapState.initialFitStatus === 'pending';
     const preserveOrbit = !explicit && mapState.extrusionEnabled && Boolean(window.GeoGlyph3D?.stats().animation.orbiting);
     if (!preserveOrbit) window.GeoGlyph3D?.stopOrbit();
@@ -26644,7 +27003,7 @@ void main() {
 
   const sectionDefinitions = [
     ['.map-control-grid', 'mapFontSection', 'Font'],
-    ['[data-map-pane="arcgis"]', 'mapArcgisSection', 'Content · ArcGIS'],
+    ['[data-map-pane="arcgis"]', 'mapArcgisSection', 'Content · Survey123'],
     ['[data-map-pane="message"]', 'mapMessageSection', 'Content · Message'],
     ['[data-map-pane="glyph"]', 'mapGlyphSection', 'Content · Character'],
     ['.map-style-panel', 'mapStyleSection', 'Style'],
@@ -26699,9 +27058,10 @@ void main() {
 
     for (const definition of sectionDefinitions) enhanceSection(editor, definition);
 
-    // Message and Character are mutually exclusive; ArcGIS also shows Message.
-    // Let the shared widget recalculate its active scope after mode changes.
+    // Recalculate active sections when modes change or the whole editor reopens.
+    // A refresh while the editor is collapsed disables both bulk actions.
     const modeObserver = new MutationObserver(() => controls.sync());
+    modeObserver.observe(editor, { attributes: true, attributeFilter: ['class'] });
     editor.querySelectorAll('[data-map-pane]').forEach(pane => {
       modeObserver.observe(pane, { attributes: true, attributeFilter: ['hidden'] });
     });
@@ -26757,8 +27117,9 @@ void main() {
   let source = '', epoch = 0, activeRun = null;
   let introWait = null;
   const introduction = Object.freeze([
-    {message:'🥱',emoji:true}, {message:'😶',emoji:true}, {message:'😏',emoji:true},
-    {message:'😏',emoji:true,mirrorX:true}, {message:'🙂',emoji:true},
+{message:'🥱',emoji:true,delayBefore:0}, {message:'😶',emoji:true}, {message:'🫣',emoji:true},
+{message:'😏',emoji:true,delayBefore:3000}, {message:'😏',emoji:true,mirrorX:true,delayBefore:3000},
+{message:'🤗',emoji:true,delayBefore:3000},
     {message:'Hello'}, {message:"I'm Geoglyph"}, {message:'Call me Geo'},
     {message:'I was made by ChatGPT'}, {message:'Today I will be presenting'},
     {message:'with my best friend'}, {message:'Josh Roberts'}, {message:'Where are you Josh?',final:true}
@@ -26829,13 +27190,14 @@ void main() {
       state.content = { kind:'emoji', message:'😴' };
       state.lastTextFont = 'Gill Sans';
       for(let index=0;index<introduction.length;index++){
-        await waitIntroduction(5000,current);
+        const step=introduction[index];
+        await waitIntroduction(step.delayBefore??5000,current);
         if(!current())return;
-        const step=introduction[index],kind=step.emoji?'emoji':'text';
+        const kind=step.emoji?'emoji':'text';
         const cue={objectId:patch.objectId,kind,message:step.message,hasNewContent:true,
           fontId:state.fontIds[step.emoji?'Segoe UI Emoji':'Gill Sans'],nativeColor:Boolean(step.emoji),
           mirrorX:Boolean(step.mirrorX),extrusionEnabled:Boolean(step.final),relativeSize:100,
-          height:step.final?30000:300,depth:step.final?3000:30,fit:false,
+          height:step.final?3000:300,depth:step.final?300:30,fit:false,
           ...(step.final?{animation:'yaw'}:{})};
         const result=await api.applyConferenceCue(cue,{isCurrent:current});
         if(!current())return;
@@ -26984,6 +27346,10 @@ void main() {
   }
   window.GeoGlyphConference = Object.freeze({
     state, poll, retryStartup,
+    clearSurveyQueue() {
+      state.phase='live';engine().state.conferenceOverview=false;
+      interrupt();state.queue.length=0;source='';state.lastQueuedId=null;state.lastAppliedId=null;state.baselined=false;
+    },
     pause() { state.paused = true; introWait?.wake(); },
     resume() { state.paused = false; introWait?.wake(); void drain(); }
   });
