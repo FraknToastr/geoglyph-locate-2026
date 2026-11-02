@@ -86,6 +86,18 @@
     "path": "src/scripts/conference-config.js"
   },
   {
+    "key": "qr-worker",
+    "type": "qr-worker",
+    "attrs": "",
+    "path": "src/workers/qr-scanner-worker.js"
+  },
+  {
+    "key": "qr-scanner-service",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/qr-scanner-service.js"
+  },
+  {
     "key": "core",
     "type": "script",
     "attrs": "",

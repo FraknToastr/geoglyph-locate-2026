@@ -41,6 +41,7 @@ function render(inline) {
       }
       tag=`<script id="geoglyph-conference-fonts" type="application/json"${inline?'':` data-local-font-pack="${localPack}"`}>${JSON.stringify(fonts).replace(/</g,'\\u003c')}</script>`;
     }
+    else if (asset.type === 'qr-worker') tag = `<script id="geoglyph-qr-worker-source" type="application/json">${JSON.stringify([read('src/vendor/jsqr.js'),read(asset.path)].join('\n;\n')).replace(/</g, '\\u003c')}</script>`;
     else if (asset.type === 'worker') tag = `<script id="geoglyph-font-worker-source" type="application/json">${JSON.stringify(workerSource(asset)).replace(/</g, '\\u003c')}</script>`;
     else if (inline) {
       const content = read(asset.path).replace(new RegExp(`</${asset.type}`, 'gi'), `<\\/${asset.type}`);

@@ -1695,6 +1695,16 @@
     state.qreverse.nextId = Math.max(0, ...state.qreverse.rows.map(row => row.id)) + 1;
   }
 
+  let qreverseScanGeneration=0;
+  window.addEventListener('pagehide',()=>{
+    qreverseScanGeneration++;
+    state.qreverse.scanner?.cancel?.();
+    if(state.qreverse.scanning){
+      state.qreverse.scanning=false;
+      for(const row of state.qreverse.rows)if(row.status==='Scanning')row.status='Queued';
+      renderQReverse();
+    }
+  });
   async function initialiseQReverseScanner() {
     const status = $("qreverseScannerStatus");
     try {
@@ -1711,7 +1721,7 @@
       }
     } catch (error) { console.warn("Native QR scanner unavailable", error); }
     if (typeof window.jsQR === "function") {
-      state.qreverse.scanner = { detect: detectQReverseWithJsQr };
+      state.qreverse.scanner = window.GeoGlyphQrScanner?.create(detectQReverseWithJsQr) || { detect: detectQReverseWithJsQr };
       state.qreverse.scannerMode = "jsqr";
       status.textContent = "Scanner ready · offline jsQR";
       status.className = "small-status green";
@@ -1827,12 +1837,17 @@
     const queue = state.qreverse.rows.filter(row => row.source === "Image" && row.status === "Queued" && row.file);
     if (!state.qreverse.scanner) { showToast("QR scanner is unavailable"); return; }
     if (!queue.length || state.qreverse.scanning) { showToast(queue.length ? "Scan already running" : "No queued images to scan"); return; }
+    const generation=++qreverseScanGeneration;
     state.qreverse.scanning = true; renderQReverse();
     for (let index = 0; index < queue.length; index += 1) {
       const row = queue[index]; row.status = "Scanning"; setQReverseProgress(index, queue.length, `Scanning ${row.filename}`); renderQReverse();
       try {
         const bitmap = await createImageBitmap(row.file); let codes;
-        try { codes = await state.qreverse.scanner.detect(bitmap); } finally { bitmap.close?.(); }
+        try {
+          if(generation!==qreverseScanGeneration)return;
+          codes = await state.qreverse.scanner.detect(bitmap);
+        } finally { bitmap.close?.(); }
+        if(generation!==qreverseScanGeneration)return;
         if (!codes.length) { row.status = "No QR found"; row.value = ""; }
         else {
           row.value = codes[0].rawValue ?? ""; row.status = "Processed"; row.error = "";
@@ -1840,7 +1855,11 @@
           const siblings = codes.slice(1).map(code => ({ ...row, id: state.qreverse.nextId++, value: code.rawValue ?? "", file: row.file }));
           state.qreverse.rows.splice(position + 1, 0, ...siblings);
         }
-      } catch (error) { row.status = "Error"; row.error = error?.message || String(error); row.value = ""; }
+      } catch (error) {
+        if(generation!==qreverseScanGeneration)return;
+        if(error?.name==='AbortError'){row.status='Queued';break;}
+        row.status = "Error"; row.error = error?.message || String(error); row.value = "";
+      }
       renderQReverse();
     }
     state.qreverse.scanning = false; setQReverseProgress(queue.length, queue.length, "Scan complete"); renderQReverse(); showToast("QReverse scan complete");
