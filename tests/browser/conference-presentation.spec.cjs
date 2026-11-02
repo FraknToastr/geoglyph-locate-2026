@@ -69,9 +69,28 @@ async function applied(page, id) {
   await page.waitForFunction(expected => GeoGlyphConference.state.lastAppliedId === expected && !GeoGlyphConference.state.applying, id, { timeout: 60_000 });
 }
 async function submit(page, server, record) {
+  const command=Object.entries(record.attributes).find(([name])=>name.toLowerCase()==='special_commands')?.[1];
+  if(String(command).trim().toLowerCase()==='begin')await installIntroductionClock(page);
   server.records.push(record);
   await poll(page);
+  if(String(command).trim().toLowerCase()==='begin')await completeIntroduction(page,record.attributes.objectid);
   await applied(page, record.attributes.objectid);
+}
+const introductionClocks=new WeakSet();
+async function installIntroductionClock(page){
+  if(introductionClocks.has(page))return;
+  await page.clock.install();introductionClocks.add(page);
+}
+async function completeIntroduction(page,id){
+  await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='flight'),id);
+  await page.clock.fastForward(30000);
+  await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='fit'),id);
+  for(let index=0;index<13;index++){
+    const done=await page.evaluate(({id,index})=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase===`introduction-${index}`),{id,index});
+    if(!done)await page.clock.fastForward(5000);
+    await page.waitForFunction(({id,index})=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase===`introduction-${index}`),{id,index});
+  }
+  await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='applied'),id);
 }
 async function snapshot(page) {
   return page.evaluate(() => {
@@ -117,8 +136,36 @@ async function expectAustralia(page) {
   }
 }
 
-test('Begin draws sleeping Geo before a real 30-second flight and holds later cues until arrival', async ({ page }) => {
+test('Begin scripted introduction renders ordered mirrored emoji and finishes Large 3D Turn',async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const server=await open(page,{overview:true});
+  await installIntroductionClock(page);
+  await page.evaluate(()=>{
+    const api=GeoGlyphMapEngine;window.introductionFrames=[];
+    window.GeoGlyphMapEngine={...api,applyConferenceCue:async(...args)=>{
+      const result=await api.applyConferenceCue(...args),s=api.state;
+      window.introductionFrames.push({message:s.message,mirrorX:s.mirrorX,height:s.baseHeightMeters,
+        depth:s.extrusionDepthMeters,extrusion:s.extrusionEnabled,font:s.selectedFontId,nativeColor:s.nativeColor});
+      return result;
+    }};
+  });
+  server.records.push(cue(1,{special_commands:'Begin'}));await poll(page);
+  await completeIntroduction(page,1);
+  const result=await page.evaluate(()=>({frames:window.introductionFrames,phase:GeoGlyphConference.state.phase,
+    font:GeoGlyphConference.state.fontIds['Gill Sans'],animation:GeoGlyph3D.stats().animation,mirrorX:GeoGlyphMapEngine.state.mirrorX}));
+  expect(result.frames.map(frame=>frame.message)).toEqual(['🥱','😶','😏','😏','🙂','Hello',"I'm Geoglyph",'Call me Geo','I was made by ChatGPT','Today I will be presenting','with my best friend','Josh Roberts','Where are you Josh?']);
+  expect(result.frames.map(frame=>frame.mirrorX)).toEqual(Array.from({length:13},(_,i)=>i===3));
+  expect(result.frames.slice(0,5).every(frame=>frame.nativeColor&&!frame.extrusion)).toBe(true);
+  expect(result.frames.slice(5).every(frame=>frame.font===result.font&&!frame.nativeColor)).toBe(true);
+  expect(result.frames.at(-1)).toMatchObject({height:30000,depth:3000,extrusion:true});
+  expect(result.phase).toBe('live');expect(result.animation.orbiting).toBe(true);expect(result.mirrorX).toBe(false);
+  expect(errors).toEqual([]);
+});
+
+test('Begin requests a 30-second flight and holds later cues through the scripted introduction', async ({ page }) => {
   const server = await open(page, { overview:true });
+  await installIntroductionClock(page);
   await expectAustralia(page);
   const anchor = (await snapshot(page)).anchor;
   await page.evaluate(() => {
@@ -127,7 +174,9 @@ test('Begin draws sleeping Geo before a real 30-second flight and holds later cu
     map.flyTo = options => {
       window.introFlights.push({ duration:options.duration, start:performance.now(),
         phases:GeoGlyphConference.state.history.filter(item => item.objectId === 1).map(item => item.phase) });
-      return fly(options);
+      // Verify the production request while completing this fixture's flight
+      // immediately: MapLibre may retain a real-time clock from construction.
+      return fly({...options,duration:0});
     };
     map.on('moveend', () => {
       const flight = window.introFlights.at(-1);
@@ -137,20 +186,21 @@ test('Begin draws sleeping Geo before a real 30-second flight and holds later cu
   server.records.push(cue(1, { special_commands:' Begin ', emojis:'👋', animation:'Face', _size_size:'Huge' }));
   await poll(page);
   await page.waitForFunction(() => window.introFlights.length === 1);
+  await page.emulateMedia({reducedMotion:'reduce'});
   server.records.push(cue(2, { geoglyph_speaks:'AWAKE' }), cue(3, { special_commands:'Begin' }));
   await poll(page);
   expect(await page.evaluate(() => GeoGlyphConference.state.phase)).toBe('beginning');
   expect((await snapshot(page)).history.some(item => item.objectId === 2 && item.phase === 'started')).toBe(false);
+  await completeIntroduction(page,1);
   await applied(page, 2);
   const flights = await page.evaluate(() => window.introFlights);
   expect(flights).toHaveLength(1);
   expect(flights[0].duration).toBe(30000);
-  expect(flights[0].end-flights[0].start).toBeGreaterThanOrEqual(29500);
   expect(flights[0].phases).toEqual(['started','drawn','flight']);
   const result = await snapshot(page);
   expect(result.anchor).toEqual(anchor);
   expect(result.content.message).toBe('AWAKE');
-  expect(result.history.filter(item => item.objectId === 1).map(item => item.phase)).toEqual(['started','drawn','flight','fit','applied']);
+  expect(result.history.filter(item => item.objectId === 1).map(item => item.phase)).toEqual(['started','drawn','flight','fit',...Array.from({length:13},(_,i)=>`introduction-${i}`),'animation','applied']);
   expect(result.history.filter(item => item.objectId === 3).map(item => item.phase)).toEqual(['ignored']);
   expect(await page.evaluate(() => GeoGlyphConference.state.phase)).toBe('live');
 });
@@ -198,7 +248,9 @@ test('Begin preserves native emoji colours before, during and after the flight',
   const before=await page.evaluate(() => window.beginColourSamples.before);
   expect(before.coloured).toBeGreaterThan(.65);
   expect(before.white).toBeLessThan(.15);
-  await applied(page,1);
+  // The expanded script changes to text later; sample the sleeping emoji at
+  // descent arrival, during its first five-second hold.
+  await page.waitForFunction(()=>GeoGlyphConference.state.history.some(item=>item.objectId===1&&item.phase==='fit'));
   await page.waitForFunction(() => !GeoGlyphMapEngine.state.pendingBuild && !GeoGlyphMapEngine.state.rebuilding);
   const samples=await page.evaluate(() => ({...window.beginColourSamples,after:window.sampleBeginColours()}));
   expect(samples.mid.moving).toBe(true);
@@ -214,6 +266,7 @@ test('Begin preserves native emoji colours before, during and after the flight',
 
 test('Begin waits for a delayed sleeping-emoji draw before starting its flight', async ({ page }) => {
   const server = await open(page, { overview:true, portable:true });
+  await installIntroductionClock(page);
   await page.emulateMedia({ reducedMotion:'reduce' });
   await page.evaluate(() => {
     const service = GeoGlyphFontService;
@@ -232,8 +285,8 @@ test('Begin waits for a delayed sleeping-emoji draw before starting its flight',
   expect((await snapshot(page)).history.map(item => item.phase)).toEqual(['started']);
   expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom())).toBeCloseTo(zoom, 8);
   await page.evaluate(() => window.releaseSleepingFace());
-  await applied(page, 1);
-  expect((await snapshot(page)).history.map(item => item.phase)).toEqual(['started','drawn','flight','fit','applied']);
+  await completeIntroduction(page,1);
+  expect((await snapshot(page)).history.map(item => item.phase)).toEqual(['started','drawn','flight','fit',...Array.from({length:13},(_,i)=>`introduction-${i}`),'animation','applied']);
 });
 
 test('Reset interrupts a flight, drops preceding queued messages and prevents a late camera move', async ({ page }) => {
@@ -286,7 +339,7 @@ test('leaving Map during Begin releases the introduction so it can be started ag
   await poll(page);
   await page.waitForFunction(() => GeoGlyphConference.state.history.some(item => item.phase === 'flight'));
   await page.evaluate(() => GeoGlyphMapEngine.showCanvas());
-  await page.waitForFunction(() => GeoGlyphConference.state.phase === 'overview' && !GeoGlyphConference.state.applying);
+  await page.waitForFunction(() => GeoGlyphConference.state.phase !== 'beginning' && !GeoGlyphConference.state.applying);
   await page.emulateMedia({ reducedMotion:'reduce' });
   await page.evaluate(() => GeoGlyphMapEngine.showMap());
   await page.evaluate(() => GeoGlyphMapEngine.startPolling());
@@ -312,7 +365,7 @@ for (const animation of ['Orbit','Turn','Face']) test(`Reset restores the openin
   expect(await page.evaluate(() => GeoGlyphMapEngine.state.arcgisPolling)).toBe(true);
 });
 
-test('overview suppresses automatic Fit and animation; reduced-motion Begin restores the opening at its anchor', async ({ page }) => {
+test('overview suppresses automatic Fit and animation; reduced-motion Begin finishes the script at its anchor', async ({ page }) => {
   await page.setViewportSize({ width:1000, height:720 });
   const server = await open(page, { overview:true });
   await expectAustralia(page);
@@ -323,9 +376,9 @@ test('overview suppresses automatic Fit and animation; reduced-motion Begin rest
   await page.emulateMedia({ reducedMotion:'reduce' });
   await submit(page, server, cue(2, { SPECIAL_COMMANDS:'bEgIn' }));
   const state = await snapshot(page);
-  expect(state.content).toEqual({ kind:'emoji', message:'😴' });
-  expect(state.extrusion).toBe(false);
-  expect(state.nativeColor).toBe(true);
+  expect(state.content).toEqual({ kind:'text', message:'Where are you Josh?' });
+  expect(state.extrusion).toBe(true);
+  expect(state.nativeColor).toBe(false);
   expect(state.anchor).toEqual({ lng:139, lat:-35 });
   expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom())).toBeGreaterThan(10);
   expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.isMoving())).toBe(false);

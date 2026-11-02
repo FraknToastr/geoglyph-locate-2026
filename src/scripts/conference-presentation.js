@@ -5,11 +5,19 @@
   const state = {
     ready: false, paused: false, applying: false, queue: [], history: [],
     lastQueuedId: null, lastAppliedId: null, baselined:false, phase:'overview', content: { kind: 'emoji', message: '😴' },
-    lastTextFont: 'Gill Sans', fontIds: {}, error: ''
+    lastTextFont: 'Gill Sans', fontIds: {}, error: '', introStep:null
   };
   const client = window.GeoGlyphSurveyResults.create();
   const MAX_QUEUED_CUES = 100;
   let source = '', epoch = 0, activeRun = null;
+  let introWait = null;
+  const introduction = Object.freeze([
+    {message:'🥱',emoji:true}, {message:'😶',emoji:true}, {message:'😏',emoji:true},
+    {message:'😏',emoji:true,mirrorX:true}, {message:'🙂',emoji:true},
+    {message:'Hello'}, {message:"I'm Geoglyph"}, {message:'Call me Geo'},
+    {message:'I was made by ChatGPT'}, {message:'Today I will be presenting'},
+    {message:'with my best friend'}, {message:'Josh Roberts'}, {message:'Where are you Josh?',final:true}
+  ]);
   const delay = () => new Promise(resolve => setTimeout(resolve, 20));
   const engine = () => window.GeoGlyphMapEngine;
   function record(objectId, phase) {
@@ -20,6 +28,8 @@
     epoch++;
     activeRun = null;
     state.applying = false;
+    state.introStep = null;
+    introWait?.wake();
     engine().cancelConferenceWork();
     if (state.phase === 'beginning') returnToOverview();
   }
@@ -30,6 +40,26 @@
     engine().state.initialFitStatus = 'pending';
     engine().state.firstFitDone = false;
     engine().showConferenceOverview();
+  }
+  function waitIntroduction(ms, current) {
+    const now = () => typeof performance === 'undefined' ? Date.now() : performance.now();
+    return new Promise((resolve,reject) => {
+      let remaining=ms,last=now(),running=!state.paused&&!document.hidden,timer,settled=false;
+      const finish=error=>{
+        if(settled)return;settled=true;clearTimeout(timer);
+        if(introWait===waiter)introWait=null;
+        error?reject(error):resolve();
+      };
+      const tick=()=>{
+        clearTimeout(timer);const time=now();
+        if(running)remaining-=Math.max(0,time-last);
+        last=time;running=!state.paused&&!document.hidden;
+        if(!current())return finish(Error('Introduction was superseded'));
+        if(running&&remaining<=0)return finish();
+        timer=setTimeout(tick,running?Math.min(100,Math.max(1,remaining)):100);
+      };
+      const waiter={wake:tick};introWait=waiter;tick();
+    });
   }
   async function applyCommand(patch, current) {
     const api = engine();
@@ -50,8 +80,31 @@
       await api.flyToConferenceOpening(current);
       if (!current()) return;
       record(patch.objectId, 'fit');
-      state.phase = 'live';
       api.state.conferenceOverview = false;
+      state.content = { kind:'emoji', message:'😴' };
+      state.lastTextFont = 'Gill Sans';
+      for(let index=0;index<introduction.length;index++){
+        await waitIntroduction(5000,current);
+        if(!current())return;
+        const step=introduction[index],kind=step.emoji?'emoji':'text';
+        const cue={objectId:patch.objectId,kind,message:step.message,hasNewContent:true,
+          fontId:state.fontIds[step.emoji?'Segoe UI Emoji':'Gill Sans'],nativeColor:Boolean(step.emoji),
+          mirrorX:Boolean(step.mirrorX),extrusionEnabled:Boolean(step.final),relativeSize:100,
+          height:step.final?30000:300,depth:step.final?3000:30,fit:false,
+          ...(step.final?{animation:'yaw'}:{})};
+        const result=await api.applyConferenceCue(cue,{isCurrent:current});
+        if(!current())return;
+        state.introStep=index;state.content={kind,message:step.message};
+        record(patch.objectId,`introduction-${index}`);
+        if(step.final){
+          if(!window.GeoGlyph3D.ensureOrbit('yaw',{framed:result.fitted}))throw Error('Introduction Turn animation could not start.');
+          await api.waitForCamera();
+          if(!current())return;
+          record(patch.objectId,'animation');
+        }
+      }
+      state.phase = 'live';state.introStep=null;
+      return;
     }
     state.content = { kind:'emoji', message:'😴' };
     state.lastTextFont = 'Gill Sans';
@@ -77,12 +130,12 @@
     throw Error('None of the survey fonts can draw this message in the selected mode.');
   }
   async function drain() {
-    if (!state.ready || state.paused || state.applying || document.hidden || !engine().state.previewActive || engine().state.mode !== 'arcgis') return;
+    if (!state.ready || (state.paused && patchCommand(state.queue[0]) !== 'reset') || state.applying || document.hidden || !engine().state.previewActive || engine().state.mode !== 'arcgis') return;
     const run = {};
     activeRun = run;
     state.applying = true;
     try {
-      while (activeRun === run && !state.paused && !document.hidden && state.queue.length && engine().state.previewActive && engine().state.mode === 'arcgis') {
+      while (activeRun === run && (!state.paused || patchCommand(state.queue[0]) === 'reset') && !document.hidden && state.queue.length && engine().state.previewActive && engine().state.mode === 'arcgis') {
         const raw = state.queue.shift(), generation = epoch;
         const current = () => activeRun === run && generation === epoch && engine().state.previewActive && engine().state.mode === 'arcgis';
         record(raw.objectId, 'started');
@@ -123,7 +176,10 @@
         } catch (error) {
           // Leaving Map can cancel a flight without a newer command. Do not
           // leave Begin permanently locked when the user returns to Map.
-          if (patchCommand(raw) === 'begin' && generation === epoch && activeRun === run) returnToOverview();
+          if (patchCommand(raw) === 'begin' && generation === epoch && activeRun === run) {
+            // Preserve the last successful artwork when a scripted step fails.
+            state.phase='live';state.introStep=null;engine().state.conferenceOverview=false;
+          }
           if (current()) {
             state.error = error.message;
             record(raw.objectId, 'failed');
@@ -183,10 +239,18 @@
   }
   window.GeoGlyphConference = Object.freeze({
     state, poll, retryStartup,
-    pause() { state.paused = true; },
-    resume() { state.paused = false; void drain(); }
+    pause() { state.paused = true; introWait?.wake(); },
+    resume() { state.paused = false; introWait?.wake(); void drain(); }
   });
-  document.addEventListener?.('visibilitychange', () => { if (!document.hidden) void drain(); });
+  document.addEventListener?.('visibilitychange', () => { introWait?.wake(); if (!document.hidden) void drain(); });
+  document.addEventListener?.('geoglyph:manual-map-change', () => {
+    if(state.phase!=='beginning')return;
+    state.phase='live';engine().state.conferenceOverview=false;
+    interrupt();
+    // Event dispatch is synchronous: let the caller finish its manual mutation
+    // before a queued survey cue starts another artwork transaction.
+    void Promise.resolve().then(drain);
+  });
 
   async function conferenceFonts(run) {
     const element = document.getElementById('geoglyph-conference-fonts');

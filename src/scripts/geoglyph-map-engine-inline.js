@@ -34,6 +34,7 @@
     opacity: 0.82,
     quality: 10,
     extrusionEnabled: false,
+    mirrorX: false,
     extrusionDepthMeters: null,
     extrusionTilt: 90,
     extrusionSolid: true,
@@ -219,7 +220,7 @@
 
         <div class="map-control-grid">
           <label class="map-field map-span-2"><span>Font</span><select id="mapFontSelect"></select></label>
-          <button class="map-action" id="mapScanSystemBtn" type="button">System</button>
+          <button class="map-action" id="mapScanSystemBtn" type="button">Allow local fonts</button>
           <button class="map-action" id="mapCopyEsriPathBtn" type="button">Copy Esri Path</button>
           <button class="map-action" id="mapLoadEsriBtn" type="button">Load Esri Fonts</button>
           <input id="mapFontFiles" type="file" accept=".ttf,.otf,.ttc" multiple hidden>
@@ -329,6 +330,7 @@
     });
 
     document.querySelectorAll("[data-map-mode]").forEach(button => button.addEventListener("click", async () => {
+      notifyManualMapChange();
       const nextMode = button.dataset.mapMode;
       if (mapState.mode === "arcgis" && nextMode !== "arcgis") stopArcgisPolling({ quiet: true });
       mapState.mode = nextMode;
@@ -374,6 +376,7 @@
 
     const bindValue = (id, key, coerce = value => value, fit = false, paintOnly = false) => {
       $(id)?.addEventListener("input", event => {
+        notifyManualMapChange();
         mapState[key] = coerce(event.target.value);
         if (paintOnly) {
           if (mapState.lastRenderMode === "decal" && key !== "opacity") {
@@ -398,7 +401,7 @@
     bindValue("mapOpacity", "opacity", value => clamp(value, 0.05, 1), false, true);
     bindValue("mapBearing", "bearing", value => Number(value) || 0, false);
     bindValue("mapQuality", "quality", value => Math.round(clamp(value, 4, 36)), false);
-    $("mapNativeColor")?.addEventListener("change", event => { mapState.nativeColor = event.target.checked; queueRebuild(false); });
+    $("mapNativeColor")?.addEventListener("change", event => { notifyManualMapChange(); mapState.nativeColor = event.target.checked; queueRebuild(false); });
 
     $("mapGlyphPrev")?.addEventListener("click", () => { mapState.codePage = Math.max(0, mapState.codePage - 1); renderGlyphTable(); });
     $("mapGlyphNext")?.addEventListener("click", () => { mapState.codePage += 1; renderGlyphTable(); });
@@ -708,7 +711,7 @@
     const button = $("mapScanSystemBtn");
     if (button) { button.disabled = true; button.textContent = "Scanning…"; }
     try {
-      const fonts = await window.queryLocalFonts();
+      const fonts = await window.GeoGlyphFontService.requestLocalFonts();
       mapState.localFontDescriptors = fonts;
       fonts.forEach((descriptor, index) => {
         const name = descriptor.fullName || descriptor.family || descriptor.postscriptName || `System font ${index + 1}`;
@@ -724,13 +727,15 @@
         });
       });
       mapState.systemScanned = true;
+      window.GeoGlyphFontService.resolveLocalFont(selectedRecord());
       renderFontChooser();
       setStatus(`${fonts.length} system font faces indexed`, "ok");
+      if (mapState.previewActive) queueRebuild(false);
     } catch (error) {
       console.error(error);
       setStatus("System font scan cancelled or blocked", "warn");
     } finally {
-      if (button) { button.disabled = false; button.textContent = "System"; }
+      if (button) { button.disabled = false; button.textContent = "Allow local fonts"; }
     }
   }
 
@@ -812,6 +817,7 @@
 
   async function ensureOpenTypeFont(record) {
     const service = window.GeoGlyphFontService;
+    service.resolveLocalFont(record);
     // CSS face registration does not depend on the outline parser supporting the font.
     service.ensureFace(record).catch(() => null);
     const metadata = await service.prepare(record);
@@ -896,6 +902,7 @@
   }
 
   function selectGlyph(code) {
+    notifyManualMapChange();
     if (!safeCodePoint(code)) return;
     mapState.selectedCode = code;
     const api = geoGlyphApi();
@@ -952,33 +959,29 @@
     let score = -1;
     for (let ti = 0; ti < targets.length; ti++) for (let vi = 0; vi < values.length; vi++) {
       if (targets[ti] === values[vi]) score = Math.max(score, 100 - ti * 4 - vi);
-      else if (targets[ti].length > 4 && (targets[ti].includes(values[vi]) || values[vi].includes(targets[ti]))) score = Math.max(score, 55 - ti * 3 - vi);
     }
     const wantedStyle = normalizedFontName(hostFont.style);
+    if (score >= 0 && wantedStyle && descriptor.style && normalizedFontName(descriptor.style) !== wantedStyle) return -1;
     if (score >= 0 && wantedStyle && normalizedFontName(descriptor.style) === wantedStyle) score += 8;
     return score;
   }
 
   function bestLocalDescriptor(descriptors, hostFont) {
-    let best = null, bestScore = -1;
-    for (const descriptor of descriptors || []) {
-      const score = fontMatchScore(descriptor, hostFont);
-      if (score > bestScore) { best = descriptor; bestScore = score; }
-    }
-    return bestScore >= 50 ? best : null;
+    return window.GeoGlyphFontService.matchLocalFont(hostFont);
   }
 
   function existingMatchingOutlineRecord(hostFont) {
     const direct = hostFont?.id ? mapState.fontRecords.get(`geoglyph:${hostFont.id}`) : null;
     if (recordHasOutlineAccess(direct)) return direct;
-    let best = null, bestScore = -1;
+    let best = null, bestScore = -1, ambiguous = false;
     for (const record of mapState.fontRecords.values()) {
       if (!recordHasOutlineAccess(record)) continue;
       const descriptorLike = { postscriptName: record.postscriptName, fullName: record.name, family: record.family, style: record.style };
       const score = fontMatchScore(descriptorLike, hostFont);
-      if (score > bestScore) { best = record; bestScore = score; }
+      if (score > bestScore) { best = record; bestScore = score; ambiguous = false; }
+      else if (score === bestScore && score >= 50 && best && window.GeoGlyphFontService.keyFor(best) !== window.GeoGlyphFontService.keyFor(record)) ambiguous = true;
     }
-    return bestScore >= 50 ? best : direct;
+    return bestScore >= 50 && !ambiguous ? best : direct;
   }
 
   function ensureOpenTypeLibrary() { return Promise.resolve(Boolean(window.opentype?.parse)); }
@@ -995,12 +998,14 @@
     }
 
     let record = existingMatchingOutlineRecord(hostFont);
-    if (!recordHasOutlineAccess(record) && typeof window.queryLocalFonts === "function") {
+    if (!recordHasOutlineAccess(record) && typeof window.queryLocalFonts === "function" &&
+        (options.requestPermission !== false || window.GeoGlyphFontService.localFonts().length)) {
       try {
         setStatus(`Resolving ${hostFont.name || hostFont.family || "selected font"} outline…`, "info");
-        if (!mapState.localFontDescriptors) mapState.localFontDescriptors = await window.queryLocalFonts();
+        if (!window.GeoGlyphFontService.localFonts().length) await window.GeoGlyphFontService.requestLocalFonts();
+        mapState.localFontDescriptors = window.GeoGlyphFontService.localFonts();
         if(!current())return null;
-        const descriptor = bestLocalDescriptor(mapState.localFontDescriptors, hostFont);
+        const descriptor = window.GeoGlyphFontService.matchLocalFont(hostFont);
         if (descriptor) {
           const name = descriptor.fullName || descriptor.family || descriptor.postscriptName || hostFont.name;
           const id = fontRecordId("system", name, descriptor.postscriptName || descriptor.style || "selected");
@@ -1058,7 +1063,7 @@
       mapState.hostSyncTimer = 0;
       if (!mapState.previewActive||choice!==mapState.fontChoiceVersion||signature!==hostSelectionSignature()) return;
       syncHostSelectionBasics();
-      await primeHostFontOutline({ buildIndex: false });
+      await primeHostFontOutline({ buildIndex: false, requestPermission:false });
       queueRebuild(false);
     }, 0);
   }
@@ -1567,7 +1572,7 @@
           const choice=mapState.fontChoiceVersion;
           window.setTimeout(async () => {
             if(choice!==mapState.fontChoiceVersion)return;
-            await primeHostFontOutline({ buildIndex: false });
+            await primeHostFontOutline({ buildIndex: false, requestPermission:false });
             if (mapState.previewActive) queueRebuild(false);
           }, 0);
         }
@@ -1580,6 +1585,7 @@
       }
     map.on("click", event => {
         if (!mapState.mapReady) return;
+        notifyManualMapChange();
         cancelInitialFit();
         placeAnchor(event.lngLat, "click");
         if (mapState.previewActive) queueRebuild(false);
@@ -1653,6 +1659,7 @@
   }
   async function selectFont(id) {
     if(!mapState.fontRecords.has(id))return false;
+    notifyManualMapChange();
     cancelRandomSearch();mapState.fontChoiceVersion++;mapState.selectedFontId=id;
     if($('mapFontSelect'))$('mapFontSelect').value=id;
     // Index/native face work is independent of the visible 3D model.
@@ -1795,6 +1802,7 @@
     return current()?record:null;
   }
   async function randomFont() {
+    notifyManualMapChange();
     refreshFontStore();
     if (!mapState.previewActive || !mapState.mapReady || mapState.conferenceRenderSuspended) return false;
     const operation=++randomRequest,choice=++mapState.fontChoiceVersion;
@@ -1987,12 +1995,20 @@
     await waitForCondition(() => !mapState.rebuilding || options.isCurrent?.() === false, 'Previous render did not complete');
     if (options.isCurrent?.() === false) throw Error('Cue was superseded');
     if (!mapState.previewActive) throw Error('Map is not active');
-    const keys = ['mode','message','arcgisMessage','selectedFontId','nativeColor','extrusionEnabled','orientationMode','fill','outline','outlineWidth','opacity','bearing','tracking','lineHeight','quality','relativeSize','extrusionTilt','extrusionSolid','anchor','anchorInitialised','anchorPinned','baseHeightMeters','extrusionDepthMeters','lastLocalModel','lastGeoJSON','lastDecal','lastRenderMode','lastMetrics','displayedFontId','committedSelection'];
+    const keys = ['mode','message','arcgisMessage','selectedFontId','nativeColor','extrusionEnabled','mirrorX','orientationMode','fill','outline','outlineWidth','opacity','bearing','tracking','lineHeight','quality','relativeSize','extrusionTilt','extrusionSolid','anchor','anchorInitialised','anchorPinned','baseHeightMeters','extrusionDepthMeters','lastLocalModel','lastGeoJSON','lastDecal','lastRenderMode','lastMetrics','displayedFontId','committedSelection'];
     const previous = Object.fromEntries(keys.map(key => [key, mapState[key]]));
     cancelRandomSearch();
     const choice = ++mapState.fontChoiceVersion;
     const current = () => mapState.fontChoiceVersion === choice && mapState.previewActive && (!options.isCurrent || options.isCurrent());
     const owner = {};
+    // A manual edit during preparation should edit the artwork actually on
+    // screen, rather than inheriting a pending script step's uncommitted state.
+    owner.cancelPending = () => {
+      if (mapState.committedSelection === previous.committedSelection) {
+        Object.assign(mapState, previous);
+        syncUiFromState(); window.GeoGlyph3D?.refreshControls();
+      }
+    };
     conferenceApplyOwner = owner;
     mapState.conferenceApplying = true;
     clearTimeout(queueRebuild.timer);
@@ -2004,6 +2020,9 @@
         opacity:.82, extrusionTilt:90, extrusionSolid:true });
       Object.assign(mapState, { mode:'arcgis', message:patch.message, arcgisMessage:patch.message, nativeColor:patch.nativeColor,
         selectedFontId:patch.fontId, extrusionEnabled:patch.extrusionEnabled });
+      if (patch.mirrorX !== undefined) mapState.mirrorX = patch.mirrorX === true;
+      else if (patch.hasNewContent || options.opening) mapState.mirrorX = false;
+      if (patch.relativeSize !== undefined) mapState.relativeSize = patch.relativeSize;
       if (patch.animation) mapState.orientationMode = patch.animation;
       if (patch.fill) mapState.fill = patch.fill;
       if (patch.height !== undefined) mapState.baseHeightMeters = patch.height;
@@ -2047,6 +2066,7 @@
 
   function cancelConferenceWork() {
     cancelRandomSearch();
+    conferenceApplyOwner?.cancelPending?.();
     conferenceApplyOwner = null;
     ++mapState.fontChoiceVersion;
     // Cancelled async work must not own a later draw or its cleanup.
@@ -2242,7 +2262,9 @@
     target.height = decal.canvas.height;
     const ctx = target.getContext("2d");
     ctx.clearRect(0, 0, target.width, target.height);
+    if (mapState.mirrorX) { ctx.translate(target.width, 0); ctx.scale(-1, 1); }
     ctx.drawImage(decal.canvas, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
 
     const existing = map.getSource(DECAL_SOURCE_ID);
     if (existing) { existing.setCoordinates(decal.coordinates); existing.play?.(); existing.pause?.(); applyMapPaint(); map.triggerRepaint(); return; }
@@ -2305,7 +2327,7 @@
   function dissolveFontPolygons(polygons) { if (polygons.length < 2) return polygons; if (!window.polygonClipping?.union) throw Error('Font contour union unavailable'); return window.polygonClipping.union(...polygons); }
 
 
-  function projectPolygons(polygons, bounds, scaleMeters, bearingDegrees, anchor) {
+  function projectPolygons(polygons, bounds, scaleMeters, bearingDegrees, anchor, mirrorX = mapState.mirrorX) {
     const maplibregl = window.maplibregl;
     const origin = maplibregl.MercatorCoordinate.fromLngLat([anchor.lng, anchor.lat], 0);
     const unitsPerMeter = origin.meterInMercatorCoordinateUnits();
@@ -2313,7 +2335,7 @@
     const cos = Math.cos(radians), sin = Math.sin(radians);
 
     return polygons.map(polygon => polygon.map(ring => ring.map(([x, y]) => {
-      const localEast = (x - bounds.cx) * scaleMeters;
+      const localEast = (x - bounds.cx) * scaleMeters * (mirrorX ? -1 : 1);
       const localNorth = -(y - bounds.cy) * scaleMeters;
       const east = localEast * cos + localNorth * sin;
       const north = -localEast * sin + localNorth * cos;
@@ -2324,10 +2346,53 @@
       );
       const lngLat = merc.toLngLat();
       return [lngLat.lng, lngLat.lat];
-    })));
+    })).map(ring => mirrorX ? ring.reverse() : ring));
   }
 
+  let manualModelVersion = 0;
+  function notifyManualMapChange() {
+    manualModelVersion++;
+    document.dispatchEvent(new CustomEvent('geoglyph:manual-map-change'));
+  }
+  async function setModelMode(enabled) {
+    notifyManualMapChange();
+    const version = manualModelVersion, choice = mapState.fontChoiceVersion;
+    const current = () => version === manualModelVersion && choice === mapState.fontChoiceVersion && mapState.previewActive;
+    const keys = ['extrusionEnabled','lastLocalModel','lastGeoJSON','lastDecal','lastRenderMode','lastMetrics','displayedFontId','committedSelection'];
+    const previous = Object.fromEntries(keys.map(key => [key,mapState[key]]));
+    cancelInitialFit(); window.GeoGlyph3D?.stopOrbit();
+    mapState.extrusionEnabled = Boolean(enabled);
+    if (enabled && mapState.extrusionDepthMeters == null) mapState.extrusionDepthMeters = Math.max(.1, Math.min(100000,mapState.baseHeightMeters*mapState.relativeSize/1000));
+    syncUiFromState(); window.GeoGlyph3D?.refreshControls(); window.GeoGlyph3D?.syncVisibility();
+    if (!mapState.previewActive || !mapState.mapReady) return false;
+    clearTimeout(queueRebuild.timer);
+    mapState.pendingBuild = mapState.pendingFit = mapState.explicitFitPending = false;
+    try {
+      const result = await rebuildGeometry(false,{deferFit:true,preserveOnFailure:true,isCurrent:current});
+      if (!current()) return false;
+      if (!result?.ok || (enabled && !window.GeoGlyph3D?.isVisible())) throw result?.error || Error('This content cannot be extruded');
+      await waitForGroundFrame(current);
+      await fitDrawnGeometry(current,{explicit:true});
+      return true;
+    } catch (error) {
+      if (!current()) return false;
+      Object.assign(mapState,previous);
+      mapState.map.getSource(SOURCE_ID)?.setData(previous.lastGeoJSON || emptyFeatureCollection());
+      if (previous.lastDecal) setGroundDecal(previous.lastDecal); else clearGroundDecal();
+      await window.GeoGlyph3D?.update(current).catch(()=>{});
+      syncUiFromState(); window.GeoGlyph3D?.refreshControls(); window.GeoGlyph3D?.syncVisibility();
+      setStatus(error.message,'warn');
+      return false;
+    }
+  }
+  function setMirrorX(enabled) {
+    notifyManualMapChange();
+    mapState.mirrorX = enabled === true;
+    syncUiFromState(); window.GeoGlyph3D?.refreshControls();
+    queueRebuild(false);
+  }
   function requestFit() {
+    notifyManualMapChange();
     cancelInitialFit();window.GeoGlyph3D?.stopOrbit();
     if(!mapState.previewActive||!mapState.mapReady)return false;
     if(mapState.pendingBuild||mapState.rebuilding||mapState.randomSearching){mapState.explicitFitPending=true;return true;}
@@ -2435,6 +2500,9 @@
     if (window.GeoGlyphMapEngine) return;
     window.GeoGlyphMapEngine = Object.freeze({
       state: mapState,
+      setModelMode,
+      setMirrorX,
+      notifyManualMapChange,
       refreshFonts: refreshFontStore,
     prepareConferenceFont,
       applyConferenceCue,

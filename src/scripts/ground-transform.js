@@ -8,7 +8,8 @@
     return {height,depth,tilt,bearing,lift:-bounds.minY*height*Math.sin(tilt)-bottomZ*depth*Math.cos(tilt)};
   }
   function point(p, value, bounds) {
-    const t=parameters(value,bounds),x=p[0]*t.height,y=p[1]*t.height,z=p[2]*t.depth;
+    const localX=value.mirrorX?(bounds.minX+bounds.maxX-p[0]):p[0];
+    const t=parameters(value,bounds),x=localX*t.height,y=p[1]*t.height,z=p[2]*t.depth;
     const north=y*Math.cos(t.tilt)-z*Math.sin(t.tilt);
     return [x*Math.cos(t.bearing)+north*Math.sin(t.bearing),-x*Math.sin(t.bearing)+north*Math.cos(t.bearing),y*Math.sin(t.tilt)+z*Math.cos(t.tilt)+t.lift];
   }

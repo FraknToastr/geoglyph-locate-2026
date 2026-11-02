@@ -3,6 +3,48 @@
   const resources = new Map(), queue = [], pending = new Map(), pins = new Map();
   let active = 0, sequence = 0, worker = null, workerUrl = '', catalogGeneration = 0, serviceEpoch = 0, workerGeneration = 0;
   const counters = { reads: 0, faces: 0, parses: 0, jobs: 0 };
+  let localDescriptors = [], localRequest = null;
+  const fontName = value => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  function requestLocalFonts() {
+    if (localRequest) return localRequest;
+    if (typeof root.queryLocalFonts !== 'function') return Promise.reject(Error('Local Font Access unavailable; load font files instead'));
+    // Invoke the browser API before any await, retaining the button gesture.
+    let request;const epoch=serviceEpoch;
+    try { request = root.queryLocalFonts(); } catch (error) { return Promise.reject(error); }
+    const job = Promise.resolve(request).then(fonts => { if(epoch!==serviceEpoch)throw Error('Font service disposed');localDescriptors = Array.from(fonts); return localDescriptors; })
+      .finally(() => { if (localRequest === job) localRequest = null; });
+    localRequest = job; return job;
+  }
+  function matchLocalFont(record) {
+    const ref = record.geoGlyphRef || record;
+    const unique = matches => matches.length === 1 ? matches[0] : null;
+    const postscript = fontName(record.postscriptName || ref.postscriptName);
+    if (postscript) { const matches=localDescriptors.filter(font=>fontName(font.postscriptName)===postscript); if(matches.length)return unique(matches); }
+    const fullName = fontName(record.name || ref.name);
+    const wantedStyle=fontName(record.style || ref.style);
+    if (fullName) { const matches=localDescriptors.filter(font=>fontName(font.fullName)===fullName&&(!wantedStyle||fontName(font.style || 'Regular')===wantedStyle)); if(matches.length)return unique(matches); }
+    const family = fontName(record.family || ref.family), style = fontName(record.style || ref.style || 'Regular');
+    return family ? unique(localDescriptors.filter(font=>fontName(font.family)===family&&fontName(font.style || 'Regular')===style)) : null;
+  }
+  function byteSource(record) {
+    if (!record) return null;
+    const ref=record.geoGlyphRef||record;
+    const descriptor=record.localDescriptor || record.metadata || ref.metadata;
+    return record.arrayBuffer || ref.arrayBuffer || record.file || ref.file || (descriptor?.blob ? descriptor : null) || record.fileHandle || null;
+  }
+  function resolveLocalFont(record) {
+    if (!record) return record;
+    const ref=record.geoGlyphRef||record;
+    if(record.arrayBuffer||ref.arrayBuffer||record.file||ref.file||record.fileHandle)return record;
+    const available=record.localDescriptor||record.metadata||ref.metadata;
+    const descriptor=available?.blob ? available : matchLocalFont(record); if(!descriptor)return record;
+    record.localDescriptor=descriptor;
+    record.postscriptName=descriptor.postscriptName||record.postscriptName;
+    record.style=descriptor.style||record.style||'';
+    record.fontResourceKey=`local:${descriptor.postscriptName || descriptor.fullName || descriptor.family}:${descriptor.style || ''}`.toLowerCase();
+    if(record.geoGlyphRef){const ref=record.geoGlyphRef;ref.metadata=descriptor;ref.postscriptName=record.postscriptName;ref.style=record.style;ref.fontResourceKey=record.fontResourceKey;}
+    return record;
+  }
   const yieldTask = () => root.scheduler?.yield ? root.scheduler.yield() : new Promise(resolve => setTimeout(resolve, 0));
   const hash = value => { let n = 2166136261; for (const c of String(value)) n = Math.imul(n ^ c.charCodeAt(0), 16777619); return (n >>> 0).toString(36); };
   function keyFor(record) {
@@ -16,9 +58,16 @@
     return `css:${record.family || record.name || record.cssFamily}:${record.style || ''}`.toLowerCase();
   }
   function register(record) {
+    resolveLocalFont(record);
     const key = keyFor(record); let resource = resources.get(key);
-    if (!resource) { resource = { key, records: new Map(), buffer: null, face: null, facePromise: null, bufferPromise: null, parsePromise: null, metadata: null, preparedGeneration: -1, error: null, faceError:null, readError:null, used: performance.now() }; resources.set(key, resource); }
-    resource.records.set(record.id || `${record.source || ''}:${record.name || ''}:${record.style || ''}`, record); record.fontResourceKey = key; resource.provider = record;
+    if (!resource) { resource = { key, records: new Map(), buffer: null, face: null, facePromise: null, bufferPromise: null, parsePromise: null, metadata: null, preparedGeneration: -1, error: null, faceError:null, readError:null, providerVersion:0, used: performance.now() }; resources.set(key, resource); }
+    const source=byteSource(record),previous=resource.providerSource;
+    if(!resource.provider || (source && source!==previous)){
+      resource.provider=record;resource.providerSource=source;resource.providerVersion++;
+      resource.readError=null;resource.faceError=null;resource.error=null;
+      resource.bufferPromise=null;resource.facePromise=null;resource.parsePromise=null;
+    }
+    resource.records.set(record.id || `${record.source || ''}:${record.name || ''}:${record.style || ''}`, record); record.fontResourceKey = key;
     if (resource.face) { record.cssFamily = resource.cssFamily; record.exactFace = true; }
     if(resource.hasColor!==undefined)record.hasColor=resource.hasColor;
     return resource;
@@ -37,7 +86,8 @@
     if (resource.buffer?.byteLength) return resource.buffer;
     if (resource.bufferPromise) return resource.bufferPromise;
     if (resource.readError) throw resource.readError;
-    resource.bufferPromise = (async () => {
+    const version=resource.providerVersion;
+    const job = (async () => {
       const record = resource.provider, ref = record.geoGlyphRef || record;
       let buffer = record.arrayBuffer || ref.arrayBuffer;
       if (!buffer?.byteLength) {
@@ -48,13 +98,14 @@
         if (!file) throw Error('Exact font bytes unavailable; choose a local font or font file');
         counters.reads++; buffer = await file.arrayBuffer();
       }
+      if(version!==resource.providerVersion)throw Error('Font source changed; retry the selected font');
       if (!buffer?.byteLength) throw Error('Font file is empty');
       const view=new DataView(buffer); let hasColor=false;
       if(buffer.byteLength>=12&&view.getUint32(0)!==0x74746366){const count=Math.min(view.getUint16(4),Math.floor((buffer.byteLength-12)/16));for(let i=0;i<count;i++){const tag=String.fromCharCode(...new Uint8Array(buffer,12+i*16,4));if(['COLR','CPAL','CBDT','CBLC','sbix','SVG '].includes(tag))hasColor=true;}}
       resource.hasColor=hasColor; for(const ref of resource.records.values())ref.hasColor=hasColor;
       resource.buffer = buffer; trimBuffers(resource.key); return buffer;
-    })().catch(error => { resource.readError=error; throw error; }).finally(() => { resource.bufferPromise = null; });
-    return resource.bufferPromise;
+    })().catch(error => { if(version===resource.providerVersion)resource.readError=error; throw error; }).finally(() => { if(resource.bufferPromise===job)resource.bufferPromise = null; });
+    resource.bufferPromise=job;return job;
   }
   function trimBuffers(activeKey) {
     let bytes = [...resources.values()].reduce((sum, r) => sum + (r.buffer?.byteLength || 0), 0);
@@ -134,8 +185,8 @@
     if (resource.face) return resource;
     if (resource.facePromise) return resource.facePromise;
     if(resource.faceError) throw resource.faceError;
-    const epoch = serviceEpoch;
-    resource.facePromise = schedule(async () => {
+    const epoch = serviceEpoch,version=resource.providerVersion;
+    const job = schedule(async () => {
       if (epoch !== serviceEpoch) throw Error('Font service disposed');
       const buffer = await read(resource);
       if (epoch !== serviceEpoch) throw Error('Font service disposed');
@@ -151,14 +202,15 @@
         } finally { clearTimeout(timer); }
       } else await loading;
       if(epoch!==serviceEpoch) throw Error('Font service disposed');
+      if(version!==resource.providerVersion)throw Error('Font source changed; retry the selected font');
       if (options.isCurrent && !options.isCurrent()) return resource;
       document.fonts.add(face); counters.faces++; resource.face = face; resource.cssFamily = cssFamily;
       for (const ref of resource.records.values()) { ref.cssFamily = cssFamily; ref.exactFace = true; }
       const inactive = [...resources.values()].filter(r => r.face && r !== resource && ![...pins.values()].includes(r.key)).sort((a, b) => b.used - a.used);
       for (const old of inactive.slice(Math.max(0,23-pins.size))) { document.fonts.delete(old.face); old.face = null; for (const ref of old.records.values()) ref.exactFace = false; }
       return resource;
-    }, options.priority ?? 0).catch(error=>{ if(epoch===serviceEpoch)resource.faceError=error; throw error; }).finally(() => { resource.facePromise = null; });
-    return resource.facePromise;
+    }, options.priority ?? 0).catch(error=>{ if(epoch===serviceEpoch&&version===resource.providerVersion)resource.faceError=error; throw error; }).finally(() => { if(resource.facePromise===job)resource.facePromise = null; });
+    resource.facePromise=job;return job;
   }
   async function prepareOnce(record, options = {}) {
     const resource = register(record); resource.used = performance.now();
@@ -166,17 +218,20 @@
     if (worker && resource.metadata && resource.preparedGeneration === workerGeneration) return resource.metadata;
     if (resource.parsePromise) return resource.parsePromise;
     if (resource.error) throw resource.error;
-    const epoch = serviceEpoch;
+    const epoch = serviceEpoch,version=resource.providerVersion;
     const job = (async () => {
       const buffer = await schedule(()=>read(resource),options.priority ?? 0);
       if (epoch !== serviceEpoch) throw Error('Font service disposed');
+      if(version!==resource.providerVersion)throw Error('Font source changed; retry the selected font');
       const copy = buffer.slice(0); counters.parses++;
       const request = workerRequest('prepare', { key: resource.key, buffer: copy }, [copy]);
       const generation = workerGeneration;
       try {
-        resource.metadata = await request; resource.preparedGeneration = generation;
+        const metadata=await request;
+        if(version!==resource.providerVersion)throw Error('Font source changed; retry the selected font');
+        resource.metadata = metadata; resource.preparedGeneration = generation;
         resource.error = null; return resource.metadata;
-      } catch (error) { if (!error.workerFailure && epoch === serviceEpoch) resource.error = error; throw error; }
+      } catch (error) { if (!error.workerFailure && epoch === serviceEpoch&&version===resource.providerVersion) resource.error = error; throw error; }
     })().finally(() => { if (resource.parsePromise === job) resource.parsePromise = null; });
     resource.parsePromise = job; return job;
   }
@@ -222,9 +277,10 @@
   function pin(record, owner) { const resource=register(record); pins.set(owner,resource.key); return resource; }
   function dispose() {
     ++serviceEpoch; cancelCatalog();
+    localDescriptors=[];localRequest=null;
     for (const r of resources.values()) if (r.face) document.fonts.delete(r.face);
     resources.clear(); pins.clear(); for(const item of queue.splice(0))item.reject(Error('Font service disposed'));
     resetWorker(worker, Error('Font service disposed'));
   }
-  root.GeoGlyphFontService = Object.freeze({ keyFor, register, ensureFace, prepare, model, mesh, catalog, cancelCatalog, yieldTask, pin, unpin:owner=>pins.delete(owner), dispose, stats: () => ({ ...counters, resources: resources.size, queued: queue.length, active, retainedBytes: [...resources.values()].reduce((sum, r) => sum + (r.buffer?.byteLength || 0), 0) }), workerStats: () => workerRequest('stats', {}) });
+  root.GeoGlyphFontService = Object.freeze({ requestLocalFonts, localFonts:()=>localDescriptors.slice(), matchLocalFont, resolveLocalFont, keyFor, register, ensureFace, prepare, model, mesh, catalog, cancelCatalog, yieldTask, pin, unpin:owner=>pins.delete(owner), dispose, stats: () => ({ ...counters, resources: resources.size, queued: queue.length, active, retainedBytes: [...resources.values()].reduce((sum, r) => sum + (r.buffer?.byteLength || 0), 0) }), workerStats: () => workerRequest('stats', {}) });
 })(globalThis);

@@ -23,7 +23,7 @@ function harness() {
     window: { GeoGlyphUi: { isRestoring: () => false }, GeoGlyph3D: {
       stopOrbit() { orbitStops++; }, refreshControls() {}, isVisible: () => true, update: async () => {} } },
     $: () => null, waitForCondition: async () => {}, cancelRandomSearch() {},
-    syncUiFromState() {}, updateAnchorStats() {}, activateSelectedFont() {},
+    syncUiFromState() {}, updateAnchorStats() {}, activateSelectedFont() {}, notifyManualMapChange() {},
     emptyFeatureCollection: () => ({ features: [] }), setGroundDecal() {}, clearGroundDecal() {},
     waitForGroundFrame: async () => {}, fitDrawnGeometry: async () => {},
     async rebuildGeometry(_fit, options = {}) {
@@ -65,6 +65,7 @@ test('explicit cancellation invalidates ownership before another cue starts', as
   const h = harness(), first = h.gate(1), second = h.gate(2);
   const old = h.cue(1).catch(error => error.message); await entered();
   h.context.cancelConferenceWork(); assert.equal(h.state.conferenceApplying, false);
+  assert.equal(h.state.message, 'previous', 'uncommitted cue state must not leak into the manual edit');
   const latest = h.cue(2); await entered(); first(); await old;
   assert.equal(h.state.conferenceApplying, true); second(); await latest;
   assert.equal(h.state.conferenceApplying, false); assert.equal(h.state.message, 'cue-2');
@@ -81,4 +82,11 @@ test('a current failed cue still restores the preceding display and releases its
   await assert.rejects(h.context.applyConferenceCue({ fontId: 'missing', message: 'invalid' }), /unavailable/);
   assert.equal(h.state.selectedFontId, 'previous'); assert.equal(h.state.message, 'previous');
   assert.equal(h.state.conferenceApplying, false); assert.equal(h.rollbacks.length, 1);
+});
+
+test('cancelling after the artwork commits retains the visible step', async () => {
+  const h=harness(),release=h.gate(1),result=h.cue(1).catch(error=>error.message);
+  await entered();h.state.committedSelection={message:'cue-1'};
+  h.context.cancelConferenceWork();
+  assert.equal(h.state.message,'cue-1');release();await result;
 });

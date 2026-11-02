@@ -105,7 +105,11 @@
 
   function addFontRecord(record) {
     const key = window.GeoGlyphFontService.keyFor(record);
-    if (fontByResource.has(key)) return fontByResource.get(key);
+    if (fontByResource.has(key)) {
+      const font=fontByResource.get(key);
+      if(record.metadata||record.localDescriptor){Object.assign(font,{metadata:record.metadata,localDescriptor:record.localDescriptor});window.GeoGlyphFontService.register(font);}
+      return font;
+    }
     const id = record.id || `${record.source}-${record.name}-${state.fonts.length}`.replace(/\s+/g, '-').toLowerCase();
     const font = { cssFamily: record.family, ...record, id };
     state.fonts.push(font); fontById.set(id, font); fontByResource.set(key, font);
@@ -135,6 +139,7 @@
 
   async function prepareSelectedFont(options={}) {
     const font = selectedFont(), generation = ++fontSelectionGeneration;
+    if(font)window.GeoGlyphFontService.resolveLocalFont(font);
     if(font) window.GeoGlyphFontService.pin(font,'canvas');
     if (!font || !(font.file || font.metadata || font.arrayBuffer)) return;
     const previousFamily=font.cssFamily, previouslyExact=font.exactFace;
@@ -147,6 +152,7 @@
 
   function selectFont(fontId) {
     const font=fontById.get(fontId); if(!font)return;
+    document.dispatchEvent(new CustomEvent('geoglyph:manual-map-change'));
     const changed=state.selectedFontId!==fontId; state.selectedFontId=fontId;
     if(changed) { renderFontList(); renderGlyphGrid(); renderGridSelectionPreview(); renderPreview(); }
     prepareSelectedFont();
@@ -500,12 +506,12 @@
     const button=$('scanBtn'),operation=++fontCatalogOperation;
     button.disabled=true;updateFontProgress({active:true,done:0,total:0,message:'Requesting local font access…'});
     try {
-      const descriptors=await window.queryLocalFonts();if(operation!==fontCatalogOperation)return;
+      const descriptors=await window.GeoGlyphFontService.requestLocalFonts();if(operation!==fontCatalogOperation)return;
       const records=descriptors.map(font=>({name:font.fullName||font.postscriptName||font.family,family:font.family,cssFamily:font.family,source:'windows',metadata:font,postscriptName:font.postscriptName||'',style:font.style||''}));
       updateFontProgress({message:'',total:records.length});
       const result=await window.GeoGlyphFontService.catalog(records,addFontRecord,{progress:(done,total)=>{if(operation===fontCatalogOperation)updateFontProgress({done,total});}});
       renderFontList();
-      if(operation===fontCatalogOperation){updateFontProgress({active:false,done:result.done,message:result.cancelled?'Loading stopped · '+result.done+' fonts catalogued':''});prepareSelectedFont();button.textContent=String(result.done);button.dataset.hoverTip=result.done+' font faces catalogued · exact faces load when selected';}
+      if(operation===fontCatalogOperation){updateFontProgress({active:false,done:result.done,message:result.cancelled?'Loading stopped · '+result.done+' fonts catalogued':''});prepareSelectedFont();button.textContent=String(result.done);button.dataset.hoverTip=result.done+' font faces catalogued · exact faces load when selected';window.GeoGlyphMapEngine?.refreshFonts();}
     } catch(error){if(operation===fontCatalogOperation){showToast('Windows font scan cancelled or unavailable');updateFontProgress({active:false,message:'Font scan cancelled or unavailable'});}}
     finally{button.disabled=false;}
   }

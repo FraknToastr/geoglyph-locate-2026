@@ -63,3 +63,29 @@ test('custom render shares one coherent pose between paint and projection and re
   c.layer.render({drawingBufferWidth:800,drawingBufferHeight:600},{defaultProjectionData:{mainMatrix:[]}});
   assert.equal(solves,1);assert.equal(paintPose,pose);assert.equal(projectionPose,pose.geographic);assert.equal(resets,2);assert.equal(draws,1);
 });
+
+test('horizontal reflection affects faces and outlines around their shared centre without moving the camera target',()=>{
+  const h=harness();
+  for(const bearing of [-120,0,75])for(const tilt of [0,45,90]){
+    h.s.mirrorX=false;
+    const angles={bearing,tilt},plain=h.calculate(angles);
+    h.s.mirrorX=true;
+    const mirrored=h.calculate(angles),b=h.data.bounds;
+    const expected=plain.object.clone().multiply(new ThreeMatrix4().makeTranslation(b.minX+b.maxX,0,0)).multiply(new ThreeMatrix4().makeScale(-1,1,1));
+    assert.deepEqual(Array.from(mirrored.object.elements),expected.elements);
+    assert.deepEqual(Array.from(mirrored.geographic.elements),Array.from(plain.geographic.elements));
+    for(const key of ['localCenter','center','elevation','radius'])assert.equal(JSON.stringify(mirrored[key]),JSON.stringify(plain[key]));
+    assert.ok(mirrored.object.determinant()<0);
+    h.s.mirrorX=false;
+    assert.deepEqual(Array.from(h.calculate(angles).object.elements),Array.from(plain.object.elements));
+  }
+});
+
+test('point transformation reflects asymmetric local x coordinates exactly while retaining tilt, bearing and elevation',()=>{
+  const bounds={minX:-2,maxX:6,minY:-1,maxY:2,minZ:-.5,maxZ:.5};
+  for(const bearing of [0,35,180])for(const tilt of [0,90,135])for(const p of [[-2,-1,-.5],[0,1,0],[6,2,.5]]){
+    const values={heightMeters:300,depthMeters:30,bearing,tilt};
+    const mirrored=transform.point(p,{...values,mirrorX:true},bounds);
+    assert.deepEqual(mirrored,transform.point([bounds.minX+bounds.maxX-p[0],p[1],p[2]],values,bounds));
+  }
+});

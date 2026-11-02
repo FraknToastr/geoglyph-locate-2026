@@ -244,6 +244,7 @@
     result.anchor = { lng:current.anchor.lng, lat:current.anchor.lat };
     result.renderStyle=current.nativeColor?'native':'styled';
     result.extrusionEnabled=current.extrusionEnabled;
+    result.mirrorX=current.mirrorX===true;
     result.extrusionDepthMeters=current.extrusionDepthMeters;
     result.extrusionTilt=current.extrusionTilt;
     result.extrusionSolid=current.extrusionSolid;
@@ -284,6 +285,7 @@
       Object.entries(limits).forEach(([key, [min, max]]) => { current[key] = bounded(value[key], min, max, current[key]); });
       current.quality = Math.round(current.quality);
       current.extrusionEnabled=value.extrusionEnabled===true;
+      current.mirrorX=value.mirrorX===true;
       current.extrusionDepthMeters=finite(value.extrusionDepthMeters)?bounded(value.extrusionDepthMeters,.1,100000,30):null;
       current.extrusionTilt=bounded(value.extrusionTilt,0,90,90);
       current.extrusionSolid=typeof value.extrusionSolid==='boolean'?value.extrusionSolid:!value.extrusionEnabled;

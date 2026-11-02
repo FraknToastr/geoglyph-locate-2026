@@ -25,7 +25,7 @@ function message(text,compact=false) {
   const quick=$('mapQuickStatus');if(quick){quick.textContent=compact?text:'';quick.hidden=!compact;}
 }
 function settings(angles=camera.getAngles()) {
-  const s=state();return {heightMeters:s.baseHeightMeters*s.relativeSize/100,depthMeters:s.extrusionDepthMeters??30,tilt:angles.tilt,bearing:angles.bearing};
+  const s=state();return {heightMeters:s.baseHeightMeters*s.relativeSize/100,depthMeters:s.extrusionDepthMeters??30,tilt:angles.tilt,bearing:angles.bearing,mirrorX:s.mirrorX===true};
 }
 function matrices(angles=camera.getAngles(),output={geographic:new Matrix4(),object:new Matrix4()}) {
   const s=state(),values=settings(angles),p=window.GeoGlyphGroundTransform.parameters(values,data.bounds);
@@ -35,6 +35,7 @@ function matrices(angles=camera.getAngles(),output={geographic:new Matrix4(),obj
   const object=output.object.makeTranslation(0,0,p.lift).multiply(matrixScratch.makeRotationX(p.tilt))
     .multiply(matrixScratch.makeScale(p.height,p.height,p.depth));
   const b=data.bounds,mid=[(b.minX+b.maxX)/2,(b.minY+b.maxY)/2,(b.minZ+b.maxZ)/2];
+  if(values.mirrorX)object.multiply(matrixScratch.makeTranslation(b.minX+b.maxX,0,0)).multiply(matrixScratch.makeScale(-1,1,1));
   const localCenter=window.GeoGlyphGroundTransform.point(mid,values,b);
   const centerMerc=new window.maplibregl.MercatorCoordinate(origin.x+localCenter[0]*u,origin.y-localCenter[1]*u,localCenter[2]*u);
   return {geographic,object,localCenter,center:centerMerc.toLngLat(),elevation:centerMerc.toAltitude(),units:u,radius:Math.hypot((b.maxX-b.minX)*p.height,(b.maxY-b.minY)*p.height,(b.maxZ-b.minZ)*p.depth)/2};
@@ -146,12 +147,14 @@ function failure(reason) {
   const displayed=s?.fontRecords.get(s.displayedFontId)?.name;
   message(isVisible()?`${requested} cannot be shown in 3D: ${reason}. Showing ${displayed||'previous font'}. Switch to 2D to preview the selected font.`:`3D unavailable: ${reason}. Choose an outline font or switch to 2D.`,true);
 }
-function setEnabled(enabled) {
+function setEnabled(enabled,{manual=true}={}) {
+  if(manual&&engine().setModelMode)return Promise.resolve(engine().setModelMode(enabled)).catch(error=>{failure(error.message);refreshControls();});
   const s=state();s.extrusionEnabled=enabled;
   if(enabled&&s.extrusionDepthMeters==null)s.extrusionDepthMeters=Math.max(.1,Math.min(100000,s.baseHeightMeters*s.relativeSize/1000));
   if(!enabled)clear();refreshControls();engine().queueRebuild(false);
 }
 function stopMotion(){queuedOrbit=null;camera.stop();refreshControls();}
+function manualChange(){if(engine()?.notifyManualMapChange)engine().notifyManualMapChange();else document.dispatchEvent(new CustomEvent('geoglyph:manual-map-change'));}
 function exitCamera(){queuedOrbit=null;camera.exit();refreshControls();}
 function toggleOrbit(mode=state().orientationMode) {
   const s=state();
@@ -159,7 +162,7 @@ function toggleOrbit(mode=state().orientationMode) {
   if(camera.isRunning()&&s.orientationMode===mode){camera.stop();return;}
   s.orientationMode=mode;
   if(!s.extrusionEnabled||!isVisible()){
-    queuedOrbit=mode;camera.enter();setEnabled(true);refreshControls();return;
+    queuedOrbit=mode;camera.enter();setEnabled(true,{manual:false});refreshControls();return;
   }
   if(camera.isRunning()){camera.retarget();syncVisibility();refreshControls();}
   else camera.start();
@@ -180,6 +183,7 @@ function refreshControls() {
     if(fontRow.textContent!==text){fontRow.textContent=text;fontRow.title=text;}
   }
   if($('map3DEnabled'))$('map3DEnabled').checked=s.extrusionEnabled;
+  if($('mapMirrorX'))$('mapMirrorX').checked=s.mirrorX===true;
   if($('map3DControls'))$('map3DControls').hidden=!s.extrusionEnabled;
   if($('map3DDepth'))$('map3DDepth').value=String(s.extrusionDepthMeters??Math.max(.1,s.baseHeightMeters*s.relativeSize/1000));
   if($('map3DTilt'))$('map3DTilt').value=String(s.extrusionTilt);
@@ -212,6 +216,7 @@ function initialise() {
   const s=state(),parent=$('geoglyphMapEditor')?.querySelector('.map-editor-actions');if(!s||!parent)return false;
   const panel=document.createElement('section');panel.className='map-3d-panel';panel.setAttribute('aria-label','3D text');
   panel.innerHTML=`<div class="map-3d-toggles"><label class="map-3d-toggle"><input id="map3DEnabled" type="checkbox"><span>3D extrusion</span></label>
+      <label class="map-3d-toggle"><input id="mapMirrorX" type="checkbox"><span>Mirror horizontally</span></label>
       <label class="map-3d-toggle"><input id="map3DSolid" type="checkbox" checked><span>Solid model</span></label></div>
     <div id="map3DControls" hidden>
       <label class="map-field"><span>Depth</span><div class="map-number"><input id="map3DDepth" type="number" min="0.1" max="100000" step="0.1" value="30"><em>m</em></div></label>
@@ -224,14 +229,15 @@ function initialise() {
     </div><p id="map3DStatus" class="map-3d-status" role="status">Extrude outline fonts and stand them upright.</p>`;
   parent.after(panel);
   $('map3DEnabled').addEventListener('change',event=>setEnabled(event.target.checked));
-  $('map3DSolid').addEventListener('change',event=>{s.extrusionSolid=event.target.checked;refreshControls();syncVisibility();});
-  $('map3DOrientation').addEventListener('change',event=>{s.orientationMode=event.target.value;if(queuedOrbit)queuedOrbit=s.orientationMode;camera.retarget();refreshControls();syncVisibility();});
-  $('map3DOrbitPeriod').addEventListener('input',event=>{s.orbitPeriodSeconds=Math.max(10,Math.min(120,Number(event.target.value)||30));refreshControls();});
-  $('map3DOrbit').addEventListener('click',()=>toggleOrbit());
-  $('map3DDepth').addEventListener('input',event=>{const n=Number(event.target.value);if(!Number.isFinite(n)||n<.1)return;s.extrusionDepthMeters=Math.min(100000,n);stopMotion();syncVisibility();});
+  $('mapMirrorX').addEventListener('change',event=>{Promise.resolve(engine().setMirrorX(event.target.checked)).catch(error=>{failure(error.message);refreshControls();});});
+  $('map3DSolid').addEventListener('change',event=>{manualChange();s.extrusionSolid=event.target.checked;refreshControls();syncVisibility();});
+  $('map3DOrientation').addEventListener('change',event=>{manualChange();s.orientationMode=event.target.value;if(queuedOrbit)queuedOrbit=s.orientationMode;camera.retarget();refreshControls();syncVisibility();});
+  $('map3DOrbitPeriod').addEventListener('input',event=>{manualChange();s.orbitPeriodSeconds=Math.max(10,Math.min(120,Number(event.target.value)||30));refreshControls();});
+  $('map3DOrbit').addEventListener('click',()=>{manualChange();toggleOrbit();});
+  $('map3DDepth').addEventListener('input',event=>{const n=Number(event.target.value);if(!Number.isFinite(n)||n<.1)return;manualChange();s.extrusionDepthMeters=Math.min(100000,n);stopMotion();syncVisibility();});
   $('map3DDepth').addEventListener('change',event=>{event.target.value=String(s.extrusionDepthMeters??30);});
-  $('map3DTilt').addEventListener('input',event=>{s.extrusionTilt=Math.max(0,Math.min(90,Number(event.target.value)||0));stopMotion();syncVisibility();});
-  $('map3DView').addEventListener('click',()=>engine().fit());
+  $('map3DTilt').addEventListener('input',event=>{manualChange();s.extrusionTilt=Math.max(0,Math.min(90,Number(event.target.value)||0));stopMotion();syncVisibility();});
+  $('map3DView').addEventListener('click',()=>{manualChange();engine().fit();});
   const geometryInputs=new Set(['mapMessage','mapHeight','mapRelativeSize','mapTracking','mapLineHeight','mapBearing','mapQuality','mapNativeColor']);
   for(const type of ['input','change'])document.addEventListener(type,event=>{if(geometryInputs.has(event.target.id))stopMotion();},true);
   document.addEventListener('click',event=>{if(state()?.previewActive&&event.target.closest?.('[data-map-mode],[data-map-code],[data-code],.key-button[data-base]'))stopMotion();},true);
@@ -244,7 +250,7 @@ function initialise() {
   $('mapQuickModel').setAttribute('aria-label','Toggle 2D or 3D model');
   $('mapQuickRandom').title='Choose a random font; keep text and animation';
   $('mapQuickModel').addEventListener('click',()=>setEnabled(!s.extrusionEnabled));
-  for(const [id,mode] of [['Orbit','fixed'],['Turn','yaw'],['Face','billboard']])$('mapQuick'+id).addEventListener('click',()=>toggleOrbit(mode));
+  for(const [id,mode] of [['Orbit','fixed'],['Turn','yaw'],['Face','billboard']])$('mapQuick'+id).addEventListener('click',()=>{manualChange();toggleOrbit(mode);});
   $('mapQuickRandom').addEventListener('click',()=>engine().randomFont());
   refreshControls();
   return true;
