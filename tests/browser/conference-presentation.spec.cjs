@@ -7,6 +7,8 @@ const hostedSmoke=process.env.GEOGLYPH_HOSTED_SMOKE==='1';
 test.setTimeout(90_000);
 const tile = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', 'base64');
 const cueFields = ['emojis', 'geoglyph_speaks', 'whats_on_your_mind', 'random_font', 'choose_a_font_font', 'choose_a_colour_colour', '_2d_or_3d', 'fit', 'animation', '_size_size', 'special_commands'];
+const introductionMessages=['🥱','😶','😏','😏','😎','Hello',"I'm Geoglyph",'Call me Geo','Everything you about to see','was made by ChatGPT','including me!','Today I will be presenting','with my best friend','Josh Roberts','Where are you Josh?'];
+const introductionDelays=[0,5000,3000,3000,3000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000];
 function cue(id, attributes = {}, point) {
   return { attributes: { objectid: id, CreationDate: 1000 + id, ...attributes }, ...(point ? { geometry: { x: point[0], y: point[1], spatialReference: { wkid: 4326 } } } : {}) };
 }
@@ -83,12 +85,18 @@ async function installIntroductionClock(page){
   await page.clock.install();introductionClocks.add(page);
 }
 async function completeIntroduction(page,id){
+  const flying=await page.evaluate(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='flight'),id);
+  if(!flying){
+    await page.waitForFunction(()=>document.getElementById('geoglyphConferenceTitle'));
+    for(let i=0;i<5;i++)await page.clock.fastForward(2000);
+    await page.clock.runFor(34);
+  }
   await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='flight'),id);
   await page.clock.fastForward(30000);
   await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='fit'),id);
-  for(let index=0;index<14;index++){
+  for(let index=0;index<introductionMessages.length;index++){
     const done=await page.evaluate(({id,index})=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase===`introduction-${index}`),{id,index});
-    if(!done)await page.clock.fastForward([0,5000,5000,3000,3000,3000,5000,5000,5000,5000,5000,5000,5000,5000][index]);
+    if(!done)await page.clock.fastForward(introductionDelays[index]);
     await page.waitForFunction(({id,index})=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase===`introduction-${index}`),{id,index});
   }
   await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='applied'),id);
@@ -145,6 +153,12 @@ test(`Begin scripted introduction renders Medium 3D Turn and retains final text 
   await installIntroductionClock(page);
   await page.evaluate(()=>{
     const api=GeoGlyphMapEngine;window.introductionFrames=[];
+    window.introductionTitles=[];
+    window.introductionTitleObserver=new MutationObserver(()=>{
+      const title=document.getElementById('geoglyphConferenceTitle');
+      if(title&&window.introductionTitles.at(-1)!==title.textContent)window.introductionTitles.push(title.textContent);
+    });
+    window.introductionTitleObserver.observe(document.getElementById('geoglyphMapWorkspace'),{childList:true,subtree:true,characterData:true});
     window.GeoGlyphMapEngine={...api,applyConferenceCue:async(...args)=>{
       const result=await api.applyConferenceCue(...args),s=api.state;
       window.introductionFrames.push({message:s.message,mirrorX:s.mirrorX,height:s.baseHeightMeters,
@@ -153,13 +167,31 @@ test(`Begin scripted introduction renders Medium 3D Turn and retains final text 
     }};
   });
   server.records.push(cue(1,{special_commands:'Begin'}));await poll(page);
+  const title=page.locator('#geoglyphConferenceTitle');
+  await expect(title).toHaveText('Conference day.');await expect(title).toBeVisible();
+  const titleView=await title.evaluate(element=>{
+    const style=getComputedStyle(element),area=element.parentElement.getBoundingClientRect(),range=document.createRange();
+    range.selectNodeContents(element);const text=range.getBoundingClientRect();
+    return {pointerEvents:style.pointerEvents,font:style.fontFamily,fontSize:parseFloat(style.fontSize),
+      expectedFont:GeoGlyphMapEngine.state.fontRecords.get(GeoGlyphConference.state.fontIds['Gill Sans']).cssFamily,
+      centerX:(text.left+text.right)/2-(area.left+area.right)/2,centerY:(text.top+text.bottom)/2-(area.top+area.bottom)/2,
+      fits:text.width<area.width&&text.height<area.height,message:GeoGlyphMapEngine.state.message,nativeColor:GeoGlyphMapEngine.state.nativeColor};
+  });
+  expect(titleView.pointerEvents).toBe('none');expect(titleView.font).toContain(titleView.expectedFont);
+  expect(titleView.fontSize).toBeGreaterThan(96);expect(titleView.fits).toBe(true);
+  expect(Math.abs(titleView.centerX)).toBeLessThan(1);expect(Math.abs(titleView.centerY)).toBeLessThan(titleView.fontSize*.3);
+  expect(titleView.message).toBe('😴');expect(titleView.nativeColor).toBe(true);
+  await page.screenshot({path:'/tmp/geoglyph-begin-title.png'});
   await completeIntroduction(page,1);
   const result=await page.evaluate(()=>({frames:window.introductionFrames,phase:GeoGlyphConference.state.phase,
-    font:GeoGlyphConference.state.fontIds['Gill Sans'],animation:GeoGlyph3D.stats().animation,mirrorX:GeoGlyphMapEngine.state.mirrorX}));
-  expect(result.frames.map(frame=>frame.message)).toEqual(['🥱','😶','🫣','😏','😏','🤗','Hello',"I'm Geoglyph",'Call me Geo','I was made by ChatGPT','Today I will be presenting','with my best friend','Josh Roberts','Where are you Josh?']);
-  expect(result.frames.map(frame=>frame.mirrorX)).toEqual(Array.from({length:14},(_,i)=>i===4));
-  expect(result.frames.slice(0,6).every(frame=>frame.nativeColor&&!frame.extrusion)).toBe(true);
-  expect(result.frames.slice(6).every(frame=>frame.font===result.font&&!frame.nativeColor)).toBe(true);
+    titles:window.introductionTitles,font:GeoGlyphConference.state.fontIds['Gill Sans'],animation:GeoGlyph3D.stats().animation,mirrorX:GeoGlyphMapEngine.state.mirrorX}));
+  await page.evaluate(()=>window.introductionTitleObserver.disconnect());
+  expect(result.titles).toEqual(['Conference day.','Conference day..','Conference day...','Conference day....','Conference day.....']);
+  await expect(title).toHaveCount(0);
+  expect(result.frames.map(frame=>frame.message)).toEqual(introductionMessages);
+  expect(result.frames.map(frame=>frame.mirrorX)).toEqual(introductionMessages.map((_,i)=>i===3));
+  expect(result.frames.slice(0,5).every(frame=>frame.nativeColor&&!frame.extrusion)).toBe(true);
+  expect(result.frames.slice(5).every(frame=>frame.font===result.font&&!frame.nativeColor)).toBe(true);
   expect(result.frames.at(-1)).toMatchObject({height:3000,depth:300,extrusion:true});
   expect(result.phase).toBe('live');expect(result.animation.orbiting).toBe(true);expect(result.mirrorX).toBe(false);
   const before=await page.evaluate(async()=>({uploads:GeoGlyph3D.stats().uploads,disposals:GeoGlyph3D.stats().disposals,
@@ -348,7 +380,7 @@ test('Begin waits for a delayed sleeping-emoji draw before starting its flight',
   expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom())).toBeCloseTo(zoom, 8);
   await page.evaluate(() => window.releaseSleepingFace());
   await completeIntroduction(page,1);
-  expect((await snapshot(page)).history.map(item => item.phase)).toEqual(['started','drawn','flight','fit',...Array.from({length:13},(_,i)=>`introduction-${i}`),'animation','applied']);
+  expect((await snapshot(page)).history.map(item => item.phase)).toEqual(['started','drawn','flight','fit',...introductionMessages.map((_,i)=>`introduction-${i}`),'animation','applied']);
 });
 
 test('Reset interrupts a flight, drops preceding queued messages and prevents a late camera move', async ({ page }) => {

@@ -10,13 +10,14 @@
   const client = window.GeoGlyphSurveyResults.create();
   const MAX_QUEUED_CUES = 100;
   let source = '', epoch = 0, activeRun = null;
-  let introWait = null;
+  let introWait = null, introTitle = null;
   const introduction = Object.freeze([
-{message:'🥱',emoji:true,delayBefore:0}, {message:'😶',emoji:true}, {message:'🫣',emoji:true},
+{message:'🥱',emoji:true,delayBefore:0}, {message:'😶',emoji:true},
 {message:'😏',emoji:true,delayBefore:3000}, {message:'😏',emoji:true,mirrorX:true,delayBefore:3000},
-{message:'🤗',emoji:true,delayBefore:3000},
+{message:'😎',emoji:true,delayBefore:3000},
     {message:'Hello'}, {message:"I'm Geoglyph"}, {message:'Call me Geo'},
-    {message:'I was made by ChatGPT'}, {message:'Today I will be presenting'},
+    {message:'Everything you about to see'}, {message:'was made by ChatGPT'}, {message:'including me!'},
+    {message:'Today I will be presenting'},
     {message:'with my best friend'}, {message:'Josh Roberts'}, {message:'Where are you Josh?',final:true}
   ]);
   const delay = () => new Promise(resolve => setTimeout(resolve, 20));
@@ -30,6 +31,7 @@
     activeRun = null;
     state.applying = false;
     state.introStep = null;
+    clearIntroductionTitle();
     introWait?.wake();
     engine().cancelConferenceWork();
     if (state.phase === 'beginning') returnToOverview();
@@ -41,6 +43,24 @@
     engine().state.initialFitStatus = 'pending';
     engine().state.firstFitDone = false;
     engine().showConferenceOverview();
+  }
+  function clearIntroductionTitle(title = introTitle) {
+    title?.remove();
+    if (introTitle === title) introTitle = null;
+  }
+  function showIntroductionTitle() {
+    clearIntroductionTitle();
+    const title = document.createElement('div');
+    title.id = 'geoglyphConferenceTitle';
+    title.className = 'geoglyph-conference-title';
+    title.setAttribute('role', 'status');
+    title.setAttribute('aria-label', 'Conference day');
+    const font = engine().state.fontRecords.get(state.fontIds['Gill Sans']);
+    title.style.fontFamily = JSON.stringify(font.cssFamily);
+    title.textContent = 'Conference day.';
+    document.getElementById('geoglyphMapWorkspace').append(title);
+    introTitle = title;
+    return title;
   }
   function waitIntroduction(ms, current) {
     const now = () => typeof performance === 'undefined' ? Date.now() : performance.now();
@@ -71,10 +91,29 @@
       api.state.map.stop();
       window.GeoGlyph3D.stopOrbit();
     }
-    await api.drawConferenceOpening(state.fontIds['Segoe UI Emoji'], {
-      resetAnchor:patch.command === 'reset', objectId:patch.objectId, isCurrent:current,
-      onDrawn:() => record(patch.objectId, 'drawn')
+    const drawOpening = isCurrent => api.drawConferenceOpening(state.fontIds['Segoe UI Emoji'], {
+      resetAnchor:patch.command === 'reset', objectId:patch.objectId,
+      onDrawn:() => record(patch.objectId, 'drawn'), isCurrent
     });
+    if (patch.command === 'begin') {
+      const title = showIntroductionTitle();
+      let openingActive = true;
+      const openingCurrent = () => openingActive && current();
+      const countdown = async () => {
+        for (let dots=2; dots<=5; dots++) {
+          await waitIntroduction(2000, openingCurrent);
+          title.textContent = 'Conference day' + '.'.repeat(dots);
+        }
+        await waitIntroduction(2000, openingCurrent);
+      };
+      try {
+        await Promise.all([drawOpening(openingCurrent), countdown()]);
+      } finally {
+        openingActive = false;
+        clearIntroductionTitle(title);
+        introWait?.wake();
+      }
+    } else await drawOpening(current);
     if (!current()) return;
     if (patch.command === 'begin') {
       record(patch.objectId, 'flight');

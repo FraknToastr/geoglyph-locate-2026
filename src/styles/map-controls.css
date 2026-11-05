@@ -1,5 +1,23 @@
 /* Map uses the shared Controls header and collapse actions without changing
    the compact panel's three fixed rows or the engine's original containers. */
+.geoglyph-conference-title {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: clamp(24px, 4vw, 64px);
+  pointer-events: none;
+  color: #fff;
+  font-size: clamp(40px, 8vw, 128px);
+  font-weight: normal;
+  line-height: 1.1;
+  text-align: center;
+  text-wrap: pretty;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .65);
+}
+
 .geoglyph-map-editor > .map-controls-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
