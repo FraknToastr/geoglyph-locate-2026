@@ -132,6 +132,7 @@
           fontId:state.fontIds[step.emoji?'Segoe UI Emoji':'Gill Sans'],nativeColor:Boolean(step.emoji),
           mirrorX:Boolean(step.mirrorX),extrusionEnabled:Boolean(step.final),relativeSize:100,
           height:step.final?3000:300,depth:step.final?300:30,fit:false,
+          ...(step.emoji?{}:{fill:'#F47D22'}),
           ...(step.final?{animation:'yaw'}:{})};
         const result=await api.applyConferenceCue(cue,{isCurrent:current});
         if(!current())return;

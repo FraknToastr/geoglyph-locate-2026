@@ -18,7 +18,7 @@ After `Call me Geo`, the text is now:
 
 These are separate messages with the established five-second pauses. The first line preserves the supplied wording exactly. The script then resumes at `Today I will be presenting` and finishes with the existing Medium 3D Turn presentation of `Where are you Josh?`.
 
-Emoji cues use Segoe UI Emoji with native colour enabled. Text cues use Gill Sans with native colour disabled. Only the second 😏 is mirrored. The DOM title uses white text and a subtle shadow; it does not modify the map's native-colour setting or generate ground geometry.
+Emoji cues use Segoe UI Emoji with native colour enabled and receive no fill override. Text cues use Gill Sans with native colour disabled and the app's orange, `#F47D22`, including the final 3D message. Only the second 😏 is mirrored. The DOM title remains white with a stronger two-layer black shadow; it does not modify the map's native-colour setting or generate ground geometry.
 
 Implementation is in `src/scripts/conference-presentation.js` and `src/styles/map-controls.css`. No public API, service schema, dependencies or font-loading policies changed.
 
@@ -26,20 +26,20 @@ Implementation is in `src/scripts/conference-presentation.js` and `src/styles/ma
 
 The title uses the existing pause-aware introduction clock. Stop/Resume and tab visibility preserve remaining time, including the fifth dot's final hold. Reset and manual artwork changes remove it immediately. Leaving Map or an opening failure cancels its timers. Cleanup is tied to the owning title, so an older Begin cannot remove a newer Begin's overlay.
 
-- **18 focused unit cases passed** using `rtk proxy node tests/unit/conference-introduction.test.cjs` (30.2 ms reported total). Coverage includes all five exact dot boundaries, the complete final two-second hold and descent at ten active seconds, slow sleeping-artwork preparation, opening failure, pause/resume, hidden time, Reset during the first and fifth dot holds, manual cancellation and newer-title ownership, Map exit, exact transcript/timings, native-colour flags, mirroring, queued cues and final Medium 3D Turn.
-- **One short Chromium file-mode regression passed in 6.9 seconds** (7.8 seconds runner total), with accelerated timing and mocked map/service responses. It checked all five title texts, the bundled font, enlarged desktop size, centring, viewport fit, pointer pass-through and removal; the full revised transcript and final Turn state; then colour-only Response 169, location-only Response 184, repeated location and Reset.
+- **18 focused unit cases passed** using `rtk proxy node tests/unit/conference-introduction.test.cjs` (29.6 ms reported total). Coverage includes all five exact dot boundaries, the complete final two-second hold and descent at ten active seconds, slow sleeping-artwork preparation, opening failure, pause/resume, hidden time, Reset during the first and fifth dot holds, manual cancellation and newer-title ownership, Map exit, exact transcript/timings, native-colour flags, mirroring, queued cues and final Medium 3D Turn. Every text cue was checked for orange fill and every emoji cue for the absence of a fill override.
+- **One short Chromium file-mode regression passed in 6.6 seconds** (7.4 seconds runner total), with accelerated timing and mocked map/service responses. It checked all five white title texts, the bundled font, enlarged desktop size, centring, viewport fit, pointer pass-through and removal; unchanged native-colour emoji cues; orange text cues and the rendered orange 3D front material; the full revised transcript and final Turn state; then colour-only Response 169, location-only Response 184, repeated location and Reset.
 - The title screenshot was visually reviewed at 1440 × 1000: `/tmp/geoglyph-begin-title.png`. Map imagery in this test was mocked. No real survey writes, network-failure exercise, soak or full browser battery was performed. Hosted and portable execution were not separately repeated; their source parity was checked below.
 - Source syntax and `git diff --check` passed.
 
 ## Rebuilt local releases
 
-The normal build regenerated both portable releases. `dist/GeoGlyph.html` and `GeoGlyph_Locate_2026.html` are byte-identical at **21,483,260 bytes**. SHA-256:
+The normal build regenerated both portable releases. `dist/GeoGlyph.html` and `GeoGlyph_Locate_2026.html` are byte-identical at **21,483,336 bytes**. SHA-256:
 
-`9a389c9d777d6fd304e1dba10dd8dd913fef28b324eca025fb1a90e57dc7eb32`
+`d212a4f1f2400189561310f45d8ab878e8c1e772f061cb3c1447d91e3bf1db6d`
 
 All **43 script/style assets** match current source and are referenced by the modular entry point. No unresolved asset markers remain. The added work is bounded to one temporary title element, four dot text updates and existing timer scheduling. No frame-rate or resource-utilisation benchmark is claimed.
 
-The previously published `eb43f5e` commit remains unchanged; this update is local pending user review and a new instruction to track, push and commit.
+Published commit `d7bba05` contains the five-dot version before this orange-text/stronger-shadow change. The colour/shadow update is local pending user review and a new instruction to track, push and commit.
 
 ## Full-suite verification before the five-dot revision
 

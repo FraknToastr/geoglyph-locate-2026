@@ -112,8 +112,8 @@ test('Begin renders immediately after zoom, uses three-second emoji holds and en
   assert.deepEqual(h.steps().map(c=>c.patch.message),transcript);
   let elapsed=10000;assert.deepEqual(h.steps().map(c=>c.time),delays.map(ms=>elapsed+=ms));
   assert.deepEqual(h.steps().map(c=>c.patch.mirrorX),transcript.map((_,i)=>i===3));
-  assert.ok(h.steps().slice(0,5).every(c=>c.patch.nativeColor&&c.patch.fontId==='emoji'));
-  assert.ok(h.steps().slice(5).every(c=>!c.patch.nativeColor&&c.patch.fontId==='gill'));
+  assert.ok(h.steps().slice(0,5).every(c=>c.patch.nativeColor&&c.patch.fontId==='emoji'&&!Object.hasOwn(c.patch,'fill')));
+  assert.ok(h.steps().slice(5).every(c=>!c.patch.nativeColor&&c.patch.fontId==='gill'&&c.patch.fill==='#F47D22'));
   for(const {patch}of h.steps().slice(0,-1)){assert.equal(patch.extrusionEnabled,false);assert.equal(patch.height,300);assert.equal(patch.depth,30);assert.equal(patch.relativeSize,100);}
   const final=h.steps().at(-1).patch;assert.equal(final.fontId,'gill');assert.equal(final.height,3000);assert.equal(final.depth,300);assert.equal(final.animation,'yaw');
   assert.equal(final.extrusionEnabled,true);assert.equal(h.calls.at(-2).type,'orbit');assert.equal(h.calls.at(-2).mode,'yaw');assert.equal(h.calls.at(-1).type,'camera');

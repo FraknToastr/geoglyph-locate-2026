@@ -162,7 +162,7 @@ test(`Begin scripted introduction renders Medium 3D Turn and retains final text 
     window.GeoGlyphMapEngine={...api,applyConferenceCue:async(...args)=>{
       const result=await api.applyConferenceCue(...args),s=api.state;
       window.introductionFrames.push({message:s.message,mirrorX:s.mirrorX,height:s.baseHeightMeters,
-        depth:s.extrusionDepthMeters,extrusion:s.extrusionEnabled,font:s.selectedFontId,nativeColor:s.nativeColor});
+        depth:s.extrusionDepthMeters,extrusion:s.extrusionEnabled,font:s.selectedFontId,nativeColor:s.nativeColor,fill:s.fill});
       return result;
     }};
   });
@@ -172,12 +172,13 @@ test(`Begin scripted introduction renders Medium 3D Turn and retains final text 
   const titleView=await title.evaluate(element=>{
     const style=getComputedStyle(element),area=element.parentElement.getBoundingClientRect(),range=document.createRange();
     range.selectNodeContents(element);const text=range.getBoundingClientRect();
-    return {pointerEvents:style.pointerEvents,font:style.fontFamily,fontSize:parseFloat(style.fontSize),
+    return {pointerEvents:style.pointerEvents,font:style.fontFamily,fontSize:parseFloat(style.fontSize),color:style.color,
       expectedFont:GeoGlyphMapEngine.state.fontRecords.get(GeoGlyphConference.state.fontIds['Gill Sans']).cssFamily,
       centerX:(text.left+text.right)/2-(area.left+area.right)/2,centerY:(text.top+text.bottom)/2-(area.top+area.bottom)/2,
       fits:text.width<area.width&&text.height<area.height,message:GeoGlyphMapEngine.state.message,nativeColor:GeoGlyphMapEngine.state.nativeColor};
   });
   expect(titleView.pointerEvents).toBe('none');expect(titleView.font).toContain(titleView.expectedFont);
+  expect(titleView.color).toBe('rgb(255, 255, 255)');
   expect(titleView.fontSize).toBeGreaterThan(96);expect(titleView.fits).toBe(true);
   expect(Math.abs(titleView.centerX)).toBeLessThan(1);expect(Math.abs(titleView.centerY)).toBeLessThan(titleView.fontSize*.3);
   expect(titleView.message).toBe('😴');expect(titleView.nativeColor).toBe(true);
@@ -190,9 +191,10 @@ test(`Begin scripted introduction renders Medium 3D Turn and retains final text 
   await expect(title).toHaveCount(0);
   expect(result.frames.map(frame=>frame.message)).toEqual(introductionMessages);
   expect(result.frames.map(frame=>frame.mirrorX)).toEqual(introductionMessages.map((_,i)=>i===3));
-  expect(result.frames.slice(0,5).every(frame=>frame.nativeColor&&!frame.extrusion)).toBe(true);
-  expect(result.frames.slice(5).every(frame=>frame.font===result.font&&!frame.nativeColor)).toBe(true);
+  expect(result.frames.slice(0,5).every(frame=>frame.nativeColor&&!frame.extrusion&&frame.fill.toUpperCase()==='#31A765')).toBe(true);
+  expect(result.frames.slice(5).every(frame=>frame.font===result.font&&!frame.nativeColor&&frame.fill.toUpperCase()==='#F47D22')).toBe(true);
   expect(result.frames.at(-1)).toMatchObject({height:3000,depth:300,extrusion:true});
+  expect(await page.evaluate(()=>GeoGlyphMapEngine.state.map.getLayer('geoglyph-extruded-font').implementation.front.color.getHexString())).toBe('f47d22');
   expect(result.phase).toBe('live');expect(result.animation.orbiting).toBe(true);expect(result.mirrorX).toBe(false);
   const before=await page.evaluate(async()=>({uploads:GeoGlyph3D.stats().uploads,disposals:GeoGlyph3D.stats().disposals,
     meshKey:GeoGlyph3D.stats().meshKey,meshBuilds:(await GeoGlyphFontService.workerStats()).meshBuilds}));
