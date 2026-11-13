@@ -4,11 +4,13 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { createGroundCamera } from './ground-camera.js';
 import { createGroundModelCache } from './ground-model-cache.js';
 import { groundIcons } from './ground-icons.js';
+import { installFontMorph } from './font-morph.js';
 
 const ID='geoglyph-extruded-font';
 const $=id=>document.getElementById(id);
 const engine=()=>window.GeoGlyphMapEngine;
 const state=()=>engine()?.state;
+const morph=()=>window.GeoGlyphFontMorph?.isActive()?window.GeoGlyphFontMorph:null;
 let layer=null,data=null,meshKey='',request=0,lastError='',queuedOrbit=null;
 const cache=createGroundModelCache((key,model)=>window.GeoGlyphFontService.mesh(key,model));
 let uploads=0,disposals=0;
@@ -17,8 +19,8 @@ let uploads=0,disposals=0;
 const matrixScratch=new Matrix4();
 const camera=createGroundCamera(()=>{
   const s=state()||{};
-  return {map:s.map,anchor:s.anchor,bearing:s.bearing,tilt:s.extrusionTilt,orientationMode:s.orientationMode||'fixed',period:s.orbitPeriodSeconds||30,bounds:data?.bounds,visible:isVisible()&&s.previewActive,restoredElevatedView:s.restoredCamera?.elevation>0,pose:matrices,
-    renderedAngles:layer?.ready&&layer.hasRenderedPose?layer.renderedAngles:null,freezePose,
+  return {map:s.map,anchor:s.anchor,bearing:s.bearing,tilt:s.extrusionTilt,orientationMode:s.orientationMode||'fixed',period:s.orbitPeriodSeconds||30,bounds:morph()?.getBounds()||data?.bounds,visible:isVisible()&&s.previewActive,restoredElevatedView:s.restoredCamera?.elevation>0,pose:matrices,
+    renderedAngles:morph()?.renderedAngles()||(layer?.ready&&layer.hasRenderedPose?layer.renderedAngles:null),freezePose,
     cancelPending:()=>{queuedOrbit=null;refreshControls();}};
 },()=>refreshControls());
 
@@ -37,6 +39,7 @@ function settings(angles=camera.getAngles()) {
   const s=state();return {heightMeters:s.baseHeightMeters*s.relativeSize/100,depthMeters:s.extrusionDepthMeters??30,tilt:angles.tilt,bearing:angles.bearing,mirrorX:s.mirrorX===true};
 }
 function matrices(angles=camera.getAngles(),output={geographic:new Matrix4(),object:new Matrix4()}) {
+  if(window.GeoGlyphFontMorph?.isActive())return morphPose(window.GeoGlyphFontMorph.getBounds(),false,angles,output);
   const s=state(),values=settings(angles),p=window.GeoGlyphGroundTransform.parameters(values,data.bounds);
   const origin=window.maplibregl.MercatorCoordinate.fromLngLat(s.anchor,0),u=origin.meterInMercatorCoordinateUnits();
   const geographic=output.geographic.makeTranslation(origin.x,origin.y,origin.z)
@@ -49,12 +52,33 @@ function matrices(angles=camera.getAngles(),output={geographic:new Matrix4(),obj
   const centerMerc=new window.maplibregl.MercatorCoordinate(origin.x+localCenter[0]*u,origin.y-localCenter[1]*u,localCenter[2]*u);
   return {geographic,object,localCenter,center:centerMerc.toLngLat(),elevation:centerMerc.toAltitude(),units:u,radius:Math.hypot((b.maxX-b.minX)*p.height,(b.maxY-b.minY)*p.height,(b.maxZ-b.minZ)*p.depth)/2};
 }
-function isVisible() {return !!(layer?.ready&&data&&state()?.extrusionEnabled&&state()?.lastRenderMode==='vector');}
+function morphPose(bounds,flat=false,angles=camera.getAngles(),output={geographic:new Matrix4(),object:new Matrix4()}) {
+  const s=state(),values=flat?{...settings(angles),tilt:0}:settings(angles);
+  // Keep source ground contact stable throughout the transition. Union bounds
+  // are for culling/framing, never for re-centering or changing the anchor.
+  const reference=flat?{minX:0,maxX:0,minY:-.5,minZ:0,maxZ:0}:{minX:0,maxX:0,minY:-.5,minZ:-.5,maxZ:.5};
+  const p=window.GeoGlyphGroundTransform.parameters(values,reference);
+  if(flat)p.lift=0;
+  const origin=window.maplibregl.MercatorCoordinate.fromLngLat(s.anchor,0),u=origin.meterInMercatorCoordinateUnits();
+  const geographic=output.geographic.makeTranslation(origin.x,origin.y,origin.z)
+    .multiply(matrixScratch.makeScale(u,-u,u)).multiply(matrixScratch.makeRotationZ(-p.bearing));
+  const object=output.object.makeTranslation(0,0,p.lift).multiply(matrixScratch.makeRotationX(p.tilt))
+    .multiply(matrixScratch.makeScale(p.height,p.height,flat?1:p.depth));
+  const b=bounds,mid=[0,0,0];
+  if(values.mirrorX)object.multiply(matrixScratch.makeScale(-1,1,1));
+  const localCenter=window.GeoGlyphGroundTransform.point(mid,values,reference);
+  const centerMerc=new window.maplibregl.MercatorCoordinate(origin.x+localCenter[0]*u,origin.y-localCenter[1]*u,localCenter[2]*u);
+  return {geographic,object,localCenter,center:centerMerc.toLngLat(),elevation:centerMerc.toAltitude(),units:u,angles,radius:Math.hypot((b.maxX-b.minX)*p.height,(b.maxY-b.minY)*p.height,(b.maxZ-b.minZ)*p.depth)/2};
+}
+function isVisible() {return !!(state()?.extrusionEnabled&&(morph()||(layer?.ready&&data&&state()?.lastRenderMode==='vector')));}
 function syncVisibility() {
   const s=state(),map=s?.map;if(!map)return;
-  const visibility=isVisible()?'none':'visible';
+  const visibility=isVisible()||morph()?'none':'visible';
   for(const id of ['geoglyph-ground-fill','geoglyph-ground-outline'])if(map.getLayer(id)&&map.getLayoutProperty(id,'visibility')!==visibility)map.setLayoutProperty(id,'visibility',visibility);
+  const decal='geoglyph-ground-decal-layer';
+  if(map.getLayer(decal))map.setLayoutProperty(decal,'visibility',morph()?'none':'visible');
   if(layer?.ready&&data)layer.paint();
+  window.GeoGlyphFontMorph?.syncVisibility();
   map.triggerRepaint();
 }
 function clear() {
@@ -104,7 +128,7 @@ function createLayer(map) {
       this.group.matrix.copy((pose||matrices()).object);this.group.matrixWorldNeedsUpdate=true;
     },
     render(gl,args) {
-      if(!isVisible()||!state()?.previewActive)return;
+      if(!isVisible()||morph()||!state()?.previewActive)return;
       const angles=camera.getAngles(),pose=matrices(angles,this.poseMatrices);
       this.paint(pose);
       this.camera.projectionMatrix.fromArray(args.defaultProjectionData.mainMatrix).multiply(pose.geographic);
@@ -127,7 +151,7 @@ async function commit(item, apply=()=>{}, current=()=>true) {
   item=cache.get(item.key)||await cache.prepare(item.model);
   return new Promise((resolve,reject)=>requestAnimationFrame(()=>{try{
     const s=state();
-    if(version!==request||!current()||!s.extrusionEnabled){resolve(false);return;}
+    if(version!==request||!current()||!s.extrusionEnabled||morph()){resolve(false);return;}
     if(cache.get(item.key)!==item){engine().queueRebuild(false);resolve(false);return;}
     // Commit the display metadata and both geometries in the same animation frame.
     const replaced=meshKey!==item.key;
@@ -141,6 +165,7 @@ async function commit(item, apply=()=>{}, current=()=>true) {
   }catch(error){reject(error);}}));
 }
 async function update(current=()=>true) {
+  if(morph()){syncVisibility();refreshControls();return;}
   const s=state();if(!s?.extrusionEnabled){if(layer)clear();message('Extrude outline fonts and stand them upright.');refreshControls();return;}
   if(s.lastRenderMode!=='vector'||!s.lastLocalModel){
     if(!isVisible())message('This content uses a font image. Choose an outline font to enable extrusion.');
@@ -149,6 +174,7 @@ async function update(current=()=>true) {
   try {
     const item=await cache.prepare(s.lastLocalModel);
     if(!current())return;
+    if(morph())return;
     if(meshKey!==item.key||!layer?.ready)await commit(item,()=>{},current);
     else {camera.retarget();syncVisibility();refreshControls();}
   }catch(error){failure(error.message);}
@@ -188,7 +214,7 @@ function ensureOrbit(mode,options={}) {
 }
 function refreshControls() {
   const s=state();if(!s)return;
-  const fontName=s.fontRecords.get(s.displayedFontId)?.name;
+  const fontName=morph()?.label()||s.fontRecords.get(s.displayedFontId)?.name;
   const fontRow=$('mapDisplayedFont');
   if(fontRow){
     const text=fontName?'Font: '+fontName:'Font: Preparing…';
@@ -218,7 +244,7 @@ function refreshControls() {
     button.setAttribute('aria-busy',String(queuedOrbit===mode));
     button.title=(running?'Stop ':'Start ')+({fixed:'orbit',yaw:'orbit, turning toward the camera',billboard:'orbit, facing the camera square-on'}[mode]);
   }
-  if(isVisible()&&!lastError)message('Outline mesh · '+Math.round(data.position.length/9).toLocaleString()+' triangles');
+  if(isVisible()&&!lastError)message(morph()?'Font morph · solid 3D':'Outline mesh · '+Math.round(data.position.length/9).toLocaleString()+' triangles');
 }
 function fit(options={}) {
   return engine().fit();
@@ -268,9 +294,11 @@ function initialise() {
   return true;
 }
 window.GeoGlyph3D=Object.freeze({update,prepare:cache.prepare,cached:cache.get,commit,failure,notice:text=>{lastError=text;message(text,true);},preparing:name=>{lastError='';message('Preparing '+name+'…',true);},clear,syncVisibility,isVisible,refreshControls,fit,fitCurrent:camera.fit,startOrbit:camera.start,ensureOrbit,stopOrbit:stopMotion,exitCamera,pauseAnimation:camera.pause,
+  morphPose:(bounds,options={})=>morphPose(bounds,options.flat===true,undefined,options.output),
+  morphModeChanged:enabled=>{enabled?camera.enter():camera.exit();syncVisibility();refreshControls();},
   stats:()=>({visible:isVisible(),uploads,disposals,bytes:data?.bytes||0,triangles:(data?.position.length||0)/9,lastError,meshKey,cache:cache.stats(),animation:camera.stats()}),
   getBounds:()=>data?.bounds||null});
-function boot(){if(initialise())return;const observer=new MutationObserver(()=>{if(initialise())observer.disconnect();});observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('load',()=>{if(initialise())observer.disconnect();},{once:true});}
+function boot(){const ready=()=>{if(!initialise())return false;installFontMorph();return true;};if(ready())return;const observer=new MutationObserver(()=>{if(ready())observer.disconnect();});observer.observe(document.body,{childList:true,subtree:true});window.addEventListener('load',()=>{if(ready())observer.disconnect();},{once:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 window.addEventListener('pagehide',clear);
 window.addEventListener('pageshow',event=>{if(event.persisted&&state()?.extrusionEnabled)engine().queueRebuild(false);});

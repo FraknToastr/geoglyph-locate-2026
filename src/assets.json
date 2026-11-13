@@ -266,6 +266,12 @@
     "path": "src/scripts/map-controls-ui.js"
   },
   {
+    "key": "map-sidebar",
+    "type": "script",
+    "attrs": "",
+    "path": "src/scripts/map-sidebar.js"
+  },
+  {
     "key": "conference-fonts",
     "type": "font-pack",
     "attrs": "",

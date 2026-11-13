@@ -1,8 +1,8 @@
 # Locate 2026 presentation
 
 Open `GeoGlyph_Locate_2026.html` or run `rtk npm run dev` and visit
-`http://localhost:4174`. The app opens Map → ArcGIS with the control panel
-collapsed, Segoe UI Emoji selected, Fix Font Colours checked, 2D enabled,
+`http://localhost:4174`. The app opens Map → ArcGIS with the full controls
+sidebar visible, Segoe UI Emoji selected, Fix Font Colours checked, 2D enabled,
 Small size and one-second anonymous polling. The camera initially shows all of
 Australia, north-up and untilted. Sleeping Geo (😴) is prepared at Adelaide
 without zooming in. Map tiles and survey polling require an internet connection.

@@ -366,15 +366,8 @@
     }));
 
     $("mapEditorCollapseBtn")?.addEventListener("click", () => {
-      const editor = $("geoglyphMapEditor");
-      if (!editor) return;
-      const collapsed = editor.classList.toggle("is-collapsed");
-      const button = $("mapEditorCollapseBtn");
-      if (button) {
-        button.textContent = collapsed ? "+" : "−";
-        button.setAttribute("aria-expanded", String(!collapsed));
-        button.title = collapsed ? "Expand Ground Font Engine" : "Collapse Ground Font Engine";
-      }
+      const sidebar = window.GeoGlyphMapSidebar;
+      if (sidebar) sidebar.setPresentation(sidebar.state().presentation === 'full' ? 'mini' : 'full');
     });
 
     $("mapFontSelect")?.addEventListener("change", async event => {
@@ -550,12 +543,21 @@
     }
   }
 
+  let viewportResizeFrame = 0;
   function syncMapViewportLayout() {
     if (!mapState.previewActive) return;
     const header = document.querySelector(".app-header");
     const top = Math.max(0, Math.round(header?.getBoundingClientRect().bottom || 48));
-    document.documentElement.style.setProperty("--geoglyph-map-top", `${top}px`);
-    requestAnimationFrame(() => requestAnimationFrame(() => mapState.map?.resize()));
+    const value = `${top}px`;
+    if (document.documentElement.style.getPropertyValue('--geoglyph-map-top') !== value)
+      document.documentElement.style.setProperty("--geoglyph-map-top", value);
+    if (viewportResizeFrame) return;
+    viewportResizeFrame = requestAnimationFrame(() => {
+      viewportResizeFrame = requestAnimationFrame(() => {
+        viewportResizeFrame = 0;
+        if (mapState.previewActive) mapState.map?.resize();
+      });
+    });
   }
 
   function showMapPreview(outlinePromise = null) {
@@ -570,6 +572,7 @@
     mapState.previewActive = true;
     document.body.classList.add("geoglyph-map-preview");
     workspace.hidden = false;
+    window.GeoGlyphMapSidebar?.sync();
     syncMapViewportLayout();
     const button = $("mapCanvasToggleBtn");
     if (button) {
@@ -582,9 +585,6 @@
     if (headerTitle) headerTitle.textContent = "Map Preview";
     refreshFontStore();
     initMap();
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      mapState.map?.resize();
-    }));
     Promise.resolve(outlinePromise).then(record => {
       if (!mapState.previewActive) return;
       queueRebuild(false);
@@ -610,6 +610,7 @@
   }
 
   function showCanvasPreview(options = {}) {
+    window.GeoGlyphFontMorph?.clear({message:'Open the map to prepare a font morph.'});
     cancelRandomSearch();mapState.explicitFitPending=false;
     window.GeoGlyph3D?.exitCamera();
     const preserveWorkflow = Boolean(options.preserveWorkflow);
@@ -618,6 +619,7 @@
     document.body.classList.remove("geoglyph-map-preview");
     const workspace = $("geoglyphMapWorkspace");
     if (workspace) workspace.hidden = true;
+    window.GeoGlyphMapSidebar?.sync();
     if (!preserveWorkflow) ensureHostSymbolWorkflow();
     const button = $("mapCanvasToggleBtn");
     if (button) {
@@ -1362,6 +1364,10 @@
   }
 
   async function saveMapImage(format = "png") {
+    if(window.GeoGlyphFontMorph&&!window.GeoGlyphFontMorph.canExport()){
+      setStatus('Move the morph slider to an endpoint before exporting.','warn');return;
+    }
+    if(window.GeoGlyphFontMorph?.isActive())window.GeoGlyphFontMorph.pause();
     const map = mapState.map;
     if (!mapState.previewActive || !mapState.mapReady || !map) {
       setStatus("Map is not ready to export", "warn");
@@ -1716,6 +1722,7 @@
   }
 
   function rebuildAfterZoom() {
+    if(window.GeoGlyphFontMorph?.isActive())return;
     if (!mapState.previewActive || !mapState.lastMetrics) return;
     // Committed 3D outlines use fixed model detail; only their camera changes.
     if (mapState.extrusionEnabled && mapState.lastRenderMode === 'vector' &&
@@ -1724,6 +1731,8 @@
   }
 
   function queueRebuild(fit = false) {
+    window.GeoGlyphFontMorph?.onGeometryChange();
+    if(window.GeoGlyphFontMorph?.isActive()){applyMapPaint();return;}
     if($('mapFont3DFilter')?.checked)renderFontChooser();
     if (mapState.conferenceRenderSuspended) return;
     if (mapState.conferenceApplying) { mapState.conferenceRebuildPending = true; return; }
@@ -1770,6 +1779,8 @@
   }
   let activeBuildToken=0;
   async function rebuildGeometry(fit = false, options = {}) {
+    window.GeoGlyphFontMorph?.onGeometryChange();
+    if(window.GeoGlyphFontMorph?.isActive()){applyMapPaint();return {ok:true};}
     if (mapState.conferenceRenderSuspended) return;
     mapState.pendingFit ||= Boolean(fit);
     if (!mapState.previewActive || !mapState.mapReady) return;
@@ -1778,7 +1789,7 @@
     const buildToken = ++mapState.buildToken, shouldFit = mapState.pendingFit; mapState.pendingFit = false;
     activeBuildToken=buildToken;
     const choice=mapState.fontChoiceVersion;
-    const current = () => buildToken === mapState.buildToken && choice === mapState.fontChoiceVersion && mapState.previewActive && (!options.isCurrent || options.isCurrent());
+    const current = () => buildToken === mapState.buildToken && choice === mapState.fontChoiceVersion && mapState.previewActive && !window.GeoGlyphFontMorph?.isActive() && (!options.isCurrent || options.isCurrent());
     try {
       const record = selectedRecord(); if (!record) throw Error('Choose a font');
       window.GeoGlyphFontService.pin(record,'map');
@@ -2192,7 +2203,8 @@
     map.stop();
     map.setCenterClampedToGround(true);
     const canvas = map.getCanvas();
-    const panelWidth = $('geoglyphMapEditor')?.getBoundingClientRect().right || 0;
+    const panel = $('geoglyphMapEditor');
+    const panelWidth = panel && !panel.hidden ? Math.max(0, panel.getBoundingClientRect().right - canvas.getBoundingClientRect().left) : 0;
     const padding = { top:48, bottom:48, right:48, left:Math.max(48, Math.min(panelWidth+24, canvas.clientWidth*.4)) };
     const camera = map.cameraForBounds(AUSTRALIA_BOUNDS, { padding, bearing:0, pitch:0 });
     if (!camera) return false;
@@ -2454,11 +2466,12 @@
   }
 
   let manualModelVersion = 0;
-  function notifyManualMapChange() {
-    manualModelVersion++;
+  function notifyManualMapChange({ preserveModel = false } = {}) {
+    if (!preserveModel) manualModelVersion++;
     document.dispatchEvent(new CustomEvent('geoglyph:manual-map-change'));
   }
   async function setModelMode(enabled) {
+    if(window.GeoGlyphFontMorph?.isActive())return window.GeoGlyphFontMorph.setMode(Boolean(enabled));
     notifyManualMapChange();
     const version = manualModelVersion, choice = mapState.fontChoiceVersion;
     const current = () => version === manualModelVersion && choice === mapState.fontChoiceVersion && mapState.previewActive;
@@ -2476,6 +2489,7 @@
       if (!current()) return false;
       if (!result?.ok || (enabled && !window.GeoGlyph3D?.isVisible())) throw result?.error || Error('This content cannot be extruded');
       await waitForGroundFrame(current);
+      mapState.explicitFitPending = false;
       await fitDrawnGeometry(current,{explicit:true});
       return true;
     } catch (error) {
@@ -2485,6 +2499,7 @@
       if (previous.lastDecal) setGroundDecal(previous.lastDecal); else clearGroundDecal();
       await window.GeoGlyph3D?.update(current).catch(()=>{});
       syncUiFromState(); window.GeoGlyph3D?.refreshControls(); window.GeoGlyph3D?.syncVisibility();
+      if (mapState.explicitFitPending) { mapState.explicitFitPending=false; fitGeometry(); }
       setStatus(error.message,'warn');
       return false;
     }
@@ -2496,7 +2511,8 @@
     queueRebuild(false);
   }
   function requestFit() {
-    notifyManualMapChange();
+    // A camera request waits for the current model switch instead of cancelling it.
+    notifyManualMapChange({ preserveModel:true });
     cancelInitialFit();window.GeoGlyph3D?.stopOrbit({freezePose:true});
     if(!mapState.previewActive||!mapState.mapReady)return false;
     if(mapState.pendingBuild||mapState.rebuilding||mapState.randomSearching){mapState.explicitFitPending=true;return true;}
@@ -2509,7 +2525,8 @@
     if (window.GeoGlyph3D?.isVisible()) return window.GeoGlyph3D.fitCurrent(options);
     const coords = [];
     const fc = mapState.lastGeoJSON;
-    if (fc?.features?.length) walkCoordinates(fc.features[0].geometry.coordinates, coords);
+    if(window.GeoGlyphFontMorph?.isActive())coords.push(...window.GeoGlyphFontMorph.framingCoordinates());
+    else if (fc?.features?.length) walkCoordinates(fc.features[0].geometry.coordinates, coords);
     else if (mapState.lastDecal?.coordinates?.length) walkCoordinates(mapState.lastDecal.coordinates, coords);
     if (!coords.length) return false;
     const target = groundFramingTarget(coords);
@@ -2559,8 +2576,16 @@
     if ($("mapAnchorStats")) $("mapAnchorStats").textContent = `${mapState.anchor.lng.toFixed(5)}, ${mapState.anchor.lat.toFixed(5)} · ${mapState.anchorPinned ? "placed by click" : "fixed anchor"}`;
   }
 
-  function exportGeoJSON() {
+  async function exportGeoJSON() {
+    const morph=window.GeoGlyphFontMorph;
+    if(morph&&!morph.canExport()){setStatus('Move the morph slider to an endpoint before exporting.','warn');return;}
     let exportData = mapState.lastGeoJSON;
+    if(morph?.isActive()){
+      try{
+        exportData=await morph.exportGeoJSON();
+        if(!exportData){setStatus('The morph changed before export. Choose an endpoint and retry.','warn');return;}
+      }catch(error){setStatus('Font endpoint export failed: '+error.message,'warn');return;}
+    }
     if (!exportData && mapState.lastDecal?.coordinates?.length === 4) {
       const ring = [...mapState.lastDecal.coordinates, mapState.lastDecal.coordinates[0]];
       exportData = {
@@ -2630,11 +2655,12 @@
       selectFont,
       randomFont,
       fit: requestFit,
-      getGeoJSON: () => mapState.lastGeoJSON,
+      getGeoJSON: () => window.GeoGlyphFontMorph?.isActive()?null:mapState.lastGeoJSON,
       scanSystemFonts,
       loadEsriFonts,
       showMap: showMapPreview,
       showCanvas: showCanvasPreview,
+      resizeViewport: syncMapViewportLayout,
       togglePreview: togglePreviewSurface,
       geometry: Object.freeze({ buildTextGeometry, flattenPath, classifyFontContours, dissolveFontPolygons, projectPolygons }),
       rasteriseGroundDecal

@@ -69,6 +69,7 @@ export function createGroundCamera(environment, changed) {
       // Projection trials must target the model even when a trial viewport
       // crosses the date line. This changes only the offscreen math clone.
       transform.setRenderWorldCopies(true);
+      window.GeoGlyphBasemapCoverage?.preserveCameraTarget(transform);
       transform.setCenter(pose.center);transform.setElevation(pose.elevation);
       transform.setPitch(55);transform.setBearing(cameraBearing);
       const object=new Matrix4().multiplyMatrices(pose.geographic,pose.object);

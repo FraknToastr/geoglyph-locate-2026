@@ -394,9 +394,6 @@
       Object.assign(map, { mode:'arcgis', message:'', arcgisMessage:'', nativeColor:true, extrusionEnabled:false,
         baseHeightMeters:300, extrusionDepthMeters:30, relativeSize:100 });
       engine().showMap();
-      const panel = document.getElementById('geoglyphMapEditor'); panel.classList.add('is-collapsed');
-      const collapse = panel.querySelector('.map-editor-collapse');
-      collapse.textContent = '+'; collapse.setAttribute('aria-expanded', 'false'); collapse.title = 'Expand map controls';
     } else if (retry && !map.mapReady) engine().retryConferenceMapInitialization();
     engine().refreshControls(); engine().setConnectionStatus('Preparing conference fonts…', 'info');
     if (!startupManifest) startupManifest = await boundedStartup(() => conferenceFonts(run), 15000,

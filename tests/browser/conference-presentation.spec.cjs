@@ -480,13 +480,14 @@ test('overview suppresses automatic Fit and animation; reduced-motion Begin fini
   expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.isMoving())).toBe(false);
 });
 
-test('modular startup opens a collapsed Map with emoji defaults and anonymous polling even with no responses', async ({ page }) => {
+test('modular startup opens the Map sidebar with emoji defaults and anonymous polling even with no responses', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => { window.conferenceLocalFontCalls = 0; window.queryLocalFonts = () => { window.conferenceLocalFontCalls++; throw new Error('Conference fonts must be bundled'); }; });
   const server = await open(page, { overview:true });
   expect(await page.evaluate(() => window.conferenceLocalFontCalls)).toBe(0);
-  await expect(page.locator('#geoglyphMapEditor')).toHaveClass(/is-collapsed/);
+  await expect(page.locator('#mapControlSidebar')).toBeVisible();
+  await expect(page.locator('#geoglyphMapEditor')).not.toHaveClass(/is-collapsed/);
   await expect(page.locator('#mapArcgisInterval')).toHaveValue('1');
   const state = await page.evaluate(() => ({
     preview: GeoGlyphMapEngine.state.previewActive, mode: GeoGlyphMapEngine.state.mode,

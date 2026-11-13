@@ -2,9 +2,21 @@
 
 This is the independent Locate 2026 conference edition, copied from the advanced GeoGlyph workspace. It retains ground-font map rendering, symbol and QR design, QR scanning, and Magic Eye workflows. The parent project is unchanged.
 
+## Font morphing on the map
+
+Choose **Message** mode. In **Font morph**, choose **From font** and a different **To font**, then **Play** or drag **Progress**. Both dropdowns offer the five supported built-in fonts; choosing From also updates the map's main Font menu. Emoji fonts such as Segoe UI Emoji cannot be morphed. **Prepare** rebuilds a pair after editing the message; duration defaults to two seconds. **Clear** restores the source font. The built-in choices load when you enter the morph controls.
+
+Morphing supports flat 2D and solid extruded 3D, including colour, outlines, mirroring, tracking and multiline text. Letters reshape and change their natural widths around a fixed geographic anchor. An existing 3D orbit keeps its clock and camera motion; morph playback does not rebuild meshes or upload geometry each frame. Switching between 2D and 3D retains progress and pauses playback without automatically fitting the camera.
+
+The first version supports Gill Sans, Forte, Chiller, Magneto and Showcard Gothic. Uploaded fonts, colour/emoji fonts, contextual shaping/ligature substitutions, and transparent 3D are rejected with an explanation. PNG/JPG and GeoJSON exports are available at the two endpoints; intermediate morph export is disabled. GPU texture memory and message length are bounded, and an unsuccessful preparation preserves the current display.
+
+The implementation prepares per-glyph signed-distance fields in an isolated, cancellable font worker. A shared WebGL2 renderer interpolates their shapes and spacing. Flat text uses unioned coverage so overlapping strokes receive opacity once; 3D uses ray-traced extrusion with actual surface depth. Performance depends on message coverage and the GPU; the desktop target is 60 FPS, rather than a guarantee for every message or software renderer.
+
+Targeted verification: `rtk node --test tests/unit/font-morph-fields.test.cjs tests/unit/font-morph-service.test.cjs tests/unit/render-pose.test.cjs` and `rtk node node_modules/@playwright/test/cli.js test tests/browser/font-morph.spec.cjs tests/browser/font-morph-renderer.spec.cjs --workers=1`.
+
 ## Survey123 conference display
 
-Open the app to start the conference presentation automatically: **Map → ArcGIS**, collapsed controls, an Australia overview, sleeping Geo prepared in Segoe UI Emoji/native colours/2D, and one-second polling. Submit `special_commands = Begin` to fly down to sleeping Geo over 30 seconds. `Reset` interrupts the presentation and restores the opening view, emoji and defaults while polling continues. After Begin, every new survey message fits after its final model is drawn; automatic fits preserve running animations. See [CONFERENCE_PRESENTATION.md](CONFERENCE_PRESENTATION.md) for survey fields, precedence, sizes, animation, queue and rehearsal instructions. Add `?studio=1` to use the usual authoring workflow without auto-start. No ArcGIS sign-in or token is used.
+Open the app to start the conference presentation automatically: **Map → ArcGIS**, full controls sidebar, an Australia overview, sleeping Geo prepared in Segoe UI Emoji/native colours/2D, and one-second polling. Submit `special_commands = Begin` to fly down to sleeping Geo over 30 seconds. `Reset` interrupts the presentation and restores the opening view, emoji and defaults while polling continues. After Begin, every new survey message fits after its final model is drawn; automatic fits preserve running animations. See [CONFERENCE_PRESENTATION.md](CONFERENCE_PRESENTATION.md) for survey fields, precedence, sizes, animation, queue and rehearsal instructions. Add `?studio=1` to use the usual authoring workflow without auto-start. No ArcGIS sign-in or token is used.
 
 The configured public results view is:
 
@@ -96,6 +108,8 @@ Scan QR has collapsible Scan actions and Results sections. **Clear Results** req
 Symbol Preview groups the live font name and Unicode metadata beside its title. Six crosshair colour swatches and an Off option retain the choice for the browser session and affect only the preview overlay, never exported artwork. Export Symbol uses a compact panel with File name and Logo source side by side on wider screens and a top-right close button; Escape also closes the panel and restores focus to Export.
 
 ## Map placement and 3D
+
+Map controls occupy an independent left sidebar below the header, reserving 340px on desktop and at most half the window on narrow screens. Click the **UOS logo** to hide or restore the controls. The internal **− / +** button switches between the full sidebar and the existing floating mini panel. Visibility and full/mini choices survive Map/Canvas switches for the current session and reset on reload; the logo is disabled outside Map. Font Explorer temporarily replaces the controls with its 50/50 split. Closing Explorer restores the previous choice; clicking UOS while Explorer is open closes Explorer and shows the remembered full or mini controls. These layout changes resize the map while morphing and orbiting continue.
 
 In authoring mode, the first successful character render after opening Map fits automatically once per page session. Conference survey messages each fit after drawing. Deliberate camera navigation or loading a saved view cancels a pending first fit. **Fit geometry** remains available at any time.
 

@@ -8,11 +8,13 @@ async function settled(page){await page.waitForFunction(()=>{
   const s=GeoGlyphMapEngine.state,a=GeoGlyph3D.stats().animation;
   return !s.pendingBuild&&!s.rebuilding&&!s.explicitFitPending&&!s.randomSearching&&a.phase!=='framing'&&(!s.map.isMoving()||a.orbiting);
 });}
-async function open(page,importFont=true){
+async function open(page,importFont=true,{requestFontAccess=false}={}){
   test.skip(!fs.existsSync(sans)||!fs.existsSync(serif),'Optional installed DejaVu fixtures unavailable');
   await page.route('**/MapServer/tile/**',route=>route.fulfill({body:tile,contentType:'image/png'}));
   await page.goto('/');await page.waitForFunction(()=>window.GeoGlyph3D&&document.getElementById('mapQuickRandom'));
-  await page.evaluate(()=>GeoGlyphMapEngine.showMap());await page.waitForFunction(()=>GeoGlyphMapEngine.state.mapReady);await settled(page);
+  if(requestFontAccess)await page.locator('#mapCanvasToggleBtn').click();
+  else await page.evaluate(()=>GeoGlyphMapEngine.showMap());
+  await page.waitForFunction(()=>GeoGlyphMapEngine.state.mapReady);await settled(page);
   if(importFont){
     await page.evaluate(async data=>{
       const s=GeoGlyphMapEngine.state;s.mode='message';s.message='AB BA';
@@ -34,7 +36,7 @@ test('Random resolves catalogue aliases from granted local descriptors while the
       return [host.name,'Consolas'].map((name,index)=>({fullName:name,family:name,postscriptName:'MapFix'+index,style:'Regular',blob:async()=>new Blob([Uint8Array.from(atob(data[index]),c=>c.charCodeAt(0))])}));
     };
   },[bytes(sans),bytes(serif)]);
-  await open(page,false);
+  await open(page,false,{requestFontAccess:true});
   expect(await page.evaluate(()=>GeoGlyphMapEngine.state.localFontDescriptors.length)).toBe(2);
   await enable3D(page);await page.locator('#mapEditorCollapseBtn').click();await page.locator('#mapQuickOrbit').click();
   await page.waitForFunction(()=>GeoGlyph3D.stats().animation.phase==='orbiting');
@@ -111,7 +113,9 @@ test('mini panel keeps two fixed rows and equal buffers through feedback and mod
       expect(await page.locator('#mapQuickStatus').evaluate(node=>!!node.closest('#geoglyphMapEditor'))).toBe(false);
       await page.evaluate(()=>GeoGlyph3D.notice('No compatible font is available. '.repeat(6)));
       expect(await measure()).toEqual(baseline);
-      await page.locator('#mapQuickModel').click();await settled(page);
+      // Await the entire model/fit transaction before testing the next notice.
+      await page.evaluate(()=>GeoGlyphMapEngine.setModelMode(!GeoGlyphMapEngine.state.extrusionEnabled));
+      await settled(page);
       expect(await measure()).toEqual(baseline);
     }
   }

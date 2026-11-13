@@ -1,6 +1,6 @@
 (function (root) {
   'use strict';
-  const resources = new Map(), queue = [], pending = new Map(), pins = new Map();
+  const resources = new Map(), queue = [], pending = new Map(), pins = new Map(), morphJobs = new Set();
   let active = 0, sequence = 0, worker = null, workerUrl = '', catalogGeneration = 0, serviceEpoch = 0, workerGeneration = 0;
   const counters = { reads: 0, faces: 0, parses: 0, jobs: 0 };
   let localDescriptors = [], localRequest = null;
@@ -264,6 +264,69 @@
       }
     });
   }
+  // Morph work is isolated from mesh/index requests. Aborting it never tears
+  // down the shared font worker or interrupts an orbiting model's preparation.
+  async function morph(from, to, text, options = {}) {
+    const { signal, ...layout } = options;
+    const epoch = serviceEpoch;
+    let target, rejectJob, rejectCancellation, cancelled, url = '', jobId = 0, timeout;
+    const cancellation = new Promise((_, reject) => { rejectCancellation = reject; });
+    // Cancellation can occur between requests, when no send() promise exists.
+    // Keep a handled rejection available to race the initial font-file reads.
+    cancellation.catch(() => {});
+    const cancel = reason => {
+      if (cancelled) return;
+      cancelled = reason;
+      rejectCancellation(reason); rejectJob?.(reason);
+    };
+    const abort = () => cancel(signal.reason || new DOMException('Morph cancelled', 'AbortError'));
+    const check = () => {
+      if (cancelled) throw cancelled;
+      if (signal?.aborted) throw signal.reason || new DOMException('Morph cancelled', 'AbortError');
+      if (epoch !== serviceEpoch) throw Error('Font service disposed');
+    };
+    morphJobs.add(cancel);
+    signal?.addEventListener('abort', abort, { once:true });
+    try {
+      check();
+      const a = register(from), b = register(to);
+      const buffers = await Promise.race([Promise.all([schedule(() => read(a), 0), schedule(() => read(b), 0)]), cancellation]);
+      check();
+      const source = document.getElementById('geoglyph-font-worker-source');
+      if (!source || !root.Worker) throw Error('Font morphing requires a font worker');
+      url = URL.createObjectURL(new Blob([JSON.parse(source.textContent)], { type:'text/javascript' }));
+      target = new Worker(url);
+      target.onerror = event => rejectJob?.(Error(event.message || 'Morph worker failed'));
+      target.onmessageerror = () => rejectJob?.(Error('Morph worker response could not be read'));
+      const send = (type, payload, transfer = []) => new Promise((resolve, reject) => {
+        check();
+        const id = ++jobId;
+        rejectJob = reject;
+        timeout = setTimeout(() => reject(Error('Font morph preparation timed out; shorten the message')), 30000);
+        target.onmessage = event => {
+          const data = event.data;
+          if (!data || typeof data !== 'object' || !Number.isInteger(data.id) || (!('result' in data) && typeof data.error !== 'string')) { reject(Error('Morph worker returned an invalid message')); return; }
+          if (data.id !== id) return;
+          clearTimeout(timeout);
+          data.error ? reject(Error(data.error)) : resolve(data.result);
+        };
+        target.postMessage({ id, type, payload }, transfer);
+      }).finally(() => { clearTimeout(timeout); rejectJob = null; });
+      for (const [i, resource] of [a,b].entries()) {
+        check();
+        const buffer = buffers[i].slice(0);
+        await send('prepare', { key:resource.key, buffer }, [buffer]);
+      }
+      check();
+      const result = await send('morph', { from:a.key, to:b.key, text, options:layout });
+      check(); return result;
+    } finally {
+      morphJobs.delete(cancel);
+      clearTimeout(timeout); signal?.removeEventListener('abort', abort);
+      if (target) { target.onmessage = target.onerror = target.onmessageerror = null; target.terminate(); }
+      if (url) URL.revokeObjectURL(url);
+    }
+  }
   async function catalog(records, onRecord, options = {}) {
     const generation = ++catalogGeneration; let sliceStart = performance.now(), lastProgress = 0, done = 0;
     for (const record of records) {
@@ -277,10 +340,11 @@
   function pin(record, owner) { const resource=register(record); pins.set(owner,resource.key); return resource; }
   function dispose() {
     ++serviceEpoch; cancelCatalog();
+    for (const cancel of morphJobs) cancel(Error('Font service disposed'));
     localDescriptors=[];localRequest=null;
     for (const r of resources.values()) if (r.face) document.fonts.delete(r.face);
     resources.clear(); pins.clear(); for(const item of queue.splice(0))item.reject(Error('Font service disposed'));
     resetWorker(worker, Error('Font service disposed'));
   }
-  root.GeoGlyphFontService = Object.freeze({ requestLocalFonts, localFonts:()=>localDescriptors.slice(), matchLocalFont, resolveLocalFont, keyFor, register, ensureFace, prepare, model, mesh, catalog, cancelCatalog, yieldTask, pin, unpin:owner=>pins.delete(owner), dispose, stats: () => ({ ...counters, resources: resources.size, queued: queue.length, active, retainedBytes: [...resources.values()].reduce((sum, r) => sum + (r.buffer?.byteLength || 0), 0) }), workerStats: () => workerRequest('stats', {}) });
+  root.GeoGlyphFontService = Object.freeze({ requestLocalFonts, localFonts:()=>localDescriptors.slice(), matchLocalFont, resolveLocalFont, keyFor, register, ensureFace, prepare, model, mesh, morph, catalog, cancelCatalog, yieldTask, pin, unpin:owner=>pins.delete(owner), dispose, stats: () => ({ ...counters, resources: resources.size, queued: queue.length, active, retainedBytes: [...resources.values()].reduce((sum, r) => sum + (r.buffer?.byteLength || 0), 0) }), workerStats: () => workerRequest('stats', {}) });
 })(globalThis);

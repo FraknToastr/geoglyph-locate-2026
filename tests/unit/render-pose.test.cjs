@@ -56,7 +56,8 @@ test('camera poses keep independent matrices while render outputs can be reused 
 });
 test('custom render shares one coherent pose between paint and projection and retains GL resets',()=>{
   let solves=0,angleReads=0,paintPose,projectionPose,resets=0,draws=0;
-  const expectedAngles={bearing:20,tilt:55},pose={object:{},geographic:{}},c=vm.createContext({isVisible:()=>true,state:()=>({previewActive:true}),
+  let morphActive=false;
+  const expectedAngles={bearing:20,tilt:55},pose={object:{},geographic:{}},c=vm.createContext({isVisible:()=>true,morph:()=>morphActive,state:()=>({previewActive:true}),
     camera:{getAngles(){angleReads++;return expectedAngles;}},matrices:(angles,output)=>{solves++;assert.equal(angles,expectedAngles);assert.equal(output,c.layer.poseMatrices);return pose;}});
   const start=source.indexOf('    render(gl,args) {'),end=source.indexOf('    onRemove()',start);
   vm.runInContext('globalThis.layer={'+source.slice(start,end)+'};',c);
@@ -64,9 +65,32 @@ test('custom render shares one coherent pose between paint and projection and re
   c.layer.render({drawingBufferWidth:800,drawingBufferHeight:600},{defaultProjectionData:{mainMatrix:[]}});
   assert.equal(solves,1);assert.equal(angleReads,1);assert.equal(paintPose,pose);assert.equal(projectionPose,pose.geographic);assert.equal(resets,2);assert.equal(draws,1);
   assert.equal(c.layer.hasRenderedPose,true);assert.deepEqual(c.layer.renderedAngles,{bearing:20,tilt:55});
+  morphActive=true;c.layer.render({},{});assert.equal(draws,1,'the ordinary mesh must yield rendering to an active morph');morphActive=false;
   expectedAngles.bearing=30;c.layer.renderer.render=()=>{throw Error('draw failed');};
   assert.throws(()=>c.layer.render({drawingBufferWidth:800,drawingBufferHeight:600},{defaultProjectionData:{mainMatrix:[]}}),/draw failed/);
   assert.deepEqual(c.layer.renderedAngles,{bearing:20,tilt:55},'failed draws cannot replace the last successfully rendered pose');
+});
+
+test('morph union bounds cannot move the source anchor, ground contact or mirrored pivot',()=>{
+  const h=harness(),angles={bearing:75,tilt:55};
+  h.data.bounds={minX:-2,maxX:2,minY:-.5,maxY:.5,minZ:-.5,maxZ:.5};
+  const ordinary=h.calculate(angles);
+  let bounds={minX:-3,maxX:4,minY:-.8,maxY:.6,minZ:-.5,maxZ:.5};
+  h.c.window.GeoGlyphFontMorph={isActive:()=>true,getBounds:()=>bounds};
+  const first=h.calculate(angles);
+  for(const key of ['object','geographic'])assert.deepEqual(Array.from(first[key].elements),Array.from(ordinary[key].elements));
+  assert.equal(JSON.stringify(first.localCenter),JSON.stringify(ordinary.localCenter));
+  bounds={...bounds,minX:-6,maxX:8,minY:-1.5};
+  const second=h.calculate(angles);
+  assert.deepEqual(Array.from(second.object.elements),Array.from(first.object.elements));
+  assert.equal(JSON.stringify(second.center),JSON.stringify(first.center));
+  h.s.mirrorX=true;
+  const reflected=h.calculate(angles);
+  assert.deepEqual(Array.from(reflected.object.elements),first.object.clone().multiply(new ThreeMatrix4().makeScale(-1,1,1)).elements);
+  assert.equal(JSON.stringify(reflected.localCenter),JSON.stringify(first.localCenter));
+  const flat=h.c.morphPose(bounds,true,angles);
+  assert.deepEqual(Array.from(flat.localCenter),[0,0,0]);
+  assert.ok(Math.abs(flat.object.determinant())>0,'flat depth scale stays invertible for shader ray reconstruction');
 });
 
 test('freezing stores a fixed pose with bounded bearing and defers UI refresh until input edits finish',()=>{

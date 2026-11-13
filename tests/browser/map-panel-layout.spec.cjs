@@ -6,7 +6,7 @@ test.beforeEach(async({page})=>{
  await page.goto('/');await page.waitForFunction(()=>window.GeoGlyphUi&&document.getElementById('mapFillHex'));
  await page.evaluate(()=>GeoGlyphMapEngine.showMap());await page.waitForFunction(()=>GeoGlyphMapEngine.state.mapReady);
 });
-test('Map control rows share the panel width on desktop and mobile',async({page})=>{
+test('Map control rows share available width and wrap within the narrow sidebar',async({page})=>{
  for(const width of [1440,390]){
   await page.setViewportSize({width,height:1000});
   const result=await page.evaluate(()=>{
@@ -14,9 +14,14 @@ test('Map control rows share the panel width on desktop and mobile',async({page}
    const group=selector=>Array.from(document.querySelectorAll(selector),n=>{const r=n.getBoundingClientRect();return {width:r.width,y:r.y};});
    return {font:group('.map-control-grid>.map-action'),modes:group('.map-mode-switch>.map-chip'),basemaps:['mapEsriAerialBtn','mapEsriWorldBtn','mapMetroMapBtn'].map(rect),exports:['mapFitBtn','mapExportGeoJsonBtn','mapSaveJpgBtn','mapSavePngBtn'].map(rect),native:rect('mapNativeColor'),label:(()=>{const r=document.getElementById('mapNativeColor').closest('label').getBoundingClientRect();return {x:r.x,width:r.width};})(),panel:rect('geoglyphMapEditor')};
   });
-  for(const group of [result.font,result.modes,result.basemaps,result.exports])for(const item of group){expect(item.width).toBeCloseTo(group[0].width,0);expect(item.y).toBeCloseTo(group[0].y,0);}
-  const extrusion=await page.locator('#map3DEnabled').boundingBox(),solid=await page.locator('#map3DSolid').boundingBox();
-  expect(solid.y).toBeCloseTo(extrusion.y,0);expect(solid.x).toBeGreaterThan(extrusion.x);
+  for(const group of [result.font,result.modes,result.basemaps,result.exports])for(const item of group){
+   expect(item.width).toBeCloseTo(group[0].width,0);
+   if(group!==result.modes)expect(item.y).toBeCloseTo(group[0].y,0);
+  }
+  const extrusion=await page.locator('#map3DEnabled').boundingBox(),mirror=await page.locator('#mapMirrorX').boundingBox(),solid=await page.locator('#map3DSolid').boundingBox();
+  if(width>680){expect(mirror.y).toBeCloseTo(extrusion.y,0);expect(mirror.x).toBeGreaterThan(extrusion.x);}
+  else{expect(mirror.x).toBeCloseTo(extrusion.x,0);expect(mirror.y).toBeGreaterThan(extrusion.y);}
+  expect(solid.x).toBeCloseTo(extrusion.x,0);expect(solid.y).toBeGreaterThan(extrusion.y);
   expect(result.label.x+result.label.width/2).toBeCloseTo(result.panel.x+result.panel.width/2,0);
  }
  await expect(page.locator('#mapFitBtn')).toHaveText('Fit');await expect(page.locator('#mapExportGeoJsonBtn')).toHaveText('Geojson');

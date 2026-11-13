@@ -1577,8 +1577,9 @@ html[data-theme="light"] .v1512-font-family-heading{background:#e3eaec;color:#17
 /* Component source: geoglyph-v167-map-layout */
 
 /* v16.7 Map surface layout ----------------------------------------------------
-   Map owns the entire application viewport below the header. Font Explorer is
-   an explicit 50/50 split only while it is open. Canvas workflows are untouched. */
+   Map fills the available viewport below the header. The controls sidebar
+   reserves its column in map-controls.css; Font Explorer uses a 50/50 split.
+   Canvas workflows are untouched. */
 body.geoglyph-map-preview>.workspace{visibility:hidden!important;pointer-events:none!important}
 body.geoglyph-map-preview #geoglyphMapWorkspace{
   position:fixed!important;
@@ -1610,7 +1611,7 @@ body.geoglyph-map-preview .drawer-scrim{display:none!important}
 
 /* Component source: geoglyph-v165-style */
 
-/* v16.7: Canvas keeps the original GeoGlyph layout. Map is full viewport unless Font Explorer is explicitly open. */
+/* Canvas keeps the original GeoGlyph layout. Map sidebar rules are separate. */
 body.geoglyph-map-preview #explorerDrawer{z-index:80!important}
 body.geoglyph-map-preview .geoglyph-map-workspace{z-index:1}
 #mapCanvasToggleBtn{min-width:78px}

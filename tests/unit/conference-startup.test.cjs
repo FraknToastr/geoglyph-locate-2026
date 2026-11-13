@@ -156,7 +156,7 @@ test('old map style completion cannot mark a replacement ready; ready map retry 
 });
 test('Start routes failed presentation startup to retry, while ready Start preserves polling semantics',async()=>{
   let retries=0,polls=0,stops=0,resumes=0;const conference={state:{ready:false},retryStartup:async()=>{retries++;return false;},resume(){resumes++;}};
-  const state={};const ctx=vm.createContext({presentation:true,window:{GeoGlyphConference:conference},mapState:state,
+  const state={};const ctx=vm.createContext({presentation:true,arcgisAdminBusy:false,window:{GeoGlyphConference:conference},mapState:state,
     stopArcgisPolling(){stops++;},syncArcgisControls(){},async pollArcgisOnce(){polls++;}});
   vm.runInContext('async '+engineFunction('startArcgisPolling'),ctx);
   await ctx.startArcgisPolling();assert.equal(retries,1);assert.equal(polls,0);assert.equal(stops,0);

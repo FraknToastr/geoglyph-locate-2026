@@ -23,7 +23,7 @@ const escape=value=>value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/
 const licences=licenceNames.map(name=>`<details><summary>${escape(name.replace('.txt',''))}</summary><pre>${escape(read('src/vendor/licenses/'+name))}</pre></details>`).join('\n');
 const template = read('src/template.html').replace(/<title>[^<]*<\/title>/,`<title>${version.title}</title>`).replace('<!-- GE0GLYPH_LICENSES -->',`<section class="bundled-licences"><h3>Bundled library licences</h3>${licences}</section>`);
 function workerSource(asset) {
-  return ['src/vendor/opentype.js', 'src/vendor/polygon-clipping.js', 'src/scripts/ground-geometry.js', 'src/vendor/extrusion-worker.js', asset.path].map(read).join('\n;\n');
+  return ['src/vendor/opentype.js', 'src/vendor/polygon-clipping.js', 'src/scripts/ground-geometry.js', 'src/scripts/font-morph-fields.js', 'src/vendor/extrusion-worker.js', asset.path].map(read).join('\n;\n');
 }
 function render(inline) {
   return manifest.reduce((html, asset) => {

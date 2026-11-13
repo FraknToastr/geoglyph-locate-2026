@@ -35,12 +35,13 @@ test('Face orbit smoothly reframes from widescreen to portrait and back without 
     await page.evaluate(()=>{window.__resizeFitProbe.events=0;window.__resizeFitProbe.zooms=[];});
     await page.setViewportSize(viewport);
     await page.waitForFunction(()=>window.__resizeFitProbe.events>0);
+    const mapWidth=await page.locator('#geoglyphMap').evaluate(node=>node.clientWidth);
     let previousZoom=null;
     await expect.poll(async()=>{
       const current=await measure(page),stable=previousZoom!==null&&Math.abs(current.zoom-previousZoom)<.0002;
       previousZoom=current.zoom;
       const animation=await page.evaluate(()=>GeoGlyph3D.stats().animation);
-      return current.width===viewport.width&&current.occupancy>.73&&current.occupancy<=.805&&
+      return current.width===mapWidth&&current.occupancy>.73&&current.occupancy<=.805&&
         current.margin>=.095&&stable&&animation.orbiting&&animation.phase==='orbiting'&&animation.frames>before.frames+5;
     },{timeout:15_000,intervals:[100,100,200,200,300]}).toBe(true);
     const after=await measure(page);
@@ -121,6 +122,9 @@ async function measure(page,{heading,rotation=false}={}){
         // A mathematical projection must preserve its requested target; native
         // map longitude constraints are checked separately on the real map.
         transform.setRenderWorldCopies(true);
+        // Measure the requested elevated pose without the finite-world floor.
+        // The real camera target is checked independently below.
+        transform._helper._latRange=null;
         transform.setPitch(55);transform.setBearing(heading);
         transform.setCenter(target.toLngLat());transform.setElevation(target.toAltitude());
       }

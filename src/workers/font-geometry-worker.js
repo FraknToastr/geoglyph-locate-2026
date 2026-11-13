@@ -33,6 +33,16 @@
           const model = self.GeoGlyphGeometry.model(entry.font, payload.text, payload.options); cached = { model, bytes: Math.max(128, model.vertices * 24) }; modelBytes += cached.bytes;
         }
         touch(models, key, cached); trim(payload.key); result = cached.model;
+      } else if (type === 'morph') {
+        const from = fonts.get(payload.from), to = fonts.get(payload.to);
+        if (!from || !to) throw Error('FONT_EVICTED');
+        result = self.GeoGlyphMorphFields.prepare(from.font, to.font, payload.text, payload.options);
+        const buffers = new Set();
+        for (const glyph of result.glyphs) {
+          buffers.add(glyph.fromField.buffer); buffers.add(glyph.toField.buffer);
+        }
+        self.postMessage({ id, result }, [...buffers]);
+        return;
       } else if(type === 'mesh') {
         let entry=meshes.get(payload.key);
         if(!entry){
