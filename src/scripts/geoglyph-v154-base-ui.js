@@ -31,12 +31,12 @@
     const oldCsvButton = $("v151ImportCsv");
     const qreversePrimary = document.querySelector(".qreverse-primary");
 
-    /* Put Font Explorer first in the centred workflow strip. */
+    /* Put Font Explorer immediately after the dedicated Geoglyph entry. */
     if (workflowNav && fontButton) {
       fontButton.textContent = "Font Explorer";
       fontButton.title = "Open Font Explorer and preview symbols";
       fontButton.classList.add("workflow-font-btn");
-      workflowNav.insertBefore(fontButton, workflowNav.firstChild);
+      workflowNav.insertBefore(fontButton, workflowNav.querySelector('#geoglyphPreviewBtn')?.nextSibling || workflowNav.firstChild);
       fontButton.addEventListener("click", event => {
         event.preventDefault();
         event.stopImmediatePropagation();

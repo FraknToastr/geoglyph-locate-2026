@@ -1,0 +1,12 @@
+{
+  "name": "adelaide-metro-dashboard",
+  "private": true,
+  "scripts": {
+    "start": "node server.cjs",
+    "build:routes": "node scripts/build-route-index.cjs",
+    "save:snapshot": "node scripts/save-startup-snapshot.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "test:browser": "PLAYWRIGHT_BROWSERS_PATH=/home/n0rt/.cache/ms-playwright NODE_PATH=/home/n0rt/.nvm/versions/node/v22.23.2/lib/node_modules node /home/n0rt/.nvm/versions/node/v22.23.2/lib/node_modules/@playwright/test/cli.js test",
+    "test:browser:list": "PLAYWRIGHT_BROWSERS_PATH=/home/n0rt/.cache/ms-playwright NODE_PATH=/home/n0rt/.nvm/versions/node/v22.23.2/lib/node_modules node /home/n0rt/.nvm/versions/node/v22.23.2/lib/node_modules/@playwright/test/cli.js test --list"
+  }
+}

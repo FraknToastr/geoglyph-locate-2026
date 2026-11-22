@@ -12,7 +12,7 @@ async function open(page,importFont=true,{requestFontAccess=false}={}){
   test.skip(!fs.existsSync(sans)||!fs.existsSync(serif),'Optional installed DejaVu fixtures unavailable');
   await page.route('**/MapServer/tile/**',route=>route.fulfill({body:tile,contentType:'image/png'}));
   await page.goto('/');await page.waitForFunction(()=>window.GeoGlyph3D&&document.getElementById('mapQuickRandom'));
-  if(requestFontAccess)await page.locator('#mapCanvasToggleBtn').click();
+  if(requestFontAccess)await page.locator('#geoglyphPreviewBtn').click();
   else await page.evaluate(()=>GeoGlyphMapEngine.showMap());
   await page.waitForFunction(()=>GeoGlyphMapEngine.state.mapReady);await settled(page);
   if(importFont){
@@ -46,6 +46,7 @@ test('Random resolves catalogue aliases from granted local descriptors while the
   const after=await page.evaluate(()=>{const s=GeoGlyphMapEngine.state;return {name:s.fontRecords.get(s.displayedFontId).name,queries:mapFixQueryCalls,anchor:{...s.anchor},code:s.selectedCode,animation:GeoGlyph3D.stats().animation,sameLayer:s.map.getLayer('geoglyph-extruded-font').implementation===mapFixLayer};});
   expect(after.name).toBe('Consolas');expect(after.queries).toBe(1);expect(after.sameLayer).toBe(true);
   expect(after.anchor).toEqual(before.anchor);expect(after.code).toBe(before.code);expect(after.animation.orbiting).toBe(true);expect(after.animation.frames).toBeGreaterThan(before.frames);
+  await expect(page.locator('#mapExportObjBtn')).toBeEnabled();
 });
 
 test('Random reaches a compatible font beyond eight incompatible entries',async({page})=>{

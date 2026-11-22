@@ -111,7 +111,7 @@ test('Segoe UI Emoji letters and colour glyphs accept fill and outline', async (
     const file = new File([await (await fetch('/__fixture.ttf')).arrayBuffer()], 'seguiemj.ttf', { lastModified: 1 });
     const record = { id: 'actual-segoe-emoji', name: 'Segoe UI Emoji Regular', source: 'file', file };
     await GeoGlyphFontService.ensureFace(record);
-    Object.assign(GeoGlyphMapEngine.state, { mode: 'glyph', fill: '#31A765', outline: '#FFFFFF', outlineWidth: 4, nativeColor: false });
+    Object.assign(GeoGlyphMapEngine.state, { mode: 'message', fill: '#31A765', outline: '#FFFFFF', outlineWidth: 4, nativeColor: false });
     return ['A', '7', '!', '😀'].map(text => {
       const styled = GeoGlyphMapEngine.rasteriseGroundDecal(record, text, { nativeColor: false });
       const data = styled.canvas.getContext('2d').getImageData(0, 0, styled.canvas.width, styled.canvas.height).data;

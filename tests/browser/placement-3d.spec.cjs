@@ -39,16 +39,16 @@ test('first Map entry fits once and camera changes never move vector or raster a
   expect(await anchor(page)).toEqual({lng:138.61,lat:-34.93});
 });
 
-test('first fit survives an empty initial character and deliberate navigation cancels it',async({page})=>{
-  await open(page);await page.evaluate(()=>{GeoGlyphStudio.state.selectedCode=32;GeoGlyphMapEngine.showMap();GeoGlyphMapEngine.state.selectedCode=32;GeoGlyphMapEngine.queueRebuild(false);});
+test('first fit survives an empty initial message and deliberate navigation cancels it',async({page})=>{
+  await open(page);await page.evaluate(()=>{GeoGlyphMapEngine.state.message=' ';GeoGlyphMapEngine.showMap();GeoGlyphMapEngine.queueRebuild(false);});
   await page.waitForFunction(()=>GeoGlyphMapEngine.state.mapReady&&!GeoGlyphMapEngine.state.rebuilding&&!GeoGlyphMapEngine.state.pendingBuild);
   expect(await page.evaluate(()=>GeoGlyphMapEngine.state.initialFitStatus)).toBe('pending');
-  await page.evaluate(()=>{GeoGlyphMapEngine.state.selectedCode=65;GeoGlyphMapEngine.queueRebuild(false);});await settled(page);
+  await page.evaluate(()=>{GeoGlyphMapEngine.state.message='A';GeoGlyphMapEngine.queueRebuild(false);});await settled(page);
   expect(await page.evaluate(()=>GeoGlyphMapEngine.state.initialFitCount)).toBe(1);
   await page.reload();await page.waitForFunction(()=>window.GeoGlyphMapEngine);
-  await page.evaluate(()=>{GeoGlyphStudio.state.selectedCode=32;GeoGlyphMapEngine.showMap();GeoGlyphMapEngine.state.selectedCode=32;});
+  await page.evaluate(()=>{GeoGlyphMapEngine.state.message=' ';GeoGlyphMapEngine.showMap();});
   await page.waitForFunction(()=>GeoGlyphMapEngine.state.mapReady);
-  await page.evaluate(()=>{const s=GeoGlyphMapEngine.state;s.map.fire('zoomstart',{originalEvent:new WheelEvent('wheel')});s.selectedCode=65;GeoGlyphMapEngine.queueRebuild(false);});await settled(page);
+  await page.evaluate(()=>{const s=GeoGlyphMapEngine.state;s.map.fire('zoomstart',{originalEvent:new WheelEvent('wheel')});s.message='A';GeoGlyphMapEngine.queueRebuild(false);});await settled(page);
   expect(await page.evaluate(()=>GeoGlyphMapEngine.state.initialFitStatus)).toBe('cancelled');
   expect(await page.evaluate(()=>GeoGlyphMapEngine.state.initialFitCount)).toBe(0);
 });
@@ -116,10 +116,11 @@ test('standalone 3D supports multiline text, exports, persistent resources and c
 
 test('colour fonts remain styled in 2D with an explicit extrusion explanation',async({page})=>{
   await open(page);await show(page);await settled(page);await importFont(page,emoji);
-  await page.locator('#map3DEnabled').check();await settled(page);
+  await page.locator('#map3DEnabled').click();await settled(page);
+  await expect(page.locator('#map3DEnabled')).not.toBeChecked();
   expect(await page.evaluate(()=>GeoGlyphMapEngine.state.lastRenderMode)).toBe('decal');
   expect(await page.evaluate(()=>GeoGlyph3D.isVisible())).toBe(false);
-  await expect(page.locator('#map3DStatus')).toContainText('Choose an outline font');
+  await expect(page.locator('#mapEngineStatus')).toContainText('cannot be extruded');
   await expect(page.locator('#map3DView')).toBeDisabled();
 });
 

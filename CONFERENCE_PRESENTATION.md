@@ -3,7 +3,8 @@
 Open `GeoGlyph_Locate_2026.html` or run `rtk npm run dev` and visit
 `http://localhost:4174`. The app opens Map → ArcGIS with the full controls
 sidebar visible, Segoe UI Emoji selected, Fix Font Colours checked, 2D enabled,
-Small size and one-second anonymous polling. The camera initially shows all of
+Small size, with polling stopped. Choose **Start** for one-second anonymous polling,
+or **Fetch** for a single request. The camera initially shows all of
 Australia, north-up and untilted. Sleeping Geo (😴) is prepared at Adelaide
 without zooming in. Map tiles and survey polling require an internet connection.
 
@@ -29,7 +30,7 @@ and Adelaide anchor, and returns immediately to Australia. Polling stays active.
 Begin and Reset take precedence over every other field in the same response.
 Values are case-insensitive and surrounding spaces are ignored.
 
-On launch, the newest stored response establishes the polling cursor without
+On the first manual poll, the newest stored response establishes the cursor without
 replaying its content or command. Reload always returns to Australia. New cues
 are processed in Object ID order. In the overview, automatic Fit and survey
 animations are suppressed. After Begin, every new submission containing Emoji,
@@ -39,6 +40,13 @@ Edit an existing response only to correct the data; submit a **new response** to
 send another presentation cue. There is no extra hold/dwell time between cues.
 
 ## Survey fields and precedence
+
+The **Script** section below Font Morph replaces the hard-coded introduction.
+Each row has up to four actions, multiline text, and a hold duration. Use its plus
+buttons and modal pickers to edit it, and Save JSON/Load JSON to exchange scripts.
+The last local draft survives reload; **Introduction** restores the bundled
+`src/scripts/introduction.json`. Begin plays the current draft. Manual script
+playback stops polling; Start stops script playback and begins polling.
 
 | Survey field | Effect |
 | --- | --- |

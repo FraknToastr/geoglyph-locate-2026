@@ -1,0 +1,1 @@
+globalThis.GeoGlyphVersion=Object.freeze({"version":"18.5-locate2026","title":"GeoGlyph — Locate 2026"});document.title=GeoGlyphVersion.title;document.documentElement.dataset.geoglyphBuild=GeoGlyphVersion.version;

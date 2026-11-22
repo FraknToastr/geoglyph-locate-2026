@@ -1,0 +1,110 @@
+(function () {
+  'use strict';
+
+  const sectionDefinitions = [
+    ['[data-map-pane="message"]', 'mapMessageSection', 'Message'],
+    ['.map-control-grid', 'mapFontSection', 'Font'],
+    ['.map-3d-panel', 'map3DSection', '3D'],
+    ['.map-morph-panel', 'mapMorphPanel', 'Font Morph'],
+    ['.map-script-panel', 'mapScriptSection', "Geo's Script", 'arcgis'],
+    ['[data-map-pane="arcgis"]', 'mapArcgisSection', 'Survey123', 'arcgis admin'],
+    ['.map-style-panel', 'mapStyleSection', 'Style'],
+    ['.map-editor-actions', 'mapBasemapSection', 'Basemap & Export']
+  ];
+  let messageOpeningApplied = false;
+
+  // Enhance existing containers in place. Their children, IDs and event handlers
+  // are also used by the map engine and the lazily mounted 3D controls.
+  function enhanceSection(editor, definition) {
+    const [selector, id, label, modes = 'message'] = definition;
+    const section = editor.querySelector(selector);
+    if (!section) return false;
+    section.dataset.mapEditorModes = modes;
+    section.hidden = !modes.split(' ').includes(editor.dataset.mapEditorMode || 'message');
+    if (section.dataset.controlSection !== undefined) return true;
+
+    section.id = id;
+    const header = document.createElement('h3');
+    header.className = 'map-section-head';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'module-collapse-btn map-section-collapse';
+    button.dataset.collapseModule = id;
+    button.setAttribute('aria-expanded', 'true');
+    const mark = document.createElement('span');
+    mark.className = 'module-collapse-mark';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = '−';
+    const caption = document.createElement('span');
+    caption.textContent = label;
+    button.append(mark, caption);
+    header.append(button);
+    section.prepend(header);
+    window.GeoGlyphControls.registerSection(section);
+    if (id === 'mapMessageSection' && !messageOpeningApplied && window.GeoGlyphSuiteEntry?.profile.expandMessage) {
+      messageOpeningApplied = true;
+      window.GeoGlyphControls.setCollapsed(section, false);
+    }
+    return true;
+  }
+
+  function enhanceEditor(editor) {
+    if (editor.dataset.mapControlsReady === 'true') return;
+    const controls = window.GeoGlyphControls;
+    if (!controls) return;
+    editor.dataset.mapControlsReady = 'true';
+
+    const header = document.createElement('div');
+    header.className = 'map-controls-head';
+    header.id = 'mapControlsHeader';
+    editor.querySelector('.map-editor-head-actions').prepend(header);
+    controls.enhanceHeader(header, editor);
+
+    function arrangeSections() {
+      for (const definition of sectionDefinitions) enhanceSection(editor, definition);
+      const sections = sectionDefinitions.map(([selector]) => editor.querySelector(selector)).filter(Boolean);
+      // Every section is a sibling, including the asynchronously installed 3D
+      // and morph panels. Moving existing nodes preserves controls and clocks.
+      const current = [...editor.children].filter(node => sections.includes(node));
+      if (current.some((node, index) => node !== sections[index])) sections.forEach(section => editor.append(section));
+      controls.sync();
+    }
+    arrangeSections();
+
+    // Recalculate active sections when modes change or the whole editor reopens.
+    // A refresh while the editor is collapsed disables both bulk actions.
+    const modeObserver = new MutationObserver(() => controls.sync());
+    modeObserver.observe(editor, { attributes: true, attributeFilter: ['class'] });
+    editor.querySelectorAll('[data-map-pane]').forEach(pane => {
+      modeObserver.observe(pane, { attributes: true, attributeFilter: ['hidden'] });
+    });
+
+    if (!editor.querySelector('.map-3d-panel') || !editor.querySelector('.map-morph-panel') || !editor.querySelector('.map-script-panel')) {
+      const panelsObserver = new MutationObserver(() => {
+        arrangeSections();
+        if (editor.querySelector('.map-3d-panel') && editor.querySelector('.map-morph-panel') && editor.querySelector('.map-script-panel')) panelsObserver.disconnect();
+      });
+      panelsObserver.observe(editor, { childList: true });
+    }
+    controls.sync();
+  }
+
+  function boot() {
+    const editor = document.getElementById('geoglyphMapEditor');
+    if (editor) {
+      enhanceEditor(editor);
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      const nextEditor = document.getElementById('geoglyphMapEditor');
+      if (nextEditor && window.GeoGlyphControls) {
+        observer.disconnect();
+        enhanceEditor(nextEditor);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+  else boot();
+})();

@@ -1,0 +1,73 @@
+UOS Explorer Suite — C64 SID jukebox credits
+
+Cybernoid II — Jeroen Tel
+PSID copyright field: 1988 Hewson
+Subtune 1 of 2 (main music)
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/T/Tel_Jeroen/Cybernoid_II.sid
+
+ACE II — Rob Hubbard
+PSID copyright field: 1987 Cascade Games
+Subtune 1 of 1
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/H/Hubbard_Rob/ACE_II.sid
+
+Last Ninja 2 — Matt Gray
+PSID copyright field: 1988 System 3
+Subtune 2 of 13: Central Park in-game theme (not subtune 1's loader music)
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/G/Gray_Matt/Last_Ninja_2.sid
+Subtune reference: https://www.slayradio.org/sidinfo/MUSICIANS/G/Gray_Matt/Last_Ninja_2.sid
+
+Delta — Rob Hubbard
+PSID copyright field: 1987 Thalamus
+Title Theme: subtune 12 of 13
+In-Game Theme: subtune 1 of 13
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/H/Hubbard_Rob/Delta.sid
+Subtune reference: https://www.hvsc.c64.org/download/C64Music/DOCUMENTS/STIL.txt
+
+Wizball Theme — Martin Galway
+SID copyright field: 1987 Ocean
+Title theme, subtune 4 of 9
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/G/Galway_Martin/Wizball.sid
+
+Combat School Theme — Martin Galway
+SID copyright field: 1987 Ocean
+Title theme, subtune 1 of 16
+Galway's C64 arrangement of Full Metal Jacket (I Wanna Be Your Drill Instructor)
+by Abigail Mead and Nigel Goulding
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/G/Galway_Martin/Combat_School.sid
+
+Arkanoid Theme — Martin Galway
+SID copyright field: 1987 Imagine
+Title theme with sampled percussion, subtune 1 of 20
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/G/Galway_Martin/Arkanoid.sid
+
+Parallax Theme — Martin Galway
+SID copyright field: 1986 Ocean
+Title theme, subtune 1 of 5
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/G/Galway_Martin/Parallax.sid
+
+Cybernoid — Jeroen Tel
+SID copyright field: 1988 Hewson
+Main theme from Cybernoid: The Fighting Machine, subtune 1 of 2
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/T/Tel_Jeroen/Cybernoid.sid
+
+The original SID program bytes are bundled in launcher/sid-tracks.js using
+base64 for direct-from-disk loading. Playback executes the PSID and RSID
+programs through local C64 emulators.
+
+Music copyrights remain with their respective rights holders. The above SID
+credit fields identify the supplied files; they do not establish current rights
+ownership or grant a licence. These tunes are included for the requested private
+evaluation. The emulator licences cover their own code. Any public/commercial
+deployment needs the relevant rights-holder permissions.
+HVSC copyright information: https://www.hvsc.c64.org/info
+
+Emulator: Hermit jsSID 0.9.1 by Mihaly Horvath (Hermit), 2016.
+https://github.com/og2t/jsSID
+Adapted CPU/SID source: vendor/sid-core.js
+Retained upstream README and licence statement: vendor/jsSID-README.txt
+Adaptation: supplied byte-array loading, injected sample rate, isolated state,
+explicit 6581 model, deterministic restart, streaming AudioWorklet output and
+bounded ScriptProcessor fallback. No tune transcription or replacement music.
+
+RSID emulator: libsidplayfp-wasm 1.1.1, reSIDfp build.
+Source and licence details are in vendor/libsidplayfp-NOTICE.md.

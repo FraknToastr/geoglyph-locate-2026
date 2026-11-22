@@ -42,8 +42,9 @@
     workflowNav.className = "workflow-nav";
     workflowNav.setAttribute("aria-label", "GeoGlyph workflows");
     workflowNav.innerHTML = `
+      <button class="square-btn" id="geoglyphPreviewBtn" type="button" aria-pressed="false" aria-controls="geoglyphMapWorkspace" title="Show Geoglyph">Geoglyph</button>
       <button class="square-btn" data-workflow="symbol" type="button">Symbol</button>
-      <button class="square-btn" id="mapCanvasToggleBtn" type="button" aria-pressed="false" title="Show map preview">Map</button>
+      <button class="square-btn" id="mapCanvasToggleBtn" type="button" aria-pressed="false" aria-controls="previewStage" title="Show canvas preview">Canvas</button>
       <button class="square-btn" data-workflow="qr" type="button">QART</button>
       <button class="square-btn" data-workflow="qreverse" type="button">Scan QRs</button>
       <button class="square-btn" data-workflow="magic-eye" type="button">Magic Eye</button>`;
@@ -159,7 +160,7 @@
     function updateModeUI(mode = modeFromState()) {
       document.body.dataset.workflow = mode;
       workflowNav.querySelectorAll("[data-workflow]").forEach(button => {
-        const active = button.dataset.workflow === mode;
+        const active = !document.body.classList.contains('geoglyph-map-preview') && button.dataset.workflow === mode;
         button.classList.toggle("is-active", active);
         button.setAttribute("aria-pressed", String(active));
       });

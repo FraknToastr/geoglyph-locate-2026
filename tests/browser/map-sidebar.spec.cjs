@@ -81,6 +81,9 @@ for (const [entrypoint, url] of [
   ['Standalone GeoGlyph_Locate_2026.html', pathToFileURL(path.resolve(__dirname, '../../GeoGlyph_Locate_2026.html')).href]
 ]) test(`${entrypoint}: UOS logo opens an independent full sidebar beneath the header only in Map`, async ({ page }) => {
   await boot(page, url);
+  await expect(page.locator('.workflow-nav>button').first()).toHaveAttribute('id','geoglyphPreviewBtn');
+  await expect(page.locator('#geoglyphPreviewBtn')).toHaveText('Geoglyph');
+  await expect(page.locator('#mapCanvasToggleBtn')).toHaveText('Canvas');
   const toggle = page.locator('#mapSidebarToggle');
   await expect(toggle).toBeDisabled();
   await expect(toggle).toHaveAttribute('type', 'button');
@@ -93,6 +96,19 @@ for (const [entrypoint, url] of [
 
   await page.evaluate(() => GeoGlyphMapEngine.showMap());
   await page.waitForFunction(() => GeoGlyphMapEngine.state.mapReady);
+  await expect(page.locator('#geoglyphPreviewBtn')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#mapCanvasToggleBtn')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('.workflow-nav>[data-workflow="symbol"]')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('.workflow-nav>[data-workflow="symbol"]')).not.toHaveClass(/is-active/);
+  // The inherited renderer schedules navigation refreshes after updating its
+  // private Symbol preview. They must not reactivate Symbol over Geoglyph.
+  await page.evaluate(()=>new Promise(resolve=>setTimeout(()=>{
+    document.querySelector('.preview-tabs [data-preview="symbol"]').setAttribute('aria-pressed','true');
+    requestAnimationFrame(()=>requestAnimationFrame(resolve));
+  },0)));
+  await expect(page.locator('#geoglyphPreviewBtn')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.workflow-nav>[data-workflow="symbol"]')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('#mapCanvasToggleBtn')).toHaveText('Canvas');
   await expect(toggle).toBeEnabled();
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   await expectState(page, { active: true, visible: true, presentation: 'full', suppressed: false });
@@ -113,15 +129,51 @@ for (const [entrypoint, url] of [
   expect(structure.tag).toBe('ASIDE');
   expect(structure.parent).toBe('BODY');
   expect(structure.editorParent).toBe('mapControlSidebar');
-  expect(structure.width).toBeCloseTo(340, 0);
+  expect(structure.width).toBeCloseTo(425, 0);
   expect(structure.top).toBeCloseTo(structure.headerBottom, 0);
   expect(structure.bottom).toBeCloseTo(structure.viewport, 0);
   await expectMapWidth(page, true);
 });
 
+for(const url of ['/',pathToFileURL(path.resolve(__dirname,'../../GeoGlyph_Locate_2026.html')).href])test(`separate Geoglyph and Canvas buttons retain the last sidebar mode and presentation (${url==='/'?'HTTP':'standalone'})`,async({page})=>{
+  await boot(page,url);
+  const geoglyph=page.locator('#geoglyphPreviewBtn'),canvas=page.locator('#mapCanvasToggleBtn');
+  for(const width of [1440,390]){
+    await page.setViewportSize({width,height:1000});
+    for(const [mode,presentation,visible] of [['message','full',true],['arcgis','mini',true],['admin','mini',false]]){
+      await geoglyph.click();await page.waitForFunction(()=>GeoGlyphMapEngine.state.mapReady);
+      await page.evaluate(()=>{GeoGlyphMapSidebar.setVisible(true);GeoGlyphMapSidebar.setPresentation('full');});
+      await page.locator(`[data-map-mode="${mode}"]`).click();
+      if(mode==='arcgis')await expect(page.locator('#mapScriptSection>.map-section-head')).toHaveText("Geo's Script");
+      await page.evaluate(({presentation,visible})=>{GeoGlyphMapSidebar.setPresentation(presentation);GeoGlyphMapSidebar.setVisible(visible);},{presentation,visible});
+      await canvas.click();await expectState(page,{active:false,presentation,visible});
+      await expect(canvas).toHaveText('Canvas');await expect(canvas).toHaveAttribute('aria-pressed','true');await expect(geoglyph).toHaveAttribute('aria-pressed','false');
+      await expect(page.locator('.workflow-nav>[data-workflow="symbol"]')).toHaveAttribute('aria-pressed','true');
+      await canvas.focus();await page.keyboard.press('Space');await expectState(page,{active:false,presentation,visible});
+      await geoglyph.focus();await page.keyboard.press('Enter');await expectState(page,{active:true,presentation,visible,suppressed:false});
+      await expect(page.locator(`[data-map-mode="${mode}"]`)).toHaveAttribute('aria-pressed','true');
+      await expect(geoglyph).toHaveAttribute('aria-pressed','true');await expect(canvas).toHaveAttribute('aria-pressed','false');await expect(canvas).toHaveText('Canvas');
+      await expect(page.locator('.workflow-nav>[data-workflow="symbol"]')).toHaveAttribute('aria-pressed','false');
+    }
+    await page.locator('[data-workflow="qr"]').click();await expectState(page,{active:false});
+    await expect(canvas).toHaveAttribute('aria-pressed','false');await expect(geoglyph).toHaveAttribute('aria-pressed','false');
+    await canvas.click();await expect(canvas).toHaveAttribute('aria-pressed','true');await expectState(page,{active:false});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    expect(await page.locator('.workflow-nav>button').evaluateAll(nodes=>nodes.every(node=>node.scrollWidth<=node.clientWidth+1))).toBe(true);
+  }
+});
+
 test('internal collapse moves the existing editor into a mini floating panel and expands it again', async ({ page }) => {
   await openMap(page);
-  await page.evaluate(() => { window.sidebarOriginalEditor = document.getElementById('geoglyphMapEditor'); });
+  await expect(page.locator('.map-motion-actions')).toBeVisible();
+  const shortcutLayout=await page.locator('.map-editor-head').evaluate(head=>{
+    const title=head.querySelector('.map-editor-title-row'),shortcuts=head.querySelector('.map-motion-actions'),modes=head.querySelector('.map-mode-switch');
+    return {titleBottom:title.getBoundingClientRect().bottom,shortcutsTop:shortcuts.getBoundingClientRect().top,shortcutsBottom:shortcuts.getBoundingClientRect().bottom,modesTop:modes.getBoundingClientRect().top,divider:getComputedStyle(title).borderBottomWidth};
+  });
+  expect(shortcutLayout.shortcutsTop).toBeGreaterThanOrEqual(shortcutLayout.titleBottom);
+  expect(shortcutLayout.modesTop).toBeGreaterThanOrEqual(shortcutLayout.shortcutsBottom);
+  expect(shortcutLayout.divider).toBe('0px');
+  await page.evaluate(() => { window.sidebarOriginalEditor = document.getElementById('geoglyphMapEditor');window.sidebarOriginalShortcuts=document.querySelector('.map-motion-actions'); });
   const collapse = page.locator('#mapEditorCollapseBtn');
   await collapse.click();
   await expectState(page, { visible: true, presentation: 'mini' });
@@ -129,6 +181,7 @@ test('internal collapse moves the existing editor into a mini floating panel and
   await expect(page.locator('#geoglyphMapEditor')).toBeVisible();
   await expect(page.locator('#mapControlsHeader')).toBeHidden();
   await expect(page.locator('.map-motion-actions')).toBeVisible();
+  expect(await page.locator('.map-motion-actions').evaluate(node=>node===window.sidebarOriginalShortcuts)).toBe(true);
   await expect(collapse).toHaveAttribute('aria-expanded', 'false');
   expect(await page.locator('#geoglyphMapEditor').evaluate(editor => ({
     same: editor === window.sidebarOriginalEditor,
@@ -141,6 +194,7 @@ test('internal collapse moves the existing editor into a mini floating panel and
   await expectState(page, { visible: true, presentation: 'full' });
   await expect(page.locator('#mapControlsHeader')).toBeVisible();
   await expect(collapse).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('.map-motion-actions')).toBeVisible();
   expect(await page.locator('#geoglyphMapEditor').evaluate(editor => editor === window.sidebarOriginalEditor && editor.parentElement.id === 'mapControlSidebar')).toBe(true);
   await expectMapWidth(page, true);
 });
@@ -277,7 +331,7 @@ test('reparenting preserves controls, section collapse states, message values an
   await expect(page.locator('#mapStyleSection')).not.toHaveClass(/is-collapsed/);
 });
 
-test('full sidebar fits both themes on desktop and narrow windows while keeping half the map visible', async ({ page }) => {
+test('full sidebar fits both themes on desktop and narrow windows with its wider column', async ({ page }) => {
   await openMap(page);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -287,7 +341,7 @@ test('full sidebar fits both themes on desktop and narrow windows while keeping 
       const layout = await page.locator('#mapControlSidebar').evaluate(sidebar => {
         const bounds = sidebar.getBoundingClientRect(), editor = document.getElementById('geoglyphMapEditor');
         const controls = [...editor.querySelectorAll('button,input:not([type="hidden"]),select,textarea')]
-          .filter(node => node.checkVisibility()).map(node => {
+          .filter(node => node.checkVisibility() && !node.closest('.script-rows')).map(node => {
             const rect = node.getBoundingClientRect();
             return { id: node.id || node.className, left: rect.left, right: rect.right };
           });
@@ -307,7 +361,7 @@ test('full sidebar fits both themes on desktop and narrow windows while keeping 
         return { width: bounds.width, left: bounds.left, right: bounds.right, scroll: sidebar.scrollWidth,
           client: sidebar.clientWidth, editorScroll: editor.scrollWidth, editorClient: editor.clientWidth, controls, headings };
       });
-      expect(layout.width).toBeCloseTo(Math.min(340, width / 2), 0);
+      expect(layout.width).toBeCloseTo(Math.min(425, width * .625), 0);
       expect(layout.scroll).toBeLessThanOrEqual(layout.client + 1);
       expect(layout.editorScroll).toBeLessThanOrEqual(layout.editorClient + 1);
       for (const control of layout.controls) {
@@ -397,6 +451,7 @@ test('live 3D morphing and orbit continue through full, mini, hidden and Explore
   }));
   const samples = [await sample()];
   const actions = [
+    () => page.locator('#geoglyphPreviewBtn').click(),
     () => page.locator('#mapEditorCollapseBtn').click(),
     () => page.locator('#mapSidebarToggle').click(),
     () => page.locator('#mapSidebarToggle').click(),

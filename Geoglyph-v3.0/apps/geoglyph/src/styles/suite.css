@@ -1,0 +1,13 @@
+/* Launcher navigation belongs only to this independent copy of Geoglyph. */
+.header-actions .suite-return { display:flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto; }
+.suite-return svg { flex:none; }
+@media(max-width:650px) {
+  .header-actions .suite-return { width:30px;padding:0; }
+  .suite-return span { display:none; }
+}
+@media(max-width:480px) {
+  .app-header .logo-link,.app-header .logo-link img { width:clamp(80px,25vw,120px); }
+  .app-header #mapSidebarToggle { flex-basis:clamp(80px,25vw,120px); }
+  .header-actions .square-btn { font-size:9px;padding-inline:4px; }
+  .header-actions .suite-return { padding:0; }
+}

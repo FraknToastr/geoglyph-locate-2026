@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "title": "Conference introduction",
+  "rows": [
+    {"id":"opening","message":"","duration":2,"actions":[{"type":"camera","value":"opening"},{"type":"title","value":"Conference day."}]},
+    {"id":"title-2","message":"","duration":2,"actions":[{"type":"title","value":"Conference day.."}]},
+    {"id":"title-3","message":"","duration":2,"actions":[{"type":"title","value":"Conference day..."}]},
+    {"id":"title-4","message":"","duration":2,"actions":[{"type":"title","value":"Conference day...."}]},
+    {"id":"title-5","message":"","duration":2,"actions":[{"type":"title","value":"Conference day....."}]},
+    {"id":"flight","message":"","duration":0,"actions":[{"type":"title","value":""},{"type":"camera","value":"fly-opening"}]},
+    {"id":"yawn","message":"🥱","duration":5,"actions":[{"type":"font","value":{"name":"Segoe UI Emoji","resourceKey":"conference:Segoe UI Emoji"}},{"type":"mode","value":"2d"},{"type":"size","value":{"height":300,"depth":30}},{"type":"mirror","value":false}]},
+    {"id":"neutral","message":"😶","duration":3,"actions":[]},
+    {"id":"smirk","message":"😏","duration":3,"actions":[]},
+    {"id":"smirk-mirror","message":"😏","duration":3,"actions":[{"type":"mirror","value":true}]},
+    {"id":"sunglasses","message":"😎","duration":5,"actions":[{"type":"mirror","value":false}]},
+    {"id":"hello","message":"Hello","duration":5,"actions":[{"type":"font","value":{"name":"Gill Sans","resourceKey":"conference:Gill Sans"}},{"type":"colour","value":{"fill":"#F47D22"}},{"type":"mode","value":"2d"}]},
+    {"id":"geoglyph","message":"I'm Geoglyph","duration":5,"actions":[]},
+    {"id":"geo","message":"Call me Geo","duration":5,"actions":[]},
+    {"id":"everything","message":"Everything you about to see","duration":5,"actions":[]},
+    {"id":"chatgpt","message":"was made by ChatGPT","duration":5,"actions":[]},
+    {"id":"including","message":"including me!","duration":5,"actions":[]},
+    {"id":"today","message":"Today I will be presenting","duration":5,"actions":[]},
+    {"id":"friend","message":"with my best friend","duration":5,"actions":[]},
+    {"id":"josh","message":"Josh Roberts","duration":5,"actions":[]},
+    {"id":"where","message":"Where are you Josh?","duration":0,"actions":[{"type":"mode","value":"3d"},{"type":"size","value":{"height":3000,"depth":300}},{"type":"animation","value":"yaw"}]}
+  ]
+}

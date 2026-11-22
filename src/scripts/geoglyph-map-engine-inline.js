@@ -16,11 +16,10 @@
   const LINE_LAYER_ID = "geoglyph-ground-outline";
   const DECAL_SOURCE_ID = "geoglyph-ground-decal";
   const DECAL_LAYER_ID = "geoglyph-ground-decal-layer";
-  const MAX_GRID_CODES = 120;
   const DESIGN_SIZE = 1000;
 
   const mapState = {
-    mode: presentation ? "arcgis" : "glyph",
+    mode: presentation ? "arcgis" : "message",
     message: presentation ? "" : "ADELAIDE",
     anchor: { ...DEFAULT_ANCHOR },
     baseHeightMeters: 300,
@@ -43,8 +42,8 @@
     selectedFontId: "",
     fontChoiceVersion:0,
     lastHostSignature:'',
-    selectedCode: 65,
     nativeColor: presentation,
+    emojiFallbackFontId: null,
     conferenceRenderSuspended: presentation,
     conferenceOverview: presentation,
     conferenceApplying: false,
@@ -57,8 +56,6 @@
     explicitFitPending: false,
     randomSearching: false,
     fontRecords: new Map(),
-    codepoints: [],
-    codePage: 0,
     map: null,
     mapReady: false,
     lastGeoJSON: null,
@@ -101,7 +98,6 @@
   const $ = id => document.getElementById(id);
   const clamp = (v, min, max) => Math.max(min, Math.min(max, Number(v)));
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const safeCodePoint = code => Number.isInteger(code) && code >= 0 && code <= 0x10FFFF;
   const formatCode = code => `U+${Number(code).toString(16).toUpperCase().padStart(4, "0")}`;
   const fontRecordId = (source, name, suffix = "") => `${source}:${name}:${suffix}`.toLowerCase().replace(/[^a-z0-9:_-]+/g, "-");
 
@@ -158,18 +154,31 @@
     const nav = document.querySelector(".workflow-nav");
     if (!nav) return;
 
-    let mapButton = $("mapCanvasToggleBtn");
-    if (!mapButton) {
-      mapButton = document.createElement("button");
-      mapButton.className = "square-btn";
-      mapButton.id = "mapCanvasToggleBtn";
-      mapButton.type = "button";
-      mapButton.textContent = "Map";
-      mapButton.setAttribute("aria-pressed", "false");
-      mapButton.title = "Show map preview";
+    let canvasButton = $("mapCanvasToggleBtn");
+    if (!canvasButton) {
+      canvasButton = document.createElement("button");
+      canvasButton.className = "square-btn";
+      canvasButton.id = "mapCanvasToggleBtn";
+      canvasButton.type = "button";
       const symbolButton = nav.querySelector('[data-workflow="symbol"]');
-      symbolButton?.after(mapButton);
+      symbolButton?.after(canvasButton);
     }
+    canvasButton.textContent = "Canvas";
+    canvasButton.title = "Show canvas preview";
+    canvasButton.setAttribute('aria-controls','previewStage');
+    let geoglyphButton = $('geoglyphPreviewBtn');
+    if (!geoglyphButton) {
+      geoglyphButton = document.createElement('button');
+      geoglyphButton.id = 'geoglyphPreviewBtn';
+      geoglyphButton.className = 'square-btn';
+      geoglyphButton.type = 'button';
+      geoglyphButton.textContent = 'Geoglyph';
+      geoglyphButton.title = 'Show Geoglyph';
+      geoglyphButton.setAttribute('aria-controls','geoglyphMapWorkspace');
+    }
+    // Geoglyph takes the first position whether Font Explorer has already
+    // mounted or is inserted by a later header enhancement.
+    if (nav.firstElementChild !== geoglyphButton) nav.prepend(geoglyphButton);
 
     if ($("geoglyphMapWorkspace")) return;
     const previewBody = document.querySelector(".preview-panel > .panel-body");
@@ -189,6 +198,7 @@
               <strong>Ground Font Engine</strong>
             </div>
             <div class="map-editor-head-actions">
+              <button class="map-collapsed-action map-header-fit" id="mapFitBtn" type="button" title="Fit geometry" aria-label="Fit geometry">⛶</button>
               <div class="map-collapsed-actions" aria-label="Collapsed map actions">
                 <button class="map-collapsed-action map-collapsed-fit" id="mapCollapsedFitBtn" type="button" title="Fit geometry" aria-label="Fit geometry">⛶</button>
                 <button class="map-collapsed-action" id="mapCollapsedJpgBtn" type="button" title="Save map to JPG">JPG</button>
@@ -198,36 +208,37 @@
             </div>
           </div>
           <div class="map-mode-switch" role="group" aria-label="Projection mode">
-            <button class="map-chip is-active" type="button" data-map-mode="message">Message</button>
-            <button class="map-chip" type="button" data-map-mode="glyph">Character</button>
-            <button class="map-chip" type="button" data-map-mode="arcgis">Geoglyph</button>
-            <button class="map-chip" type="button" data-map-mode="admin">ArcGIS</button>
+            <button class="square-btn is-active" type="button" data-map-mode="message" aria-pressed="true">Message</button>
+            <button class="square-btn" type="button" data-map-mode="arcgis" aria-pressed="false">Geoglyph</button>
+            <button class="square-btn" type="button" data-map-mode="admin" aria-pressed="false">ArcGIS</button>
           </div>
         </div>
 
         <section class="map-pane map-arcgis-pane" data-map-pane="arcgis" hidden>
           <div class="arcgis-grid">
             <div id="mapArcgisAuth" hidden>
-              <div class="arcgis-token-actions">
-                <button class="map-action" id="mapArcgisRequestTokenBtn" type="button">Open ArcGIS sign-in</button>
-                <button class="map-action" id="mapArcgisExchangeCodeBtn" type="button">Exchange code</button>
+              <div class="arcgis-token-actions arcgis-signin-actions">
+                <button class="map-action map-numbered-step" id="mapArcgisRequestTokenBtn" type="button"><b class="map-step-number">1</b> <span>Open ArcGIS sign-in</span></button>
+              </div>
+              <label class="map-field map-token-field"><span class="map-step-number">2</span><input id="mapArcgisToken" type="password" autocomplete="off" spellcheck="false" aria-label="Step 2: Paste returned authorization code or access token" placeholder="Paste returned code or access token"></label>
+              <div class="arcgis-token-actions arcgis-exchange-actions">
+                <button class="map-action map-numbered-step" id="mapArcgisExchangeCodeBtn" type="button"><b class="map-step-number">3</b> <span>Exchange code</span></button>
+              </div>
+              <div class="arcgis-token-actions arcgis-session-actions">
                 <button class="map-action" id="mapArcgisUseTokenBtn" type="button">Use token</button>
                 <button class="map-action" id="mapArcgisClearTokenBtn" type="button">Clear</button>
               </div>
-              <label class="map-field"><span>ArcGIS token / returned code</span><input id="mapArcgisToken" type="password" autocomplete="off" spellcheck="false" placeholder="Paste returned authorization code or access token"></label>
-              <p>Open sign-in → Allow → copy the returned code → paste it here → Exchange code.</p>
               <span id="mapArcgisAuthStatus" role="status">Not signed in</span>
             </div>
             <label class="map-field" id="mapArcgisLayerField" hidden><span>Results layer</span><select id="mapArcgisLayerSelect"><option value="">Choose a results layer</option></select></label>
-          <div class="arcgis-actions arcgis-poll-actions">
+          <div class="arcgis-actions arcgis-poll-actions" id="mapArcgisPolling" hidden>
               <button class="map-action" id="mapArcgisStartBtn" type="button">Start</button>
               <button class="map-action" id="mapArcgisPollBtn" type="button">Fetch</button>
               <button class="map-action" id="mapArcgisStopBtn" type="button" disabled>Stop</button>
-              <button class="map-action" id="mapArcgisReset123Btn" type="button" hidden>Reset 123</button>
             <label class="arcgis-poll-interval"><span>Poll (s)</span><button class="map-action" id="mapArcgisIntervalMinus" type="button" aria-label="Decrease poll interval">−</button><input id="mapArcgisInterval" type="number" min="1" max="3600" step="1" value="5" aria-label="ArcGIS poll interval in seconds" title="Seconds between checks; changes apply while polling"><button class="map-action" id="mapArcgisIntervalPlus" type="button" aria-label="Increase poll interval">+</button></label>
             </div>
+            <button class="map-action arcgis-reset-action" id="mapArcgisReset123Btn" type="button" hidden>Reset 123</button>
             <div class="arcgis-live"><strong>Survey123 results</strong><span id="mapArcgisLiveValue" role="status" aria-live="polite">Ready · Fetch once or Start live updates</span></div>
-            <div class="arcgis-note">Latest non-empty response · whats_on_your_mind</div>
           </div>
         </section>
 
@@ -238,9 +249,11 @@
             <button id="mapFontRescanBtn" class="map-action" type="button">Rescan</button>
           </div>
           <span class="map-span-2" id="mapFontFilterStatus" role="status" hidden></span>
-          <button class="map-action" id="mapScanSystemBtn" type="button">Allow local fonts</button>
-          <button class="map-action" id="mapCopyEsriPathBtn" type="button">Copy Esri Path</button>
-          <button class="map-action" id="mapLoadEsriBtn" type="button">Load Esri Fonts</button>
+          <div class="map-font-actions map-span-2" role="group" aria-label="Font loading">
+            <button class="map-action" id="mapScanSystemBtn" type="button">Allow local fonts</button>
+            <button class="map-action" id="mapCopyEsriPathBtn" type="button">Copy Esri Path</button>
+            <button class="map-action" id="mapLoadEsriBtn" type="button">Load Esri Fonts</button>
+          </div>
           <input id="mapFontFiles" type="file" accept=".ttf,.otf,.ttc" multiple hidden>
           <input id="mapEsriFolderInput" type="file" accept=".ttf,.otf,.ttc" multiple webkitdirectory hidden>
         </div>
@@ -256,21 +269,6 @@
             <label class="map-field"><span>Tracking</span><div class="map-number"><input id="mapTracking" type="number" min="-20" max="100" step="1" value="0"><em>% em</em></div></label>
             <label class="map-field"><span>Line height</span><input id="mapLineHeight" type="number" min="0.5" max="3" step="0.05" value="1.15"></label>
           </div>
-        </section>
-
-        <section class="map-pane" data-map-pane="glyph" hidden>
-          <div class="map-glyph-summary">
-            <strong id="mapGlyphSelected">A</strong>
-            <span id="mapGlyphCode">U+0041</span>
-            <span id="mapCoverage">Outline index not loaded</span>
-          </div>
-          <div class="map-glyph-toolbar">
-            <button class="map-mini" id="mapGlyphPrev" type="button">‹</button>
-            <span id="mapGlyphPage">1 / 1</span>
-            <button class="map-mini" id="mapGlyphNext" type="button">›</button>
-            <input id="mapGlyphSearch" type="search" placeholder="A, ★, 😀 or U+E000" aria-label="Find character or Unicode code" title="Type a character, emoji, symbol, or Unicode code such as U+E000">
-          </div>
-          <div class="map-glyph-grid" id="mapGlyphGrid" aria-label="Font character table"></div>
         </section>
 
         <section class="map-style-panel">
@@ -291,11 +289,12 @@
 
         <div class="map-editor-actions">
           <div class="map-action-row">
-            <button class="map-action" id="mapFitBtn" type="button">Fit</button>
+            <button class="map-action" id="mapExportObjBtn" type="button" disabled aria-describedby="mapObjStatus">OBJ</button>
             <button class="map-action" id="mapExportGeoJsonBtn" type="button">Geojson</button>
             <button class="map-action" id="mapSaveJpgBtn" type="button">JPG</button>
             <button class="map-action" id="mapSavePngBtn" type="button">PNG</button>
           </div>
+          <p id="mapObjStatus" class="map-3d-status" role="status">Enable 3D to export an OBJ object.</p>
           <div class="map-action-row map-basemap-row" role="group" aria-label="Basemap">
             <button class="map-action" id="mapEsriAerialBtn" type="button" title="Esri World Imagery">Esri Aerial</button>
             <button class="map-action" id="mapEsriWorldBtn" type="button" title="Esri World Topographic Map">Esri World</button>
@@ -330,14 +329,14 @@
     $("mapCanvasToggleBtn")?.addEventListener("click", event => {
       event.preventDefault();
       event.stopImmediatePropagation();
-      const workspace = $("geoglyphMapWorkspace");
-      const mapVisible = Boolean(workspace && !workspace.hidden && document.body.classList.contains("geoglyph-map-preview"));
-      if (mapVisible) {
-        showCanvasPreview();
-        return;
-      }
+      showCanvasPreview();
+    }, true);
+    $('geoglyphPreviewBtn')?.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (mapState.previewActive && isMapSurfaceVisible()) return;
       // Call Local Font Access while this click still carries user activation. Only the selected face is parsed.
-      const outlinePromise = primeHostFontOutline({ buildIndex: false });
+      const outlinePromise = primeHostFontOutline();
       showMapPreview(outlinePromise);
     }, true);
     nav?.addEventListener("click", event => {
@@ -354,10 +353,7 @@
       if (mapState.mode === "arcgis" && nextMode !== "arcgis") stopArcgisPolling({ quiet: true });
       mapState.mode = mapState.adminMode ? 'arcgis' : nextMode;
       syncModeUi();
-      if (mapState.mode === "glyph") {
-        await activateSelectedFont({ buildIndex: true, syncLegacy: false });
-        queueRebuild(false);
-      } else if (mapState.mode === "arcgis") {
+      if (mapState.mode === "arcgis") {
         if (mapState.message) queueRebuild(false);
         else setStatus("Survey123 results · Fetch once or Start live updates", "info");
       } else {
@@ -423,16 +419,6 @@
     bindValue("mapQuality", "quality", value => Math.round(clamp(value, 4, 36)), false);
     $("mapNativeColor")?.addEventListener("change", event => { notifyManualMapChange(); mapState.nativeColor = event.target.checked; queueRebuild(false); });
 
-    $("mapGlyphPrev")?.addEventListener("click", () => { mapState.codePage = Math.max(0, mapState.codePage - 1); renderGlyphTable(); });
-    $("mapGlyphNext")?.addEventListener("click", () => { mapState.codePage += 1; renderGlyphTable(); });
-    $("mapGlyphSearch")?.addEventListener("input", renderGlyphTable);
-    $("mapGlyphSearch")?.addEventListener("keydown", event => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        selectGlyphFromSearch(event.currentTarget.value);
-      }
-    });
-    $("mapGlyphSearch")?.addEventListener("change", event => selectGlyphFromSearch(event.currentTarget.value));
     const explicitFit = requestFit;
     $("mapFitBtn")?.addEventListener("click", explicitFit);
     $("mapCollapsedFitBtn")?.addEventListener("click", explicitFit);
@@ -476,16 +462,12 @@
     $("mapSavePngBtn")?.addEventListener("click", () => saveMapImage("png"));
     $("mapCollapsedJpgBtn")?.addEventListener("click", () => saveMapImage("jpeg"));
     $("mapCollapsedPngBtn")?.addEventListener("click", () => saveMapImage("png"));
-    document.addEventListener("click", event => {
-      const cell = event.target.closest("#mapGlyphGrid [data-map-code]");
-      if (!cell) return;
-      selectGlyph(Number(cell.dataset.mapCode));
-    });
 
     new MutationObserver(() => {
       // Workflow changes initiated while Map is visible must keep the new workflow.
       if (mapState.previewActive && document.body.dataset.workflow !== "symbol")
         showCanvasPreview({ preserveWorkflow: true });
+      syncPreviewNavigation();
     }).observe(document.body, { attributes: true, attributeFilter: ["data-workflow"] });
 
     const selectionObserver = new MutationObserver(scheduleHostSelectionSync);
@@ -512,6 +494,21 @@
     return Boolean(workspace && !workspace.hidden && document.body.classList.contains("geoglyph-map-preview"));
   }
 
+  function syncPreviewNavigation() {
+    const geoglyph = mapState.previewActive && isMapSurfaceVisible();
+    const canvas = !geoglyph && document.body.dataset.workflow === 'symbol';
+    for (const [id, active] of [['geoglyphPreviewBtn',geoglyph],['mapCanvasToggleBtn',canvas]]) {
+      const button = $(id);
+      button?.classList.toggle('is-active',active);
+      button?.setAttribute('aria-pressed',String(active));
+    }
+    document.querySelectorAll('.workflow-nav [data-workflow]').forEach(button => {
+      const active = !geoglyph && button.dataset.workflow === document.body.dataset.workflow;
+      button.classList.toggle('is-active',active);
+      button.setAttribute('aria-pressed',String(active));
+    });
+  }
+
   function ensureHostSymbolWorkflow() {
     const api = geoGlyphApi();
     if (api?.state) api.state.preview = "symbol";
@@ -527,7 +524,7 @@
 
   function togglePreviewSurface() {
     if (isMapSurfaceVisible()) showCanvasPreview();
-    else showMapPreview(primeHostFontOutline({ buildIndex: false }));
+    else showMapPreview(primeHostFontOutline());
   }
 
   function closeExplorerForMapEntry() {
@@ -563,6 +560,7 @@
   function showMapPreview(outlinePromise = null) {
     const workspace = $("geoglyphMapWorkspace");
     if (!workspace) return;
+    if (mapState.previewActive && isMapSurfaceVisible()) { syncPreviewNavigation(); return; }
     ensureHostSymbolWorkflow();
     syncHostSelectionBasics();
     mapState.lastHostSignature=hostSelectionSignature();
@@ -574,13 +572,7 @@
     workspace.hidden = false;
     window.GeoGlyphMapSidebar?.sync();
     syncMapViewportLayout();
-    const button = $("mapCanvasToggleBtn");
-    if (button) {
-      button.textContent = "Canvas";
-      button.classList.add("is-active");
-      button.setAttribute("aria-pressed", "true");
-      button.title = "Return to canvas preview";
-    }
+    syncPreviewNavigation();
     const headerTitle = document.querySelector(".preview-panel .panel-title");
     if (headerTitle) headerTitle.textContent = "Map Preview";
     refreshFontStore();
@@ -588,7 +580,6 @@
     Promise.resolve(outlinePromise).then(record => {
       if (!mapState.previewActive) return;
       queueRebuild(false);
-      if (mapState.mode === "glyph" && record?.opentypeFont) window.setTimeout(() => activateSelectedFont({ buildIndex: true, syncLegacy: false }), 250);
     }).catch(error => {
       console.warn("Selected font outline could not be prepared; using decal fallback", error);
       if (mapState.previewActive) queueRebuild(false);
@@ -610,6 +601,10 @@
   }
 
   function showCanvasPreview(options = {}) {
+    if (!mapState.previewActive && !options.preserveWorkflow && document.body.dataset.workflow === 'symbol') { syncPreviewNavigation(); return; }
+    document.dispatchEvent(new CustomEvent('geoglyph:map-exit'));
+    cancelCameraPick();setCameraAuthoring(false);cancelCameraFlight();
+    window.GeoGlyphScripts?.stop();
     window.GeoGlyphFontMorph?.clear({message:'Open the map to prepare a font morph.'});
     cancelRandomSearch();mapState.explicitFitPending=false;
     window.GeoGlyph3D?.exitCamera();
@@ -621,13 +616,7 @@
     if (workspace) workspace.hidden = true;
     window.GeoGlyphMapSidebar?.sync();
     if (!preserveWorkflow) ensureHostSymbolWorkflow();
-    const button = $("mapCanvasToggleBtn");
-    if (button) {
-      button.textContent = "Map";
-      button.classList.remove("is-active");
-      button.setAttribute("aria-pressed", "false");
-      button.title = "Show map preview";
-    }
+    syncPreviewNavigation();
     if (!preserveWorkflow) {
       const headerTitle = document.querySelector(".preview-panel .panel-title");
       if (headerTitle) headerTitle.textContent = "Symbol Preview";
@@ -658,12 +647,23 @@
   }
 
   function syncModeUi() {
-    document.querySelectorAll("[data-map-mode]").forEach(button => button.classList.toggle("is-active", button.dataset.mapMode === (mapState.adminMode && mapState.mode==='arcgis' ? 'admin' : mapState.mode)));
-    if($('mapArcgisAuth'))$('mapArcgisAuth').hidden=!(mapState.adminMode&&mapState.mode==='arcgis');
+    syncPreviewNavigation();
+    const editorMode = mapState.adminMode && mapState.mode === 'arcgis' ? 'admin' : mapState.mode;
+    if ($('geoglyphMapEditor')) $('geoglyphMapEditor').dataset.mapEditorMode = editorMode;
+    document.querySelectorAll("[data-map-mode]").forEach(button => {
+      const active = button.dataset.mapMode === editorMode;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    if($('mapArcgisAuth'))$('mapArcgisAuth').hidden=editorMode!=='admin';
+    if($('mapArcgisPolling'))$('mapArcgisPolling').hidden=editorMode!=='arcgis';
     syncArcgisAuthentication();
     document.querySelectorAll("[data-map-pane]").forEach(pane => {
       const paneMode = pane.dataset.mapPane;
       pane.hidden = mapState.mode === "arcgis" ? !["arcgis", "message"].includes(paneMode) : paneMode !== mapState.mode;
+    });
+    document.querySelectorAll('#geoglyphMapEditor [data-map-editor-modes]').forEach(section => {
+      section.hidden = !section.dataset.mapEditorModes.split(' ').includes(editorMode);
     });
     const messageBox = $("mapMessage");
     if (messageBox) {
@@ -851,27 +851,24 @@
       if (last) {
         mapState.selectedFontId = last.id;
         $("mapFontSelect").value = last.id;
-        await activateSelectedFont({ buildIndex: mapState.mode === "glyph", syncLegacy: false });
+        await activateSelectedFont();
         queueRebuild(false);
       }
     }
     setStatus(`${candidates.length} ${source === "esri" ? "Esri" : "font"} file(s) indexed`, candidates.length ? "ok" : "warn");
   }
 
-  async function activateSelectedFont(options = {}) {
+  async function activateSelectedFont() {
     const record = selectedRecord(); if (!record) return null;
     const selectedId = record.id,choice=mapState.fontChoiceVersion;
     try {
       const font = await ensureOpenTypeFont(record);
       if (selectedId !== mapState.selectedFontId || choice!==mapState.fontChoiceVersion) return font;
       record.outlineIndexUnavailable = false;
-      if (options.buildIndex ?? (mapState.mode === 'glyph')) { buildCodepointIndex(font); renderGlyphTable(); }
-      if (options.syncLegacy) syncGeoGlyphSelection(record);
       setStatus(record.name + ' · outline geometry ready', 'ok'); return font;
     } catch (error) {
       record.outlineIndexUnavailable = true;
       if (selectedId !== mapState.selectedFontId || choice!==mapState.fontChoiceVersion) return null;
-      if (options.buildIndex ?? (mapState.mode === 'glyph')) { mapState.codepoints = []; renderGlyphTable(); syncGlyphSummary(); }
       setStatus(record.name + ' · styled browser rendering ready', 'warn'); return null;
     }
   }
@@ -885,106 +882,6 @@
     record.opentypeFont = metadata; return metadata;
   }
 
-  function syncGeoGlyphSelection(record) {
-    const api = geoGlyphApi();
-    const ref = record.geoGlyphRef;
-    if (!api?.state || !ref?.id) return;
-    api.state.selectedFontId = ref.id;
-    api.state.selectedCode = mapState.selectedCode;
-  }
-
-  function buildCodepointIndex(font) {
-    if (Array.isArray(font?.codes)) { mapState.codepoints = font.codes.slice(); mapState.codePage = 0; return; }
-    const map = font?.tables?.cmap?.glyphIndexMap || {};
-    const codes = Object.keys(map)
-      .map(Number)
-      .filter(code => safeCodePoint(code) && code > 31 && Number(map[code]) > 0)
-      .sort((a, b) => a - b);
-    mapState.codepoints = codes;
-    mapState.codePage = Math.max(0, Math.min(mapState.codePage, Math.ceil(codes.length / MAX_GRID_CODES) - 1));
-    if (!codes.includes(mapState.selectedCode)) mapState.selectedCode = codes.find(code => code === 65) ?? codes[0] ?? 65;
-  }
-
-  function renderGlyphTable() {
-    const grid = $("mapGlyphGrid");
-    if (!grid) return;
-    const record = selectedRecord();
-    const allCodes = mapState.codepoints;
-    const query = $("mapGlyphSearch")?.value?.trim() || "";
-    let codes = allCodes;
-    const exact = query.match(/^u\+([0-9a-f]{1,6})$/i);
-    if (exact) {
-      const code = parseInt(exact[1], 16);
-      codes = allCodes.includes(code) ? [code] : [];
-    } else if (query) {
-      const literal = [...query][0];
-      const literalCode = literal?.codePointAt(0);
-      codes = safeCodePoint(literalCode) && allCodes.includes(literalCode) ? [literalCode] : allCodes.filter(code => formatCode(code).toLowerCase().includes(query.toLowerCase()));
-    }
-    const pages = Math.max(1, Math.ceil(codes.length / MAX_GRID_CODES));
-    mapState.codePage = Math.min(mapState.codePage, pages - 1);
-    const start = mapState.codePage * MAX_GRID_CODES;
-    const pageCodes = codes.slice(start, start + MAX_GRID_CODES);
-    grid.style.setProperty("--map-glyph-font", record?.cssFamily ? `"${String(record.cssFamily).replace(/"/g, '\\"')}"` : "sans-serif");
-    const emptyMessage = record?.outlineIndexUnavailable || (!allCodes.length && mapState.lastRenderMode === "decal")
-      ? `<div class="map-empty-grid"><strong>Vector outline index unavailable.</strong><br>Ground decal rendering is available.<br><span>Type a character or Unicode code above, then press Enter.</span></div>`
-      : query
-      ? `<div class="map-empty-grid">No indexed characters match this filter. You can still type a character or Unicode code and press Enter.</div>`
-      : `<div class="map-empty-grid">No indexed characters are available for this font.</div>`;
-    grid.innerHTML = pageCodes.map(code => {
-      let char = "";
-      try { char = String.fromCodePoint(code); } catch { char = "□"; }
-      return `<button class="map-glyph-cell ${code === mapState.selectedCode ? "is-active" : ""}" data-map-code="${code}" type="button" title="${formatCode(code)}"><b>${esc(char)}</b><span>${formatCode(code).replace("U+", "")}</span></button>`;
-    }).join("") || emptyMessage;
-    if ($("mapGlyphPage")) $("mapGlyphPage").textContent = `${mapState.codePage + 1} / ${pages}`;
-    if ($("mapCoverage")) {
-      $("mapCoverage").textContent = allCodes.length
-        ? `${allCodes.length.toLocaleString()} indexed characters`
-        : (record?.outlineIndexUnavailable || mapState.lastRenderMode === "decal")
-        ? "Vector outline index unavailable · decal supported"
-        : "Outline index not loaded";
-    }
-    syncGlyphSummary();
-  }
-
-  function selectGlyphFromSearch(value) {
-    const query = String(value || "").trim();
-    if (!query) return false;
-    const exact = query.match(/^u\+([0-9a-f]{1,6})$/i);
-    let code = exact ? parseInt(exact[1], 16) : [...query][0]?.codePointAt(0);
-    if (!safeCodePoint(code)) return false;
-    mapState.selectedCode = code;
-    const api = geoGlyphApi();
-    if (api?.state) api.state.selectedCode = code;
-    syncGlyphSummary();
-    renderGlyphTable();
-    queueRebuild(false);
-    return true;
-  }
-
-  function selectGlyph(code) {
-    notifyManualMapChange();
-    if (!safeCodePoint(code)) return;
-    mapState.selectedCode = code;
-    const api = geoGlyphApi();
-    if (api?.state) api.state.selectedCode = code;
-    syncGlyphSummary();
-    renderGlyphTable();
-    queueRebuild(false);
-  }
-
-  function syncGlyphSummary() {
-    let char = "□";
-    try { char = String.fromCodePoint(mapState.selectedCode); } catch {}
-    if ($("mapGlyphSelected")) {
-      $("mapGlyphSelected").textContent = char;
-      const record = selectedRecord();
-      $("mapGlyphSelected").style.fontFamily = record?.cssFamily ? `"${record.cssFamily}"` : "sans-serif";
-    }
-    if ($("mapGlyphCode")) $("mapGlyphCode").textContent = formatCode(mapState.selectedCode);
-  }
-
-
   function normalizedFontName(value) {
     return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
   }
@@ -996,17 +893,13 @@
 
   function syncHostSelectionBasics() {
     refreshFontStore();
-    const api = geoGlyphApi();
     const hostFont = currentHostFont();
-    const code = Number(api?.state?.selectedCode);
-    if (mapState.mode === "glyph" && safeCodePoint(code)) mapState.selectedCode = code;
     if (hostFont?.id) {
       const directId = `geoglyph:${hostFont.id}`;
       if (mapState.fontRecords.has(directId)) mapState.selectedFontId = directId;
     }
     renderFontChooser();
     if ($("mapFontSelect") && mapState.selectedFontId) $("mapFontSelect").value = mapState.selectedFontId;
-    syncGlyphSummary();
   }
 
   function recordHasOutlineAccess(record) {
@@ -1104,7 +997,7 @@
       return record;
     }
     if(!current())return null;
-    const font = await activateSelectedFont({ buildIndex: Boolean(options.buildIndex), syncLegacy: false });
+    const font = await activateSelectedFont();
     if(!current())return null;
     if (!font) {
       setStatus(`${record.name} · outline parse unavailable, decal fallback ready`, "warn");
@@ -1124,7 +1017,7 @@
       mapState.hostSyncTimer = 0;
       if (!mapState.previewActive||choice!==mapState.fontChoiceVersion||signature!==hostSelectionSignature()) return;
       syncHostSelectionBasics();
-      await primeHostFontOutline({ buildIndex: false, requestPermission:false });
+      await primeHostFontOutline({ requestPermission:false });
       queueRebuild(false);
     }, 0);
   }
@@ -1150,7 +1043,7 @@
   function adminClient(){return arcgisAdminClient ||= window.GeoGlyphArcgisAdmin.create();}
   function syncArcgisAuthentication(){
     const button=$('mapArcgisReset123Btn');
-    if(button){button.hidden=!(mapState.adminMode&&mapState.mode==='arcgis'&&arcgisAdminClient?.authenticated());button.disabled=arcgisAdminBusy;}
+    if(button){button.hidden=!(mapState.mode==='arcgis'&&arcgisAdminClient?.authenticated());button.disabled=arcgisAdminBusy;}
     for(const id of ['mapArcgisRequestTokenBtn','mapArcgisExchangeCodeBtn','mapArcgisUseTokenBtn','mapArcgisClearTokenBtn'])if($(id))$(id).disabled=arcgisAdminBusy;
     if(arcgisAdminBusy)for(const id of ['mapArcgisStartBtn','mapArcgisPollBtn'])if($(id))$(id).disabled=true;
   }
@@ -1219,8 +1112,9 @@
 
   async function startArcgisPolling() {
     if(arcgisAdminBusy)return;
+    window.GeoGlyphScripts?.stop();
     if (presentation && window.GeoGlyphConference && !window.GeoGlyphConference.state.ready)
-      return window.GeoGlyphConference.retryStartup();
+      if(!await window.GeoGlyphConference.retryStartup())return;
     stopArcgisPolling({ quiet: true });
     mapState.arcgisPolling = true;
     if (presentation) window.GeoGlyphConference?.resume();
@@ -1533,6 +1427,13 @@
       this.map = map;
       this.container = document.createElement("div");
       this.container.className = "maplibregl-ctrl maplibregl-ctrl-group geoglyph-camera-control";
+      this.homeButton = document.createElement('button');
+      this.homeButton.type = 'button';
+      this.homeButton.id = 'mapHomeBtn';
+      this.homeButton.title = 'Australia home view';
+      this.homeButton.setAttribute('aria-label','Australia home view');
+      this.homeButton.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" style="margin:auto" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z"/></svg>';
+      this.homeButton.addEventListener('click',()=>showHomeView());
       this.northButton = document.createElement("button");
       this.northButton.type = "button";
       this.northButton.textContent = "↑";
@@ -1555,7 +1456,7 @@
       };
       map.on("pitch", this.update);
       this.update();
-      this.container.append(this.northButton, this.viewButton);
+      this.container.append(this.homeButton, this.northButton, this.viewButton);
       return this.container;
     }
     onRemove() {
@@ -1623,9 +1524,13 @@
         },
         center: [mapState.anchor.lng, mapState.anchor.lat],
         zoom: 13.1,
-        ...(presentation ? { bounds: AUSTRALIA_BOUNDS, fitBoundsOptions: { padding: 48 } } : {}),
+        bounds: AUSTRALIA_BOUNDS,
+        fitBoundsOptions: { padding: Math.max(8,Math.min(48,container.clientWidth*.08,container.clientHeight*.08)) },
         pitch: 0,
         bearing: 0,
+        minZoom: 0,
+        maxZoom: 24,
+        maxPitch: 85,
         attributionControl: true,
         renderWorldCopies: false,
         fadeDuration: 0,
@@ -1650,7 +1555,9 @@
         window.clearTimeout(watchdog);
         if (generation !== mapInitialisationGeneration || mapState.map !== map) return;
         mapState.mapReady = true;
-        if (presentation && mapState.conferenceOverview) showConferenceOverview();
+        if (mapState.restoredCamera) cancelInitialFit();
+        else if (presentation && mapState.conferenceOverview) showConferenceOverview();
+        else { frameAustralia(); cancelInitialFit(); }
         syncMetroMapKeyUi();
         syncBasemapButtons();
         if (!map.getSource(SOURCE_ID)) map.addSource(SOURCE_ID, { type: "geojson", data: mapState.lastGeoJSON || emptyFeatureCollection() });
@@ -1679,7 +1586,7 @@
           const choice=mapState.fontChoiceVersion;
           window.setTimeout(async () => {
             if(choice!==mapState.fontChoiceVersion)return;
-            await primeHostFontOutline({ buildIndex: false, requestPermission:false });
+            await primeHostFontOutline({ requestPermission:false });
             if (mapState.previewActive) queueRebuild(false);
           }, 0);
         }
@@ -1688,10 +1595,16 @@
       map.on("zoomend", rebuildAfterZoom);
 
       for (const event of ["dragstart", "zoomstart", "pitchstart", "rotatestart"]) {
-        map.on(event, e => { if (e.originalEvent) cancelInitialFit(); });
+        map.on(event, e => { if (e.originalEvent) { cancelInitialFit(); if(activeCameraFlight)notifyManualMapChange({preserveModel:true}); } });
       }
     map.on("click", event => {
         if (!mapState.mapReady) return;
+        if(cameraPick){
+          const picker=cameraPick,view=captureCameraView();
+          view.center=[event.lngLat.wrap().lng,clamp(event.lngLat.lat,-85.051129,85.051129)];
+          picker.cleanup();picker.onPick(view);return;
+        }
+        if(cameraAuthoring)return;
         notifyManualMapChange();
         cancelInitialFit();
         placeAnchor(event.lngLat, "click");
@@ -1745,7 +1658,7 @@
   async function ensurePolygonClipping() { return window.polygonClipping || null; }
 
   function layoutFor(record) {
-    return { tracking: mapState.mode === 'glyph' ? 0 : mapState.tracking, lineHeight: mapState.lineHeight, quality: mapState.quality, symbol: Boolean(mapLegacySymbolFamily(record)), tolerance:mapState.extrusionEnabled?Math.max(.02,2/(mapState.quality+1)):groundTolerance(mapState.lastLocalModel?.bounds?.height||1000) };
+    return { tracking: mapState.tracking, lineHeight: mapState.lineHeight, quality: mapState.quality, symbol: Boolean(mapLegacySymbolFamily(record)), tolerance:mapState.extrusionEnabled?Math.max(.02,2/(mapState.quality+1)):groundTolerance(mapState.lastLocalModel?.bounds?.height||1000) };
   }
   function modelKey(record,text,options) {return JSON.stringify([window.GeoGlyphFontService.keyFor(record),text,options]);}
   async function prepareConferenceFont(fontId, patch) {
@@ -1773,8 +1686,8 @@
     notifyManualMapChange();
     cancelRandomSearch();mapState.fontChoiceVersion++;mapState.selectedFontId=id;
     if($('mapFontSelect'))$('mapFontSelect').value=id;
-    // Index/native face work is independent of the visible 3D model.
-    activateSelectedFont({buildIndex:mapState.mode==='glyph'});
+    // Native face work is independent of the visible 3D model.
+    activateSelectedFont();
     queueRebuild(false);return true;
   }
   let activeBuildToken=0;
@@ -1802,7 +1715,7 @@
       try {model=await prepareFontModel(record,text);}catch(error){vectorError=error;}
       if (!current()) return;
       const heightMeters = mapState.baseHeightMeters * mapState.relativeSize / 100;
-      const selection={selectedFontId:record.id,mode:mapState.mode,message:mapState.message,selectedCode:mapState.selectedCode,tracking:mapState.tracking,lineHeight:mapState.lineHeight,quality:mapState.quality};
+      const selection={selectedFontId:record.id,mode:mapState.mode,message:mapState.message,tracking:mapState.tracking,lineHeight:mapState.lineHeight,quality:mapState.quality};
       if (model) {
         const coordinates = projectPolygons(model.polygons, model.bounds, heightMeters / model.bounds.height, mapState.bearing, mapState.anchor);
         const fc = { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { mode: mapState.mode, renderer: 'vector', message: text, font: record.name, fill: mapState.fill, outline: mapState.outline, height_m: heightMeters, bearing: mapState.bearing }, geometry: { type: 'MultiPolygon', coordinates } }] };
@@ -1821,6 +1734,12 @@
         if(mapState.extrusionEnabled&&window.GeoGlyph3D?.isVisible())throw vectorError||Error('No validated outlines to extrude');
         const face=await window.GeoGlyphFontService.ensureFace(record, { isCurrent: current }).catch(() => null);
         if (!current()) return;
+        const emojiFallback=mapState.fontRecords.get(mapState.emojiFallbackFontId);
+        if(emojiFallback&&window.GeoGlyphMessageText?.hasEmoji(text)){
+          const flags=[...mapState.fontRecords.values()].find(font=>font.fontResourceKey==='conference:Emoji Flags');
+          await Promise.all([emojiFallback,flags].filter(Boolean).map(font=>window.GeoGlyphFontService.ensureFace(font,{isCurrent:current})));
+          if(!current())return;
+        }
         const provider=record.geoGlyphRef||record;
         if((record.file||record.fileHandle||record.localDescriptor||record.arrayBuffer||provider.file||provider.metadata)&&!face?.face&&!record.exactFace)throw Error('Exact font could not be loaded: '+record.name);
         const decal = buildGroundDecal(record, text); if (!decal) throw vectorError || Error('Preview unavailable');
@@ -1858,6 +1777,7 @@
     } finally {
       if(activeBuildToken===buildToken){
         mapState.rebuilding = false;
+        window.GeoGlyph3D?.refreshExportControls?.();
         if (mapState.pendingBuild && mapState.previewActive) { clearTimeout(queueRebuild.timer); queueRebuild.timer = setTimeout(() => rebuildGeometry(), 0); }
       }
     }
@@ -1892,6 +1812,7 @@
   function cancelRandomSearch() {
     randomRequest++;mapState.randomSearching=false;
     $('mapQuickRandom')?.setAttribute('aria-busy','false');
+    window.GeoGlyph3D?.refreshExportControls?.();
   }
   function randomCandidates() {
     resolveKnownRandomFonts();
@@ -1946,7 +1867,7 @@
         mapState.pendingBuild=false;
         mapState.selectedFontId=id;
         if($('mapFontSelect'))$('mapFontSelect').value=id;
-        activateSelectedFont({buildIndex:mapState.mode==='glyph'});
+        activateSelectedFont();
         try{
           const rendered=await rebuildGeometry(false,{deferFit:true,preserveOnFailure:true,isCurrent:current});
           if(!rendered?.ok||!current())throw rendered?.error||Error('Random font render was superseded');
@@ -1982,7 +1903,7 @@
         if(mapState.explicitFitPending){mapState.explicitFitPending=false;fitGeometry();}
       }
       return false;
-    }finally{if(operation===randomRequest){mapState.randomSearching=false;button?.setAttribute('aria-busy','false');}}
+    }finally{if(operation===randomRequest){mapState.randomSearching=false;button?.setAttribute('aria-busy','false');window.GeoGlyph3D?.refreshExportControls?.();}}
   }
   function scheduleRandomPreparation() {
     if(presentation)return;
@@ -1998,20 +1919,7 @@
     randomIdle=window.requestIdleCallback?requestIdleCallback(work,{timeout:2000}):setTimeout(work,500);
   }
 
-  function previewTextForMode(record) {
-    if (mapState.mode === "arcgis") return String(mapState.message || "");
-    if (mapState.mode === "glyph") {
-      const code = Number(mapState.selectedCode) || 65;
-      if (mapLegacySymbolFamily(record)) {
-        const slot = code <= 0xFF ? code : (code >= 0xF000 && code <= 0xF0FF ? code - 0xF000 : code);
-        return String.fromCharCode(slot);
-      }
-      try {
-        return String.fromCodePoint(code);
-      } catch (_) {
-        return String.fromCharCode(code & 0xFFFF);
-      }
-    }
+  function previewTextForMode() {
     return String(mapState.message || "");
   }
 
@@ -2109,7 +2017,7 @@
     await waitForCondition(() => !mapState.rebuilding || options.isCurrent?.() === false, 'Previous render did not complete');
     if (options.isCurrent?.() === false) throw Error('Cue was superseded');
     if (!mapState.previewActive) throw Error('Map is not active');
-    const keys = ['mode','message','arcgisMessage','selectedFontId','nativeColor','extrusionEnabled','mirrorX','orientationMode','fill','outline','outlineWidth','opacity','bearing','tracking','lineHeight','quality','relativeSize','extrusionTilt','extrusionSolid','anchor','anchorInitialised','anchorPinned','baseHeightMeters','extrusionDepthMeters','lastLocalModel','lastGeoJSON','lastDecal','lastRenderMode','lastMetrics','displayedFontId','committedSelection'];
+    const keys = ['mode','message','arcgisMessage','selectedFontId','nativeColor','emojiFallbackFontId','extrusionEnabled','mirrorX','orientationMode','fill','outline','outlineWidth','opacity','bearing','tracking','lineHeight','quality','relativeSize','extrusionTilt','extrusionSolid','anchor','anchorInitialised','anchorPinned','baseHeightMeters','extrusionDepthMeters','lastLocalModel','lastGeoJSON','lastDecal','lastRenderMode','lastMetrics','displayedFontId','committedSelection'];
     const previous = Object.fromEntries(keys.map(key => [key, mapState[key]]));
     const anchorChanged = Boolean(patch.anchor && (patch.anchor.lng !== previous.anchor?.lng || patch.anchor.lat !== previous.anchor?.lat));
     cancelRandomSearch();
@@ -2133,13 +2041,16 @@
       if (options.opening) Object.assign(mapState, { orientationMode:'fixed', relativeSize:100, bearing:0,
         tracking:0, lineHeight:1.15, quality:10, fill:'#31A765', outline:'#FFFFFF', outlineWidth:2,
         opacity:.82, extrusionTilt:90, extrusionSolid:true });
-      Object.assign(mapState, { mode:'arcgis', message:patch.message, arcgisMessage:patch.message, nativeColor:patch.nativeColor,
-        selectedFontId:patch.fontId, extrusionEnabled:patch.extrusionEnabled });
+      Object.assign(mapState, { mode:options.mode||'arcgis', message:patch.message, arcgisMessage:patch.message, nativeColor:patch.nativeColor,
+        emojiFallbackFontId:patch.emojiFallbackFontId||null,selectedFontId:patch.fontId, extrusionEnabled:patch.extrusionEnabled });
       if (patch.mirrorX !== undefined) mapState.mirrorX = patch.mirrorX === true;
       else if (patch.hasNewContent || options.opening) mapState.mirrorX = false;
       if (patch.relativeSize !== undefined) mapState.relativeSize = patch.relativeSize;
       if (patch.animation) mapState.orientationMode = patch.animation;
       if (patch.fill) mapState.fill = patch.fill;
+      if (patch.outline) mapState.outline = patch.outline;
+      if (patch.tilt !== undefined) mapState.extrusionTilt = patch.tilt;
+      if (patch.bearing !== undefined) mapState.bearing = patch.bearing;
       if (patch.height !== undefined) mapState.baseHeightMeters = patch.height;
       if (patch.depth !== undefined) mapState.extrusionDepthMeters = patch.depth;
       if (patch.anchor) { mapState.anchor = { ...patch.anchor }; mapState.anchorInitialised = true; mapState.anchorPinned = false; updateAnchorStats(); }
@@ -2179,7 +2090,8 @@
     }
   }
 
-  function cancelConferenceWork() {
+  function cancelConferenceWork({preserveMotion=false}={}) {
+    cancelCameraFlight();
     cancelRandomSearch();
     conferenceApplyOwner?.cancelPending?.();
     conferenceApplyOwner = null;
@@ -2191,12 +2103,11 @@
     mapState.conferenceRebuildPending = false;
     mapState.pendingBuild = mapState.pendingFit = mapState.explicitFitPending = false;
     clearTimeout(queueRebuild.timer);
-    window.GeoGlyph3D?.stopOrbit();
+    if(!preserveMotion)window.GeoGlyph3D?.stopOrbit();
     mapState.map?.stop();
   }
 
-  function showConferenceOverview() {
-    mapState.conferenceOverview = true;
+  function frameAustralia({animate=false}={}) {
     const map = mapState.map;
     if (!map) return false;
     window.GeoGlyph3D?.stopOrbit();
@@ -2205,11 +2116,100 @@
     const canvas = map.getCanvas();
     const panel = $('geoglyphMapEditor');
     const panelWidth = panel && !panel.hidden ? Math.max(0, panel.getBoundingClientRect().right - canvas.getBoundingClientRect().left) : 0;
-    const padding = { top:48, bottom:48, right:48, left:Math.max(48, Math.min(panelWidth+24, canvas.clientWidth*.4)) };
+    const inset=Math.max(8,Math.min(48,canvas.clientWidth*.08,canvas.clientHeight*.08));
+    const padding = { top:inset, bottom:inset, right:inset, left:Math.max(inset, Math.min(panelWidth+24, canvas.clientWidth*.4)) };
     const camera = map.cameraForBounds(AUSTRALIA_BOUNDS, { padding, bearing:0, pitch:0 });
     if (!camera) return false;
-    map.jumpTo({ ...camera, bearing:0, pitch:0, elevation:0 });
+    map.setPadding({top:0,bottom:0,left:0,right:0});
+    map[animate?'easeTo':'jumpTo']({ ...camera, bearing:0, pitch:0, elevation:0,
+      ...(animate?{duration:window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:450,essential:true}:{}) });
     return true;
+  }
+
+  function showConferenceOverview() {
+    mapState.conferenceOverview = true;
+    return frameAustralia();
+  }
+
+  function showHomeView() {
+    if(!mapState.previewActive||!mapState.mapReady)return false;
+    notifyManualMapChange({preserveModel:true});
+    cancelCameraFlight();cancelInitialFit();
+    window.GeoGlyph3D?.stopOrbit({freezePose:true});
+    return frameAustralia({animate:true});
+  }
+
+  let cameraAuthoring=false,cameraPick=null,activeCameraFlight=null;
+  function setCameraAuthoring(active) {
+    cameraAuthoring=Boolean(active);
+    if(active){cancelInitialFit();window.GeoGlyph3D?.stopOrbit({freezePose:true});}
+    else cancelCameraPick();
+  }
+  function captureCameraView() {
+    const map=mapState.map;if(!map)throw Error('Open the map before choosing a camera view');
+    const center=map.getCenter().wrap();
+    return {center:[center.lng,clamp(center.lat,-85.051129,85.051129)],zoom:map.getZoom(),pitch:map.getPitch(),bearing:map.getBearing()};
+  }
+  function restoreCameraView(value) {
+    const map=mapState.map;if(!map)return false;
+    const view=window.GeoGlyphCameraFlight.validateView(value);
+    cancelCameraFlight();map.stop();map.setCenterClampedToGround(true);
+    map.setPadding({top:0,bottom:0,left:0,right:0});
+    map.jumpTo({...view,elevation:0});return true;
+  }
+  function cancelCameraPick() {
+    if(!cameraPick)return;
+    const picker=cameraPick;picker.cleanup();picker.onCancel?.();
+  }
+  function pickCameraView({onPick,onCancel}={}) {
+    if(!mapState.previewActive||!mapState.mapReady)throw Error('Wait for the map before choosing a camera view');
+    cancelCameraPick();cancelInitialFit();window.GeoGlyph3D?.stopOrbit({freezePose:true});
+    const map=mapState.map,canvas=map.getCanvas(),previous=canvas.style.cursor;
+    const picker={onPick,onCancel,cleanup:()=>{
+      if(cameraPick!==picker)return;
+      cameraPick=null;canvas.style.cursor=previous;document.removeEventListener('keydown',escape);
+    }};
+    const escape=event=>{if(event.key==='Escape'){event.preventDefault();cancelCameraPick();}};
+    cameraPick=picker;canvas.style.cursor='crosshair';document.addEventListener('keydown',escape);
+    return picker.cleanup;
+  }
+  function cancelCameraFlight() { activeCameraFlight?.cancel(); }
+  function playCameraFlight(value,{signal,isCurrent=()=>true}={}) {
+    const action=window.GeoGlyphCameraFlight.validateFlight(value),map=mapState.map;
+    const aborted=()=>new DOMException('Camera flight cancelled','AbortError');
+    if(!mapState.previewActive||!mapState.mapReady)return Promise.reject(Error('Open the map before playing a camera flight'));
+    if(signal?.aborted||!isCurrent())return Promise.reject(aborted());
+    cancelCameraFlight();cancelInitialFit();window.GeoGlyph3D?.stopOrbit({freezePose:true});
+    mapState.conferenceOverview=false;
+    map.stop();map.setCenterClampedToGround(true);map.setPadding({top:0,bottom:0,left:0,right:0});
+    map.jumpTo({...action.start,elevation:0});
+    return new Promise((resolve,reject)=>{
+      let settled=false,timer;
+      const clock=renderWaitClock();
+      const finish=(error,result=true,stop=false)=>{
+        if(settled)return;settled=true;clearTimeout(timer);clock.dispose();
+        map.off('moveend',ended);map.off('remove',removed);signal?.removeEventListener('abort',abort);
+        if(activeCameraFlight===job)activeCameraFlight=null;
+        if(stop)map.stop();error?reject(error):resolve(result);
+      };
+      const abort=()=>finish(aborted(),false,true);
+      const ended=()=>signal?.aborted||!isCurrent()?abort():finish(null,true);
+      const removed=()=>finish(aborted(),false);
+      const job={cancel:()=>finish(null,false,true)};
+      const poll=()=>{
+        if(settled)return;
+        if(signal?.aborted||!isCurrent()||!mapState.previewActive)return abort();
+        if(clock.elapsed()>action.duration*1000+15000)return finish(Error('Camera flight did not complete'),false,true);
+        timer=setTimeout(poll,50);
+      };
+      activeCameraFlight=job;map.on('moveend',ended);map.on('remove',removed);signal?.addEventListener('abort',abort,{once:true});
+      if(signal?.aborted||!isCurrent())return abort();
+      try{
+        map.flyTo({...action.end,elevation:0,duration:window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:action.duration*1000,essential:true});
+        if(!settled&&!map.isMoving())ended();
+        if(!settled)poll();
+      }catch(error){finish(error,false,true);}
+    });
   }
 
   function drawConferenceOpening(fontId, options = {}) {
@@ -2218,7 +2218,7 @@
     }, { ...options, opening:true, suppressFit:true });
   }
 
-  function shouldPreferDecal(record, text) { return Boolean(record?.hasColor)|| /[\u0590-\u0FFF\u1780-\u17FF\u200D\uFE0F]/u.test(text); }
+  function shouldPreferDecal(record, text) { return Boolean(record?.hasColor)|| /[\u0590-\u0FFF\u1780-\u17FF\u200D\uFE0F]/u.test(text)||Boolean(mapState.emojiFallbackFontId&&window.GeoGlyphMessageText?.hasEmoji(text)); }
 
   function groundPixelsPerMeter() {
     const map=mapState.map;if(!map?.project)return 0;
@@ -2268,40 +2268,57 @@
 
   function rasteriseGroundDecal(record, text, options = {}) {
     const cache=rasteriseGroundDecal.cache ||= new Map();
+    const fallback=window.GeoGlyphMessageText?.hasEmoji(text)&&mapState.fontRecords.get(mapState.emojiFallbackFontId);
+    const flags=fallback&&[...mapState.fontRecords.values()].find(font=>font.fontResourceKey==='conference:Emoji Flags');
     const lines=String(text).replace(/\r\n?/g,'\n').split('\n');
     const cssHeight=options.screenHeight ?? groundPixelsPerMeter()*mapState.baseHeightMeters*mapState.relativeSize/100;
-    const base=mapState.mode==='glyph'?900:420;
+    const base=420;
     const desired=cssHeight*(window.devicePixelRatio||1)*Math.min(2,Math.max(1,mapState.quality/12));
     const multiplier=Math.max(1,Math.min(4,Math.pow(2,Math.ceil(Math.log2(Math.max(1,desired/(base*lines.length)))))));
     const fontPx=base*multiplier;
-    const key=JSON.stringify([record.fontResourceKey||record.id||record.name,record.cssFamily,record.style,text,mapState.mode,mapState.tracking,mapState.lineHeight,fontPx]);
+    const key=JSON.stringify([record.fontResourceKey||record.id||record.name,record.cssFamily,record.style,text,mapState.mode,mapState.tracking,mapState.lineHeight,fontPx,
+      fallback?[fallback.fontResourceKey||fallback.id,fallback.cssFamily,fallback.style,flags?.fontResourceKey,flags?.cssFamily]:null,Boolean(options.nativeColor)]);
     let saved=cache.get(key);
     if(!saved) {
       const probe=document.createElement('canvas'),pctx=probe.getContext('2d');if(!pctx)return null;
       const style=record.style||'',font=(record.exactFace?'':(/italic|oblique/i.test(style)?'italic ':''))+fontPx+'px '+cssFontFamily(record);
       pctx.font=font.replace(fontPx+'px','1000px');pctx.textBaseline='alphabetic';
-      const tracking=mapState.mode==='glyph'?0:fontPx*mapState.tracking/100;
+      const tracking=fontPx*mapState.tracking/100;
       if('letterSpacing' in pctx)pctx.letterSpacing=(tracking*1000/fontPx)+'px';
-      const metrics=lines.map(line=>{const m=pctx.measureText(line||' '),ratio=fontPx/1000;return Object.fromEntries(['width','actualBoundingBoxLeft','actualBoundingBoxRight','actualBoundingBoxAscent','actualBoundingBoxDescent'].map(key=>[key,m[key]*ratio]));});
+      const emojiFamily=fallback?(flags?cssFontFamily(flags)+',':'')+cssFontFamily(fallback):'';
+      const layouts=fallback?lines.map(line=>window.GeoGlyphMessageText.measureLine(pctx,line,font.replace(fontPx+'px','1000px'),'1000px '+emojiFamily)):null;
+      const metrics=lines.map((line,index)=>{const m=layouts?layouts[index]:pctx.measureText(line||' '),ratio=fontPx/1000;return Object.fromEntries(['width','actualBoundingBoxLeft','actualBoundingBoxRight','actualBoundingBoxAscent','actualBoundingBoxDescent'].map(key=>[key,m[key]*ratio]));});
       const ascent=Math.max(1,...metrics.map(m=>m.actualBoundingBoxAscent||fontPx*.8));
       const descent=Math.max(0,...metrics.map(m=>m.actualBoundingBoxDescent||0));
-      const advance=fontPx*(mapState.mode==='glyph'?1:mapState.lineHeight);
+      const advance=fontPx*mapState.lineHeight;
       const inkHeight=Math.max(1,ascent+descent+(lines.length-1)*advance);
       const maxWidth=Math.max(fontPx*.2,...metrics.map(m=>Math.max(m.width,(m.actualBoundingBoxLeft||0)+(m.actualBoundingBoxRight||0))));
       const pad=Math.ceil(Math.max(48,fontPx*.12));
       const rawWidth=maxWidth+pad*2,rawHeight=inkHeight+pad*2;
-      const scale=Math.min(1,4096/Math.max(rawWidth,rawHeight),Math.sqrt(4*1024*1024/(rawWidth*rawHeight)));
+      const scale=Math.min(1,4096/Math.max(rawWidth,rawHeight),Math.sqrt((layouts?2:4)*1024*1024/(rawWidth*rawHeight)));
       const mask=document.createElement('canvas');mask.width=Math.max(1,Math.floor(rawWidth*scale));mask.height=Math.max(1,Math.floor(rawHeight*scale));
       const ctx=mask.getContext('2d');ctx.scale(scale,scale);ctx.font=font;ctx.textBaseline='alphabetic';ctx.textAlign='left';ctx.fillStyle='#000000';
       if('letterSpacing' in ctx)ctx.letterSpacing=tracking+'px';
+      let textMask,emojiMask,textContext,emojiContext;
+      if(layouts){
+        const layer=()=>{const canvas=document.createElement('canvas');canvas.width=mask.width;canvas.height=mask.height;const context=canvas.getContext('2d');context.scale(scale,scale);context.textBaseline='alphabetic';context.fillStyle='#000';if('letterSpacing' in context)context.letterSpacing=tracking+'px';return {canvas,context};};
+        ({canvas:textMask,context:textContext}=layer());({canvas:emojiMask,context:emojiContext}=layer());
+      }
       let y=mask.height/(2*scale)-inkHeight/2+ascent;
-      lines.forEach((line,i)=>{const m=metrics[i],offset=((m.actualBoundingBoxLeft||0)-(m.actualBoundingBoxRight||m.width))/2;ctx.fillText(line||' ',mask.width/(2*scale)+offset,y);y+=advance;});
-      saved={mask,inkHeight:inkHeight*scale};cache.set(key,saved);
+      lines.forEach((line,i)=>{
+        const m=metrics[i],offset=((m.actualBoundingBoxLeft||0)-(m.actualBoundingBoxRight||m.width))/2,x=mask.width/(2*scale)+offset;
+        if(layouts)for(const part of layouts[i].parts){const target=part.emoji?emojiContext:textContext;target.font=part.font.replace('1000px',fontPx+'px');target.fillText(part.text,x+part.x*fontPx/1000,y);}
+        else ctx.fillText(line||' ',x,y);
+        y+=advance;
+      });
+      if(layouts){ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(textMask,0,0);ctx.drawImage(emojiMask,0,0);}
+      saved={mask,textMask,emojiMask,inkHeight:inkHeight*scale};cache.set(key,saved);
     }
     cache.delete(key);cache.set(key,saved);
     const result=options.measureOnly ? { canvas:saved.mask, inkHeight:saved.inkHeight } : colourGroundMask(saved,options,cssHeight);
-    let bytes=[...cache.values()].reduce((sum,item)=>sum+item.mask.width*item.mask.height*4*(item.outlineMask?2:1),0);
-    while((cache.size>8||bytes>32*1024*1024)&&cache.size>1){const [old,item]=cache.entries().next().value;cache.delete(old);bytes-=item.mask.width*item.mask.height*4*(item.outlineMask?2:1);}
+    const size=item=>item.mask.width*item.mask.height*4*(1+Boolean(item.textMask)+Boolean(item.emojiMask)+Boolean(item.outlineMask));
+    let bytes=[...cache.values()].reduce((sum,item)=>sum+size(item),0);
+    while((cache.size>8||bytes>32*1024*1024)&&cache.size>1){const [old,item]=cache.entries().next().value;cache.delete(old);bytes-=size(item);}
     result.resolutionLimited=cssHeight>0&&saved.inkHeight<cssHeight*(window.devicePixelRatio||1)*.9;
     result.samplingHeightPx=cssHeight;
     return result;
@@ -2328,8 +2345,10 @@
         out.clearRect(0,0,canvas.width,canvas.height);out.globalCompositeOperation='source-over';
       }
     }
-    out.drawImage(mask,0,0);
-    if(!options.nativeColor){out.globalCompositeOperation='source-in';out.fillStyle=mapState.fill;out.fillRect(0,0,canvas.width,canvas.height);out.globalCompositeOperation='source-over';}
+    const mixed=options.nativeColor&&saved.emojiMask;
+    out.drawImage(mixed?saved.textMask:mask,0,0);
+    if(mixed||!options.nativeColor){out.globalCompositeOperation='source-in';out.fillStyle=mapState.fill;out.fillRect(0,0,canvas.width,canvas.height);out.globalCompositeOperation='source-over';}
+    if(mixed)out.drawImage(saved.emojiMask,0,0);
     if(radius>0) {
       const tint=document.createElement('canvas');tint.width=canvas.width;tint.height=canvas.height;
       const tc=tint.getContext('2d');tc.drawImage(saved.outlineMask,0,0);tc.globalCompositeOperation='source-in';tc.fillStyle=mapState.outline;tc.fillRect(0,0,tint.width,tint.height);out.drawImage(tint,0,0);
@@ -2635,8 +2654,12 @@
       refreshFonts: refreshFontStore,
     prepareConferenceFont,
       applyConferenceCue,
+      applyScriptCue:(patch,options={})=>applyConferenceCue(patch,{...options,suppressFit:patch.fit!==true}),
+      cancelScriptWork:()=>cancelConferenceWork({preserveMotion:true}),
+      fontCompatibility:id=>compatibilityFilter().result(id),
       cancelConferenceWork,
       showConferenceOverview,
+      showHomeView,captureCameraView,restoreCameraView,pickCameraView,setCameraAuthoring,playCameraFlight,cancelCameraFlight,
       drawConferenceOpening,
       flyToConferenceOpening: current => fitDrawnGeometry(current, { introduction:true }),
       waitForCamera: waitForCamera,
@@ -2680,7 +2703,7 @@
     );
     if (!hostReady) return false;
     makeUi();
-    if (!$("mapCanvasToggleBtn") || !$("geoglyphMapWorkspace")) return false;
+    if (!$("mapCanvasToggleBtn") || !$('geoglyphPreviewBtn') || !$("geoglyphMapWorkspace")) return false;
     observeExistingFontChanges();
     exposeApi();
     bootComplete = true;

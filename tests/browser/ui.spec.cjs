@@ -27,7 +27,7 @@ test('map settings use a validated authoring whitelist and omit credentials', as
     const engine = window.GeoGlyphMapEngine;
     engine.state.arcgisPkce = { verifier:'do-not-save' };
     engine.state.metroMapSourceKey = 'do-not-save';
-    window.GeoGlyphUi.applyMapSettings({ version:1, message:'Restored', mode:'glyph', fill:'#abc', outline:'#123456', opacity:99, baseHeightMeters:1e12, anchor:{lng:999,lat:99}, arcgisPkce:{verifier:'malicious'} });
+    window.GeoGlyphUi.applyMapSettings({ version:1, message:'Restored', mode:'message', fill:'#abc', outline:'#123456', opacity:99, baseHeightMeters:1e12, anchor:{lng:999,lat:99}, arcgisPkce:{verifier:'malicious'} });
     return window.GeoGlyphUi.collectMapSettings();
   });
   expect(value.message).toBe('Restored');

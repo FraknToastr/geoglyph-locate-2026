@@ -11,6 +11,7 @@ function harness(options = {}) {
   const timers = new Map(), calls = { fetch:[], defaults:0, registrations:0, polls:0, draws:0, retries:0, faces:[], parses:[], aborts:0, errors:[] };
   const manifest = ['Segoe UI Emoji','Gill Sans','Forte','Chiller','Magneto','Showcard Gothic'].map((key,i) => ({ key,
     name:key, family:key, style:'Regular', emoji:i===0, file:'font-'+i, ...(options.inline ? {data:'AAECAw=='} : {}) }));
+  if(options.fallbackFont)manifest.push({key:'Emoji Flags',name:'Emoji Flags',family:'Noto Color Emoji',file:'flag-font',emoji:true,fallback:true});
   const map = { mapReady:options.mapReady !== false, fontRecords:new Map() };
   let registered = [];
   const nodes = { 'geoglyph-conference-fonts':{textContent:JSON.stringify(manifest)},
@@ -22,7 +23,7 @@ function harness(options = {}) {
     async startPolling(){calls.polls++;}, cancelConferenceWork(){} };
   const window = { GeoGlyphConferenceConfig:{enabled:true,pollSeconds:1}, GeoGlyphSurveyResults:{create:()=>({})},
     GeoGlyphStudio:{state:{fonts:[{family:'Segoe UI Emoji',id:'preset-emoji'}]},registerFonts(records){calls.registrations++;registered=records;return records;}},
-    GeoGlyph3D:{}, GeoGlyphMapEngine:engine,
+    GeoGlyph3D:{}, GeoGlyphScripts:{}, GeoGlyphMapEngine:engine,
     GeoGlyphFontService:{async ensureFace(record,opts){calls.faces.push(opts);if(options.face)await options.face(record,opts);},
       async prepare(record,opts){calls.parses.push(opts);if(options.parse)await options.parse(record,opts);}} };
   if (options.noHost) delete window.GeoGlyphStudio;
@@ -37,15 +38,19 @@ function harness(options = {}) {
     async advance(ms){now+=ms;for(const [id,t]of [...timers])if(t.due<=now){timers.delete(id);t.fn();}await flush();} };
 }
 
-test('startup coalesces callers, preserves all six fonts and starts one poller; ready retry is a no-op',async()=>{
+test('startup coalesces callers, preserves all six fonts and never starts a poller; ready retry is a no-op',async()=>{
   const h=harness(), first=h.api.retryStartup(), same=h.api.retryStartup();assert.equal(first,same);
   assert.equal(await first,true);assert.equal(h.api.state.ready,true);assert.equal(h.calls.fetch.length,6);
-  assert.equal(h.calls.faces.length,6);assert.equal(h.calls.parses.length,5);assert.equal(h.calls.polls,1);
-  assert.equal(h.calls.defaults,1);await h.api.retryStartup();assert.equal(h.calls.polls,1);assert.equal(h.timers.size,0);
+  assert.equal(h.calls.faces.length,6);assert.equal(h.calls.parses.length,5);assert.equal(h.calls.polls,0);
+  assert.equal(h.calls.defaults,1);await h.api.retryStartup();assert.equal(h.calls.polls,0);assert.equal(h.timers.size,0);
 });
 test('embedded portable fonts do not fetch and retain exact startup policy',async()=>{
   const h=harness({inline:true});assert.equal(await h.api.retryStartup(),true);assert.equal(h.calls.fetch.length,0);
   assert.equal(h.calls.faces.length,6);assert.equal(h.calls.draws,1);assert.equal(h.map.nativeColor,true);assert.equal(h.map.extrusionEnabled,false);
+});
+test('internal emoji fallback fonts do not change the six conference presentation fonts',async()=>{
+  const h=harness({fallbackFont:true});assert.equal(await h.api.retryStartup(),true);
+  assert.equal(h.calls.fetch.length,6);assert.equal(h.calls.faces.length,6);assert.equal(h.api.state.fontIds['Emoji Flags'],undefined);
 });
 test('permanent font failure settles; Start retry reuses good downloads and clears prior preparation failure',async()=>{
   let fail=true;
@@ -53,7 +58,7 @@ test('permanent font failure settles; Start retry reuses good downloads and clea
   assert.equal(await h.api.retryStartup(),false);assert.match(h.api.state.error,/HTTP 404/);
   assert.equal(h.calls.fetch.filter(x=>x==='font-1').length,1);assert.equal(h.calls.polls,0);
   await flush();fail=false;assert.equal(await h.api.retryStartup(),true);
-  assert.equal(h.calls.fetch.length,7);assert.equal(h.calls.defaults,1);assert.equal(h.calls.polls,1);
+  assert.equal(h.calls.fetch.length,7);assert.equal(h.calls.defaults,1);assert.equal(h.calls.polls,0);
   assert.ok(h.calls.faces.every(opts=>opts.timeoutMs===30000));assert.ok(h.calls.parses.every(opts=>opts.retry));
 });
 test('a held response body is timed out and aborted before a bounded delayed retry',async()=>{
@@ -81,13 +86,13 @@ test('whole-startup deadline settles a held preparation and rejects stale contin
   const h=harness({parse:async()=>{if(hang)await held;}});const pending=h.api.retryStartup();await flush();
   await h.advance(120000);assert.equal(await pending,false);assert.equal(h.calls.polls,0);
   hang=false;assert.equal(await h.api.retryStartup(),true);release();await flush();
-  assert.equal(h.calls.polls,1);assert.equal(h.calls.draws,1);assert.equal(h.calls.defaults,1);
+  assert.equal(h.calls.polls,0);assert.equal(h.calls.draws,1);assert.equal(h.calls.defaults,1);
 });
 test('explicit startup retry requests preparation retry after a cached preparation error',async()=>{
   let fail=true;const h=harness({parse:async()=>{if(fail)throw Error('Font worker unavailable');}});
   assert.equal(await h.api.retryStartup(),false);fail=false;assert.equal(await h.api.retryStartup(),true);
   assert.equal(h.calls.fetch.length,6);assert.ok(h.calls.parses.some(opts=>opts.retry===false));
-  assert.ok(h.calls.parses.some(opts=>opts.retry===true));assert.equal(h.calls.polls,1);
+  assert.ok(h.calls.parses.some(opts=>opts.retry===true));assert.equal(h.calls.polls,0);
 });
 test('failed map readiness can retry without reinitializing defaults or recreating a ready map',async()=>{
   const h=harness({mapReady:false});const pending=h.api.retryStartup();await flush();await h.advance(20000);
@@ -131,7 +136,7 @@ function mapHarness(){
     async ensureMapLibre(){ensureCalls++;if(ensureCalls===1&&firstGate)await firstGate;return true;},
     webglSupported:()=>true,$:()=>({}),requestAnimationFrame:fn=>frames.push(fn),
     setStatus(){},syncMetroMapKeyUi(){},syncBasemapButtons(){},refreshFontStore(){},selectedRecord:()=>({}),
-    placeAnchor(){},emptyFeatureCollection:()=>({features:[]}),showConferenceOverview(){},rebuildAfterZoom(){} });
+    placeAnchor(){},emptyFeatureCollection:()=>({features:[]}),showConferenceOverview(){},frameAustralia(){},cancelInitialFit(){},rebuildAfterZoom(){} });
   vm.runInContext('let mapInitialisationGeneration=0;'+engineFunction('retryConferenceMapInitialization')+'\nasync '+engineFunction('initMap'),context);
   return {context,state,instances,frames,holdFirst(){let release;firstGate=new Promise(resolve=>{release=resolve;});return release;},
     async paint(){while(frames.length){const pending=frames.splice(0);pending.forEach(fn=>fn());await flush();}}};

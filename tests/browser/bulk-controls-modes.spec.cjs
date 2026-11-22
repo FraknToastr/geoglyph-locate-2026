@@ -2,14 +2,14 @@ const {test,expect}=require('./studio-fixture.cjs');
 const path=require('node:path'),{pathToFileURL}=require('node:url');
 const tile=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64');
 
-test('disk bulk controls refresh across all four modes and after reopening the editor',async({page})=>{
+test('disk bulk controls refresh across all three modes and after reopening the editor',async({page})=>{
   await page.route('**/MapServer/tile/**',route=>route.fulfill({body:tile,contentType:'image/png'}));
   await page.goto(pathToFileURL(path.resolve(__dirname,'../../index.html')).href);
   await page.waitForFunction(()=>window.GeoGlyphControls&&document.getElementById('map3DSection'));
   await page.evaluate(()=>GeoGlyphMapEngine.showMap());
   const editor=page.locator('#geoglyphMapEditor'),header=page.locator('#mapControlsHeader');
   const expand=header.locator('[data-collapse-all="expand"]'),collapse=header.locator('[data-collapse-all="collapse"]');
-  for(const mode of ['message','glyph','arcgis','admin']){
+  for(const mode of ['message','arcgis','admin']){
     await page.locator(`[data-map-mode="${mode}"]`).click();
     if(await expand.isEnabled())await expand.click();
     await expect(collapse).toBeEnabled();await expect(expand).toBeDisabled();
@@ -30,5 +30,7 @@ test('disk bulk controls refresh across all four modes and after reopening the e
     await expect(page.locator('#mapArcgisReset123Btn')).toBeHidden();
     if(mode==='admin')await expect(page.locator('#mapArcgisAuth')).toBeVisible();
     else await expect(page.locator('#mapArcgisAuth')).toBeHidden();
+    if(mode==='arcgis')await expect(page.locator('#mapArcgisPolling')).toBeVisible();
+    else await expect(page.locator('#mapArcgisPolling')).toBeHidden();
   }
 });

@@ -1,0 +1,103 @@
+.network-route-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.route-colour-key {
+  margin: 8px 0 10px 2px;
+}
+
+.route-colour-key summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.route-colour-key ul {
+  display: grid;
+  gap: 4px;
+  padding: 0 0 0 12px;
+  list-style: none;
+}
+
+.network-heat-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+  padding: 6px 0;
+}
+
+.network-controls .network-heat-options label {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  white-space: normal;
+}
+
+.network-heat-options select {
+  max-width: 122px;
+  border: 1px solid #9bbec7;
+  border-radius: 5px;
+  background: #f9fcfd;
+  color: #16394a;
+  font: inherit;
+}
+
+.network-controls .tool-button {
+  margin-top: 6px;
+}
+
+.network-status {
+  margin: 8px 0;
+  max-width: 180px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.network-status:empty {
+  display: none;
+}
+
+.network-legend {
+  position: absolute;
+  z-index: 4;
+  bottom: 23px;
+  left: 11px;
+  max-width: calc(100% - 22px);
+  border: 1px solid #71889d;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #172331f2;
+  color: #f9fcfd;
+  font-size: 11px;
+}
+
+.network-legend div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 9px;
+  margin-top: 5px;
+}
+
+.network-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.network-legend i {
+  width: 12px;
+  height: 5px;
+  border-radius: 2px;
+}
+
+.punctuality .metric {
+  padding-inline: clamp(4px, 1vw, 10px);
+}
+
+.punctuality .metric span {
+  white-space: normal;
+}

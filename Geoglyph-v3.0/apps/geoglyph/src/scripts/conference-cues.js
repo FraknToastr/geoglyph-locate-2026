@@ -1,0 +1,111 @@
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.GeoGlyphConferenceCues = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  const fonts = Object.freeze(['Gill Sans', 'Forte', 'Chiller', 'Magneto', 'Showcard Gothic']);
+  const sizes = Object.freeze({ small: [300, 30], medium: [3000, 300], large: [30000, 3000], huge: [300000, 6000] });
+  const colours = Object.freeze({ green: '#37FF65', orange: '#FF8500', blue: '#40BCFF', purple: '#CE82FF', yellow: '#FFE747', pink: '#FF45B8' });
+  const animations = Object.freeze({ orbit: 'fixed', turn: 'yaw', face: 'billboard' });
+  const text = value => value == null ? '' : String(value).trim();
+  const key = value => text(value).toLowerCase();
+  const yesNo = Object.freeze({ yes:true, no:false, true:true, false:false });
+  const controlOptions = Object.freeze({
+    '_size_size':sizes, fit:Object.freeze({fit:true,...yesNo}), random_font:yesNo,
+    choose_a_font_font:Object.freeze(Object.fromEntries(fonts.map(font=>[key(font),font]))),
+    choose_a_colour_colour:colours, '_2d_or_3d':Object.freeze({'2d':false,'3d':true}), animation:animations
+  });
+
+  function command(raw) {
+    const attributes = raw?.attributes || raw || {};
+    const name = Object.keys(attributes).find(name => name.toLowerCase() === 'special_commands');
+    const value = key(attributes[name]);
+    return value === 'begin geoglyph' ? 'begin' : value === 'reset' ? 'reset' : undefined;
+  }
+
+  // Resolve one submission without changing either the feature or current state.
+  // Rendering, font randomness and camera sequencing belong to the engine.
+  function resolve(raw, context = {}) {
+    raw = raw || {};
+    const source = raw.attributes || raw;
+    const attributes = Object.create(null);
+    Object.keys(source).forEach(name => { attributes[name.toLowerCase()] = source[name]; });
+    const get = name => attributes[name];
+    const warnings = [];
+    // Commands own the entire submission, including submissions with emoji content.
+    const special = command(raw);
+    if (special) return { command: special, objectId: raw.objectId ?? get('objectid') ?? get('object_id'), warnings };
+    function option(name, choices = controlOptions[name]) {
+      const value = key(get(name));
+      if (!value) return undefined;
+      if (Object.prototype.hasOwnProperty.call(choices, value)) return choices[value];
+      warnings.push(`Unknown ${name} value: ${text(get(name))}`);
+      return undefined;
+    }
+
+    if (key(get('special_commands'))) warnings.push(`Unknown special_commands value: ${text(get('special_commands'))}`);
+    let anchor, invalidPoint = false;
+    if (raw.geometry != null) {
+      const { x, y, spatialReference } = raw.geometry;
+      const wkid = spatialReference && (spatialReference.latestWkid || spatialReference.wkid);
+      if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y) &&
+          x >= -180 && x <= 180 && y >= -85.051129 && y <= 85.051129 && (!wkid || wkid === 4326)) {
+        // (0,0) is the survey's unanswered location. Either zero ordinate alone is valid.
+        if (x !== 0 || y !== 0) anchor = { lng: x, lat: y };
+      } else invalidPoint = true;
+    }
+    const emoji = text(get('emojis'));
+    const speech = text(get('geoglyph_speaks')), legacy = text(get('whats_on_your_mind'));
+    // The survey can retain its sleeping placeholder on a controls-only submission.
+    // Do not mistake it for new text and try to extrude it in the last text font.
+    const legacyPlaceholder = !emoji && !speech && legacy === '😴' && (Boolean(anchor) || Object.entries(controlOptions)
+      .some(([name, choices]) => Object.prototype.hasOwnProperty.call(choices, key(get(name)))));
+    const message = emoji || speech || (legacyPlaceholder ? '' : legacy);
+    const previous = context.content || { kind: 'emoji', message: '' };
+    const kind = message ? (emoji ? 'emoji' : 'text') : previous.kind === 'text' ? 'text' : 'emoji';
+    const result = {
+      objectId: raw.objectId ?? get('objectid') ?? get('object_id'),
+      kind,
+      message: message || text(previous.message),
+      hasNewContent: Boolean(message),
+      font: kind === 'emoji' ? 'Segoe UI Emoji' : context.lastTextFont || 'Gill Sans',
+      nativeColor: kind === 'emoji',
+      extrusionEnabled: kind === 'emoji' ? false : !!context.extrusionEnabled,
+      fit: false,
+      random: false,
+      warnings,
+      nextContent: null
+    };
+    result.nextContent = { kind: result.kind, message: result.message };
+
+    const size = option('_size_size');
+    if (size) [result.height, result.depth] = size;
+    result.fit = option('fit') === true;
+
+    if (anchor) result.anchor = anchor;
+    if (invalidPoint) warnings.push('Invalid survey point; retaining the current anchor.');
+
+    // An existing emoji also keeps these restrictions for controls-only cues.
+    if (kind === 'emoji') return result;
+
+    result.random = option('random_font') === true;
+    if (!result.random) {
+      const font = option('choose_a_font_font');
+      if (font) result.font = font;
+    }
+    const fill = option('choose_a_colour_colour');
+    if (fill) result.fill = fill;
+    const extrusion = option('_2d_or_3d');
+    if (extrusion !== undefined) result.extrusionEnabled = extrusion;
+    const animation = option('animation');
+    if (animation) {
+      result.animation = animation;
+      result.extrusionEnabled = true;
+    }
+    return result;
+  }
+
+  return Object.freeze({ resolve, command, fonts });
+});

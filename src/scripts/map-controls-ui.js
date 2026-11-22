@@ -2,25 +2,28 @@
   'use strict';
 
   const sectionDefinitions = [
+    ['[data-map-pane="message"]', 'mapMessageSection', 'Message'],
     ['.map-control-grid', 'mapFontSection', 'Font'],
-    ['[data-map-pane="arcgis"]', 'mapArcgisSection', 'Content · Survey123'],
-    ['[data-map-pane="message"]', 'mapMessageSection', 'Content · Message'],
-    ['[data-map-pane="glyph"]', 'mapGlyphSection', 'Content · Character'],
+    ['.map-3d-panel', 'map3DSection', '3D'],
+    ['.map-morph-panel', 'mapMorphPanel', 'Font Morph'],
+    ['.map-script-panel', 'mapScriptSection', "Geo's Script", 'arcgis'],
+    ['[data-map-pane="arcgis"]', 'mapArcgisSection', 'Survey123', 'arcgis admin'],
     ['.map-style-panel', 'mapStyleSection', 'Style'],
-    ['.map-editor-actions', 'mapBasemapSection', 'Basemap & Export'],
-    ['.map-3d-panel', 'map3DSection', '3D']
+    ['.map-editor-actions', 'mapBasemapSection', 'Basemap & Export']
   ];
 
   // Enhance existing containers in place. Their children, IDs and event handlers
   // are also used by the map engine and the lazily mounted 3D controls.
   function enhanceSection(editor, definition) {
-    const [selector, id, label] = definition;
+    const [selector, id, label, modes = 'message'] = definition;
     const section = editor.querySelector(selector);
     if (!section) return false;
+    section.dataset.mapEditorModes = modes;
+    section.hidden = !modes.split(' ').includes(editor.dataset.mapEditorMode || 'message');
     if (section.dataset.controlSection !== undefined) return true;
 
     section.id = id;
-    const header = document.createElement('header');
+    const header = document.createElement('h3');
     header.className = 'map-section-head';
     const button = document.createElement('button');
     button.type = 'button';
@@ -46,17 +49,22 @@
     if (!controls) return;
     editor.dataset.mapControlsReady = 'true';
 
-    const header = document.createElement('header');
-    header.className = 'panel-head map-controls-head';
+    const header = document.createElement('div');
+    header.className = 'map-controls-head';
     header.id = 'mapControlsHeader';
-    const title = document.createElement('h2');
-    title.className = 'panel-title';
-    title.textContent = 'Controls · Ground Font Engine';
-    header.append(title);
-    editor.querySelector('.map-editor-head').after(header);
+    editor.querySelector('.map-editor-head-actions').prepend(header);
     controls.enhanceHeader(header, editor);
 
-    for (const definition of sectionDefinitions) enhanceSection(editor, definition);
+    function arrangeSections() {
+      for (const definition of sectionDefinitions) enhanceSection(editor, definition);
+      const sections = sectionDefinitions.map(([selector]) => editor.querySelector(selector)).filter(Boolean);
+      // Every section is a sibling, including the asynchronously installed 3D
+      // and morph panels. Moving existing nodes preserves controls and clocks.
+      const current = [...editor.children].filter(node => sections.includes(node));
+      if (current.some((node, index) => node !== sections[index])) sections.forEach(section => editor.append(section));
+      controls.sync();
+    }
+    arrangeSections();
 
     // Recalculate active sections when modes change or the whole editor reopens.
     // A refresh while the editor is collapsed disables both bulk actions.
@@ -66,18 +74,12 @@
       modeObserver.observe(pane, { attributes: true, attributeFilter: ['hidden'] });
     });
 
-    // ground-3d inserts its panel after the existing actions node, possibly
-    // after the rest of the Map UI is ready. Watch only editor children until it
-    // arrives, rather than observing map tiles or the font table continuously.
-    const threeDDefinition = sectionDefinitions[sectionDefinitions.length - 1];
-    if (!editor.querySelector('.map-3d-panel')) {
-      const threeDObserver = new MutationObserver(() => {
-        if (enhanceSection(editor, threeDDefinition)) {
-          threeDObserver.disconnect();
-          controls.sync();
-        }
+    if (!editor.querySelector('.map-3d-panel') || !editor.querySelector('.map-morph-panel') || !editor.querySelector('.map-script-panel')) {
+      const panelsObserver = new MutationObserver(() => {
+        arrangeSections();
+        if (editor.querySelector('.map-3d-panel') && editor.querySelector('.map-morph-panel') && editor.querySelector('.map-script-panel')) panelsObserver.disconnect();
       });
-      threeDObserver.observe(editor, { childList: true });
+      panelsObserver.observe(editor, { childList: true });
     }
     controls.sync();
   }

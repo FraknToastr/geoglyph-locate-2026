@@ -20,7 +20,7 @@ function builtin(record){return !!record&&record.source==='conference'&&/^confer
 function eligibility(){
   const s=state();
   if(!s?.previewActive||!s.mapReady)return 'Open the map preview before preparing a morph.';
-  if(s.mode!=='message')return 'Choose Message mode to morph the same text between fonts.';
+  if(s.mode!=='message'&&!(s.mode==='arcgis'&&window.GeoGlyphScripts?.state().running))return 'Choose Message mode to morph the same text between fonts.';
   if(s.extrusionEnabled&&!s.extrusionSolid)return 'Font morphing needs Solid model enabled in 3D. Transparent 3D is not supported yet.';
   if(!builtin(s.fontRecords.get(s.selectedFontId)))return 'Choose a From font in the Font morph panel. Emoji fonts cannot be morphed.';
   if(!String(s.message||'').trim())return 'Enter a message to morph.';
@@ -45,7 +45,7 @@ async function ensureBuiltins(){
       manifest=window.GeoGlyphConferenceFontData||manifest;
     }
     const added=[];
-    for(const font of manifest.filter(font=>!font.emoji)){
+    for(const font of manifest){
       const key=`conference:${font.key}`;
       if([...state().fontRecords.values()].some(record=>service().keyFor(record)===key))continue;
       let buffer;
@@ -59,7 +59,7 @@ async function ensureBuiltins(){
         buffer=await response.arrayBuffer();
       }
       added.push({id:`conference-${font.key.toLowerCase().replace(/\s/g,'-')}`,source:'conference',
-        fontResourceKey:key,name:font.name,family:font.family,style:font.style,arrayBuffer:buffer});
+        fontResourceKey:key,name:font.name,family:font.family,style:font.style,hasColor:Boolean(font.emoji),arrayBuffer:buffer});
     }
     if(added.length){window.GeoGlyphStudio.registerFonts(added);engine().refreshFonts();}
     const records=[...state().fontRecords.values()].filter(builtin);
@@ -115,6 +115,7 @@ function refreshUi(){
       const previous=blockedExports.get(id);button.disabled=previous.disabled;button.title=previous.title;blockedExports.delete(id);
     }
   }
+  window.GeoGlyph3D?.refreshExportControls?.();
 }
 function stopClock(){if(frame)cancelAnimationFrame(frame);frame=0;lastTime=0;}
 function pause(){playing=false;stopClock();refreshUi();return progress;}
@@ -285,18 +286,29 @@ async function exportGeoJSON(){
     renderer:'font-morph-endpoint',fill:s.fill,outline:s.outline,height_m:height*endpoint.bounds.height/model.fromBounds.height,bearing:s.bearing},
     geometry:{type:'MultiPolygon',coordinates}}]};
 }
+async function prepareOBJEndpoint(){
+  if(!ready||preparing||!canExport())throw Error('Move the morph slider to an endpoint before exporting.');
+  const s=state(),at=progress,version=sequence,key=selectionKey();
+  const record=s.fontRecords.get(at===1?toId:fromId),referenceBounds={...model.fromBounds};
+  const text=s.message,options={tracking:s.tracking,lineHeight:s.lineHeight,tolerance:.4};
+  const isCurrent=()=>ready&&!preparing&&version===sequence&&progress===at&&selectionKey()===key;
+  const endpoint=await service().model(record,text,options);
+  if(!isCurrent())throw Error('The morph changed before export. Choose an endpoint and retry.');
+  const mesh=await service().mesh(JSON.stringify([service().keyFor(record),text,options]),endpoint);
+  if(!isCurrent())throw Error('The morph changed before export. Choose an endpoint and retry.');
+  return {mesh,model:endpoint,referenceBounds,name:record.name,isCurrent};
+}
 export function installFontMorph(){
   if(installed||!$('mapFontSelect')||!window.GeoGlyph3D)return;
   const panel=document.createElement('section');panel.id='mapMorphPanel';panel.className='map-morph-panel map-span-2';panel.setAttribute('aria-label','Font morph');
-  panel.innerHTML=`<div class="map-morph-heading"><span>Font morph</span><span>2D / 3D</span></div>
-    <label class="map-field"><span>From font</span><select id="mapMorphSource" aria-describedby="mapMorphStatus"><option value="">Choose source font…</option></select></label>
+  panel.innerHTML=`<label class="map-field"><span>From font</span><select id="mapMorphSource" aria-describedby="mapMorphStatus"><option value="">Choose source font…</option></select></label>
     <label class="map-field"><span>To font</span><select id="mapMorphTarget"><option value="">Choose target font…</option></select></label>
     <div class="map-morph-actions"><label class="map-field"><span>Duration</span><div class="map-number"><input id="mapMorphDuration" type="number" min="0.25" max="30" step="0.25" value="2"><em>s</em></div></label>
-    <button class="map-action" id="mapMorphPrepare" type="button" disabled>Prepare</button><button class="map-action" id="mapMorphPlay" type="button" aria-pressed="false" disabled>Play</button></div>
+    <div class="map-morph-buttons" role="group" aria-label="Morph playback"><button class="map-action" id="mapMorphPrepare" type="button" disabled>Prepare</button><button class="map-action" id="mapMorphPlay" type="button" aria-pressed="false" disabled>Play</button></div></div>
     <label class="map-field"><span>Progress <output id="mapMorphValue" for="mapMorphProgress">0%</output></span><input id="mapMorphProgress" type="range" min="0" max="1" step="0.001" value="0" disabled></label>
     <div class="map-morph-footer"><p id="mapMorphStatus" class="map-3d-status" role="status">Choose two built-in outline fonts.</p><button class="map-action" id="mapMorphClear" type="button" disabled>Clear</button></div>`;
-  $('mapFontSelect').closest('label').after(panel);installed=true;
-  window.GeoGlyphFontMorph=Object.freeze({ensureBuiltins,prepare,play,pause,seek,clear,onGeometryChange,setMode,syncVisibility,canExport,exportGeoJSON,framingCoordinates,
+  document.querySelector('.map-3d-panel').after(panel);installed=true;
+  window.GeoGlyphFontMorph=Object.freeze({ensureBuiltins,prepare,play,pause,seek,clear,onGeometryChange,setMode,syncVisibility,canExport,exportGeoJSON,prepareOBJEndpoint,framingCoordinates,
     isActive:()=>ready,getBounds:()=>layer?.getBounds(),renderedAngles:()=>angles,
     label:()=>`${state().fontRecords.get(fromId)?.name||'Source'} → ${state().fontRecords.get(toId)?.name||'Target'}`,
     stats:()=>({ready,preparing,playing,progress,error,fromId,toId,lastPreparationMs,renderer:layer?.stats()||null})});

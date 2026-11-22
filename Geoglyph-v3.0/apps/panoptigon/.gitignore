@@ -1,0 +1,42 @@
+# Local photographs and original capture media must never be uploaded.
+/Adelaide Park Lands View and Vistas sample 5.1-5.3 260828/
+*.[jJ][pP][gG]
+*.[jJ][pP][eE][gG]
+*.[pP][nN][gG]
+*.[wW][eE][bB][pP]
+*.[tT][iI][fF]
+*.[tT][iI][fF][fF]
+*.[hH][eE][iI][cC]
+*.[hH][eE][iI][fF]
+*.[aA][vV][iI][fF]
+*.[dD][nN][gG]
+*.[rR][aA][wW]
+*.[iI][nN][sS][pP]
+*.[iI][nN][sS][vV]
+*.[mM][pP]4
+*.[mM][oO][vV]
+# Import archives and 3D geometry stay local. Only the audited add-on ZIPs ship.
+*.[zZ][iI][pP]
+!/Blender/Adelaide_GeoLOD_Views_Vistas_Blender5_v1.3.1.zip
+!/Blender/Adelaide_GeoLOD_Views_Vistas_Blender5_v1.3.2.zip
+*.[oO][bB][jJ]
+*.[mM][tT][lL]
+*:Zone.Identifier
+# Saved workspaces contain local source references and personal viewing settings.
+*.vistas-workspace.json
+# Credentials, agent state, dependencies and generated artifacts.
+.env
+.env.*
+.aws/
+.codex/
+.agents/
+.vistas-git/
+node_modules/
+__pycache__/
+*.pyc
+*.log
+coverage/
+test-results/
+playwright-report/
+.DS_Store
+Thumbs.db

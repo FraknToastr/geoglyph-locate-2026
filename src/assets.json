@@ -43,6 +43,7 @@
     "attrs": "",
     "path": "src/styles/map-controls.css"
   },
+  {"key":"script-editor-style","type":"style","attrs":"","path":"src/styles/script-editor.css"},
   {
     "key": "polygon-clipping",
     "type": "script",

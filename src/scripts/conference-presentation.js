@@ -10,16 +10,7 @@
   const client = window.GeoGlyphSurveyResults.create();
   const MAX_QUEUED_CUES = 100;
   let source = '', epoch = 0, activeRun = null;
-  let introWait = null, introTitle = null;
-  const introduction = Object.freeze([
-{message:'🥱',emoji:true,delayBefore:0}, {message:'😶',emoji:true},
-{message:'😏',emoji:true,delayBefore:3000}, {message:'😏',emoji:true,mirrorX:true,delayBefore:3000},
-{message:'😎',emoji:true,delayBefore:3000},
-    {message:'Hello'}, {message:"I'm Geoglyph"}, {message:'Call me Geo'},
-    {message:'Everything you about to see'}, {message:'was made by ChatGPT'}, {message:'including me!'},
-    {message:'Today I will be presenting'},
-    {message:'with my best friend'}, {message:'Josh Roberts'}, {message:'Where are you Josh?',final:true}
-  ]);
+
   const delay = () => new Promise(resolve => setTimeout(resolve, 20));
   const engine = () => window.GeoGlyphMapEngine;
   function record(objectId, phase) {
@@ -31,8 +22,7 @@
     activeRun = null;
     state.applying = false;
     state.introStep = null;
-    clearIntroductionTitle();
-    introWait?.wake();
+    window.GeoGlyphScripts?.stopConference();
     engine().cancelConferenceWork();
     if (state.phase === 'beginning') returnToOverview();
   }
@@ -44,112 +34,50 @@
     engine().state.firstFitDone = false;
     engine().showConferenceOverview();
   }
-  function clearIntroductionTitle(title = introTitle) {
-    title?.remove();
-    if (introTitle === title) introTitle = null;
-  }
-  function showIntroductionTitle() {
-    clearIntroductionTitle();
-    const title = document.createElement('div');
-    title.id = 'geoglyphConferenceTitle';
-    title.className = 'geoglyph-conference-title';
-    title.setAttribute('role', 'status');
-    title.setAttribute('aria-label', 'Conference day');
-    const font = engine().state.fontRecords.get(state.fontIds['Gill Sans']);
-    title.style.fontFamily = JSON.stringify(font.cssFamily);
-    title.textContent = 'Conference day.';
-    document.getElementById('geoglyphMapWorkspace').append(title);
-    introTitle = title;
-    return title;
-  }
-  function waitIntroduction(ms, current) {
-    const now = () => typeof performance === 'undefined' ? Date.now() : performance.now();
-    return new Promise((resolve,reject) => {
-      let remaining=ms,last=now(),running=!state.paused&&!document.hidden,timer,settled=false;
-      const finish=error=>{
-        if(settled)return;settled=true;clearTimeout(timer);
-        if(introWait===waiter)introWait=null;
-        error?reject(error):resolve();
-      };
-      const tick=()=>{
-        clearTimeout(timer);const time=now();
-        if(running)remaining-=Math.max(0,time-last);
-        last=time;running=!state.paused&&!document.hidden;
-        if(!current())return finish(Error('Introduction was superseded'));
-        if(running&&remaining<=0)return finish();
-        timer=setTimeout(tick,running?Math.min(100,Math.max(1,remaining)):100);
-      };
-      const waiter={wake:tick};introWait=waiter;tick();
-    });
-  }
   async function applyCommand(patch, current) {
     const api = engine();
-    if (patch.command === 'reset') returnToOverview();
-    else {
-      state.phase = 'beginning';
-      api.state.conferenceOverview = true;
-      api.state.map.stop();
-      window.GeoGlyph3D.stopOrbit();
-    }
-    const drawOpening = isCurrent => api.drawConferenceOpening(state.fontIds['Segoe UI Emoji'], {
-      resetAnchor:patch.command === 'reset', objectId:patch.objectId,
-      onDrawn:() => record(patch.objectId, 'drawn'), isCurrent
-    });
-    if (patch.command === 'begin') {
-      const title = showIntroductionTitle();
-      let openingActive = true;
-      const openingCurrent = () => openingActive && current();
-      const countdown = async () => {
-        for (let dots=2; dots<=5; dots++) {
-          await waitIntroduction(2000, openingCurrent);
-          title.textContent = 'Conference day' + '.'.repeat(dots);
-        }
-        await waitIntroduction(2000, openingCurrent);
-      };
-      try {
-        await Promise.all([drawOpening(openingCurrent), countdown()]);
-      } finally {
-        openingActive = false;
-        clearIntroductionTitle(title);
-        introWait?.wake();
-      }
-    } else await drawOpening(current);
-    if (!current()) return;
-    if (patch.command === 'begin') {
-      record(patch.objectId, 'flight');
-      await api.flyToConferenceOpening(current);
-      if (!current()) return;
-      record(patch.objectId, 'fit');
-      api.state.conferenceOverview = false;
-      state.content = { kind:'emoji', message:'😴' };
-      state.lastTextFont = 'Gill Sans';
-      for(let index=0;index<introduction.length;index++){
-        const step=introduction[index];
-        await waitIntroduction(step.delayBefore??5000,current);
-        if(!current())return;
-        const kind=step.emoji?'emoji':'text';
-        const cue={objectId:patch.objectId,kind,message:step.message,hasNewContent:true,
-          fontId:state.fontIds[step.emoji?'Segoe UI Emoji':'Gill Sans'],nativeColor:Boolean(step.emoji),
-          mirrorX:Boolean(step.mirrorX),extrusionEnabled:Boolean(step.final),relativeSize:100,
-          height:step.final?3000:300,depth:step.final?300:30,fit:false,
-          ...(step.emoji?{}:{fill:'#F47D22'}),
-          ...(step.final?{animation:'yaw'}:{})};
-        const result=await api.applyConferenceCue(cue,{isCurrent:current});
-        if(!current())return;
-        state.introStep=index;state.content={kind,message:step.message};
-        record(patch.objectId,`introduction-${index}`);
-        if(step.final){
-          if(!window.GeoGlyph3D.ensureOrbit('yaw',{framed:result.fitted}))throw Error('Introduction Turn animation could not start.');
-          await api.waitForCamera();
-          if(!current())return;
-          record(patch.objectId,'animation');
-        }
-      }
-      state.phase = 'live';state.introStep=null;
+    if (patch.command === 'reset') {
+      window.GeoGlyphScripts?.stopConference();
+      returnToOverview();
+      await api.drawConferenceOpening(state.fontIds['Segoe UI Emoji'], {
+        resetAnchor:true, objectId:patch.objectId,
+        onDrawn:() => record(patch.objectId, 'drawn'), isCurrent:current
+      });
+      state.content={kind:'emoji',message:'😴'};state.lastTextFont='Gill Sans';
       return;
     }
-    state.content = { kind:'emoji', message:'😴' };
-    state.lastTextFont = 'Gill Sans';
+    const commandRun=activeRun,commandEpoch=epoch;
+    state.phase='beginning';api.state.conferenceOverview=true;
+    api.state.map.stop();window.GeoGlyph3D.stopOrbit();
+    let step=0;
+    const completed=await window.GeoGlyphScripts.playConference({
+      isCurrent:current,
+      onRowStart:row=>{if(row.actions.some(a=>a.type==='camera'&&a.value==='fly-opening'))record(patch.objectId,'flight');},
+      onRow:row=>{
+        if(row.actions.some(a=>a.type==='camera'&&a.value==='opening'))record(patch.objectId,'drawn');
+        if(row.actions.some(a=>a.type==='camera'&&a.value==='fly-opening'))record(patch.objectId,'fit');
+        if(row.message){
+          const map=api.state,kind=map.nativeColor?'emoji':'text';
+          state.content={kind,message:row.message};
+          if(kind==='text'){
+            const name=Object.keys(state.fontIds).find(name=>state.fontIds[name]===map.selectedFontId)||map.fontRecords.get(map.selectedFontId)?.name||'Gill Sans';
+            state.fontIds[name]=map.selectedFontId;state.lastTextFont=name;
+          }
+          state.introStep=step;record(patch.objectId,'introduction-'+step++);
+        }
+        if(row.actions.some(a=>a.type==='animation'&&a.value!=='none'))record(patch.objectId,'animation');
+      }
+    });
+    if(!current()){
+      // A stopped script resolves normally. Release this Begin when Map was
+      // left, while keeping a newer Reset or Begin's state owned by that run.
+      if(activeRun===commandRun&&epoch===commandEpoch&&state.phase==='beginning'){
+        state.phase='live';state.introStep=null;api.state.conferenceOverview=false;
+      }
+      return;
+    }
+    if(!completed)throw Error('Introduction stopped');
+    state.phase='live';state.introStep=null;api.state.conferenceOverview=false;
   }
   async function chooseFont(patch) {
     if (!patch.random) return patch.font;
@@ -285,10 +213,10 @@
       state.phase='live';engine().state.conferenceOverview=false;
       interrupt();state.queue.length=0;source='';state.lastQueuedId=null;state.lastAppliedId=null;state.baselined=false;
     },
-    pause() { state.paused = true; introWait?.wake(); },
-    resume() { state.paused = false; introWait?.wake(); void drain(); }
+    pause() { state.paused = true; window.GeoGlyphScripts?.pauseConference(); },
+    resume() { state.paused = false; window.GeoGlyphScripts?.resumeConference(); void drain(); }
   });
-  document.addEventListener?.('visibilitychange', () => { introWait?.wake(); if (!document.hidden) void drain(); });
+  document.addEventListener?.('visibilitychange', () => { if (!document.hidden) void drain(); });
   document.addEventListener?.('geoglyph:manual-map-change', () => {
     if(state.phase!=='beginning')return;
     state.phase='live';engine().state.conferenceOverview=false;
@@ -385,7 +313,7 @@
   }
   async function start(run, retry) {
     const signal = run.controller.signal;
-    await waitStartup(() => window.GeoGlyphStudio && engine() && window.GeoGlyph3D && document.getElementById('geoglyphMapEditor'),
+    await waitStartup(() => window.GeoGlyphStudio && engine() && window.GeoGlyph3D && window.GeoGlyphScripts && document.getElementById('geoglyphMapEditor'),
       10000, 'Conference dependencies did not become ready', run);
     const host = window.GeoGlyphStudio, map = engine().state;
     if (!startupInitialised) {
@@ -398,7 +326,7 @@
     engine().refreshControls(); engine().setConnectionStatus('Preparing conference fonts…', 'info');
     if (!startupManifest) startupManifest = await boundedStartup(() => conferenceFonts(run), 15000,
       'Conference font pack did not load', signal);
-    const manifest = startupManifest;
+    const manifest = startupManifest.filter(font=>!font.fallback);
     const records = await Promise.all(manifest.map(async font => ({
       id:`conference-${font.key.toLowerCase().replace(/\s/g, '-')}`, source:'conference',
       fontResourceKey:`conference:${font.key}`, name:font.name, family:font.family, style:font.style,
@@ -422,8 +350,7 @@
     signal.throwIfAborted(); run.opening = false;
     document.getElementById('mapArcgisInterval').value = String(window.GeoGlyphConferenceConfig.pollSeconds);
     state.ready = true;
-    // Polling owns its own request deadlines; readiness does not await the service.
-    void engine().startPolling().catch(() => engine()?.setConnectionStatus('Could not start live polling. Use Start to retry.', 'warn'));
+    engine().setConnectionStatus('Ready · Polling stopped. Choose Start for live updates.', 'info');
     return true;
   }
   function retryStartup() {

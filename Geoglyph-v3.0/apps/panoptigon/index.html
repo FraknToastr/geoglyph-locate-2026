@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f2e9">
+  <title>Views &amp; Vistas · Adelaide Park Lands</title>
+  <link rel="stylesheet" href="vendor/maplibre-gl.css">
+  <link rel="stylesheet" href="css/styles.css?v=20261109-workspace-north1">
+  <script>
+    // Report module-graph failures too: these happen before app.js can catch them.
+    (()=>{
+      const root=document.documentElement;
+      root.dataset.appState='loading';
+      let reported=false;
+      window.addEventListener('error',event=>{
+        if(root.dataset.appState==='ready'||reported)return;
+        if(event.target?.id!=='appModule'&&!(event instanceof ErrorEvent&&event.filename))return;
+        reported=true;root.dataset.appState='error';
+        const show=()=>{
+          const region=document.getElementById('toastRegion');if(!region)return;
+          const notice=document.createElement('div');notice.className='toast bad';notice.setAttribute('role','alert');
+          notice.textContent='App could not start. Reload the page and make sure the extracted files are together. '+(event.message||'An application script could not load; check your connection and browser console.');
+          region.append(notice);
+        };
+        if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',show,{once:true});else show();
+      },true);
+    })();
+  </script>
+  <script src="vendor/maplibre-gl.js"></script>
+  <script src="vendor/shp.min.js"></script>
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/proj4.js"></script>
+  <script type="importmap">
+    {"imports": {
+      "three": "./vendor/three/three.module.js",
+      "three/addons/": "./vendor/three/addons/",
+      "./js/app.js": "./js/app.js?v=20261109-workspace-north1",
+      "./js/core.js": "./js/core.js?v=20261109-workspace-north1",
+      "./js/geo.js": "./js/geo.js?v=20261109-workspace-north1",
+      "./js/importers.js": "./js/importers.js?v=20261109-workspace-north1",
+      "./js/layers.js": "./js/layers.js?v=20261109-workspace-north1",
+      "./js/alignment.js": "./js/alignment.js?v=20261109-workspace-north1",
+      "./js/obj-map.js": "./js/obj-map.js?v=20261109-workspace-north1",
+      "./js/panorama.js": "./js/panorama.js?v=20261109-workspace-north1",
+      "./js/appearance.js": "./js/appearance.js?v=20261109-workspace-north1",
+      "./js/tooltips.js": "./js/tooltips.js?v=20261109-workspace-north1",
+      "./js/visibility.js": "./js/visibility.js?v=20261109-workspace-north1",
+      "./js/workspace.js": "./js/workspace.js?v=20261109-workspace-north1",
+      "./js/workspace-ui.js": "./js/workspace-ui.js?v=20261109-workspace-north1",
+      "./js/map-labels.js": "./js/map-labels.js?v=20261109-workspace-north1"
+    }}
+  </script>
+</head>
+<body>
+  <div class="shell">
+    <header class="header">
+      <button class="icon-button layers-toggle" id="layersBtn" aria-label="Layers" data-tooltip="Layers" aria-expanded="true" aria-controls="layersPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 17l9 5 9-5"/></svg></button>
+      <a class="brand" href="./" aria-label="Views and Vistas home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path fill="currentColor" fill-opacity=".08" d="M20 5C16 3 11 6 11 10C6 9 3 14 6 18C2 22 6 27 11 25C13 29 18 28 20 25C23 28 28 28 30 25C35 27 39 21 34 18C37 13 33 8 28 10C28 6 24 3 20 5Z"/><path d="M20 16v12c0 3-2 6-5 7m5-7c0 3 2 6 5 7M20 24l-7-6m7 3 7-6"/></svg></span><span><strong>Views &amp; Vistas</strong><small>Adelaide Park Lands</small></span></a>
+      <button class="button primary" id="importBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 17v3h16v-3"/></svg>Import data</button>
+      <a class="suite-return" id="suiteReturnLauncher" href="../../index.html" data-suite-return="panoptigon" aria-label="Return to launcher" title="Return to launcher">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg><span>Return to launcher</span>
+      </a>
+    </header>
+    <main class="workspace" id="workspace">
+      <aside class="sidebar" id="layersPanel" aria-label="Layer selector">
+        <fieldset class="appearance-frame"><legend>Spatial appearance</legend>
+          <label class="ground-obj-control"><input id="groundObjLayers" type="checkbox" checked disabled>Ground 3D Models</label>
+          <div id="appearanceControls"></div>
+          <button class="text-button" id="resetAppearance">Reset appearance</button>
+        </fieldset>
+        <fieldset class="appearance-frame layers-frame"><legend>Locations</legend>
+          <div class="layers-search-row">
+            <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg><input id="locationSearch" type="search" placeholder="Find a location" aria-label="Find a location"></label>
+            <button class="icon-button" id="closeLayers" data-tooltip="Close layers" aria-label="Close layers"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+          </div>
+          <div class="location-actions"><button id="layerSelectionToggle" class="text-button" aria-pressed="false" disabled>Select all</button><span aria-hidden="true"> / </span><button id="zoomToSelection" class="text-button" data-tooltip="Frame the selected location and its spatial layers" disabled>Zoom to selection</button></div>
+        </fieldset>
+        <div class="layer-tree" id="layerTree"></div>
+      </aside>
+      <button class="sidebar-scrim" id="sidebarScrim" aria-label="Close layers" tabindex="-1"></button>
+      <section class="pane map-pane" aria-label="Interactive map">
+        <div id="map" aria-label="Map of Adelaide viewpoints"></div>
+        <div class="map-top"><div class="map-toolbar surface" role="group" aria-label="Map controls">
+          <div class="basemap-tabs" role="group" aria-label="Basemap"><button class="basemap-btn" data-base="aerial" aria-pressed="true">Aerial</button><button class="basemap-btn" data-base="topo" aria-pressed="false">Topographic</button><button class="basemap-btn" data-base="metro" aria-pressed="false">MetroMap</button><button class="icon-button" id="metroKeyBtn" data-tooltip="MetroMap API key" aria-label="MetroMap API key"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="15" cy="8" r="5"/><path d="m11 12-8 8v-4l2-2h3l1-3"/></svg></button></div>
+          <div class="map-tools"><button class="map-mode-button" id="mapLabelsBtn" type="button" aria-label="Location labels" data-tooltip="Show or hide location names and photo attachment icons" aria-pressed="true">Aa</button>          <div class="map-layer-widget">
+            <button class="icon-button" id="mapLayersBtn" data-tooltip="Map layers" aria-label="Map layers" aria-expanded="false" aria-controls="mapLayerPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 17l9 5 9-5"/></svg></button>
+            <div class="map-layer-panel surface" id="mapLayerPanel" hidden><div id="mapLayerControls"></div></div>
+          </div><button class="map-mode-button" id="pitchBtn" data-tooltip="Map view: 2D. Switch to 3D." aria-label="Map view: 2D. Switch to 3D." aria-pressed="false">2D</button><button class="icon-button" id="fitBtn" data-tooltip="Fit locations" aria-label="Fit locations"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button><button class="icon-button" id="mapFullscreen" data-tooltip="Fullscreen map" aria-label="Fullscreen map" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5m6 0h5v5M20 15v5h-5M9 20H4v-5"/></svg></button></div>
+        </div></div>
+      </section>
+      <section class="pane pano-pane" aria-label="360 degree panorama viewer">
+        <div id="panoCanvas" class="pano-canvas"></div>
+        <div id="photoCompass" class="photo-compass hidden" aria-hidden="true"><span class="photo-compass-line"></span><span id="photoCompassBearing" class="photo-compass-bearing"></span></div>
+        <div class="pano-empty" id="panoEmpty"><div class="panorama-emblem" aria-hidden="true"><span>360°</span><svg viewBox="0 0 180 70"><ellipse cx="90" cy="35" rx="82" ry="25"/><path d="m161 19 12 8-14 5"/></svg></div><h2 id="emptyMessage">Panorama</h2></div>
+        <div class="pano-header hidden" id="panoHeader"><div><h2 id="panoTitle"></h2><span id="panoPlace"></span></div></div>
+        <div class="pano-bottom hidden" id="panoFooter">
+          <div class="control-group photo-navigation"><button class="icon-button" id="prevView" data-tooltip="Previous photo" aria-label="Previous photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button><button class="icon-button" id="nextView" data-tooltip="Next photo" aria-label="Next photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button></div>
+          <div class="control-group heading-controls"><span class="heading-option"><span class="heading-option-label">Compass</span><button class="icon-button" id="photoCompassToggle" data-tooltip="Show centre compass line" aria-label="Show centre compass line" aria-pressed="false" aria-controls="photoCompass"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m12 5 3 9-3-2-3 2 3-9ZM12 14v5"/></svg></button></span><button id="setPhotoNorth" type="button" class="text-button north-button" disabled data-tooltip="Centre a known north direction in the photo, then set this view to North" aria-label="Set this view to North">Set North</button><span class="control-label">Heading</span><button class="icon-button" id="headingMinus" data-tooltip="Calibrate heading −5°" aria-label="Calibrate heading minus 5 degrees">−</button><output id="headingValue" aria-label="Heading calibration">0°</output><button class="icon-button" id="headingPlus" data-tooltip="Calibrate heading +5°" aria-label="Calibrate heading plus 5 degrees">+</button><span class="heading-option"><span class="heading-option-label">Step</span><button class="icon-button heading-step" id="headingStepToggle" data-tooltip="Heading step: 5°. Switch to 1°." aria-label="Heading step: 5 degrees. Switch to 1 degree.">5°</button></span></div>
+          <div class="control-group"><button class="icon-button" id="resetView" data-tooltip="Reset view" aria-label="Reset view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 3v5h5"/></svg></button><button class="icon-button" id="panoFullscreen" data-tooltip="Fullscreen panorama" aria-label="Fullscreen panorama"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5m6 0h5v5M20 15v5h-5M9 20H4v-5"/></svg></button></div>
+        </div>
+        <div id="panoLoading" class="pano-loading hidden" role="status">Loading…</div>
+      </section>
+    </main>
+  </div>
+  <dialog id="importModal" class="modal" aria-labelledby="importHeading">
+    <div class="modal-top"><h2 id="importHeading">Data sources</h2><button class="icon-button" data-close="importModal" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <fieldset class="workspace-frame"><legend>Workspace</legend>
+      <div class="workspace-actions"><button type="button" class="button primary" id="openWorkspaceFolder" data-tooltip="Choose the folder containing the workspace JSON and source data">Open workspace folder</button><button type="button" class="button secondary" id="openWorkspace" data-tooltip="Open a saved workspace and reconnect its source files">Open workspace JSON</button><button type="button" class="button secondary" id="saveWorkspace" data-tooltip="Download data references and viewing settings as a workspace JSON file">Save workspace</button></div>
+      <input type="file" id="workspaceInput" accept=".json" hidden>
+      <input type="file" id="workspaceFolderInput" webkitdirectory multiple hidden>
+      <p class="import-feedback" id="workspaceFeedback" role="status">Keep the workspace JSON at the top of the folder containing your source data.</p>
+    </fieldset>
+    <div class="import-list">
+      <div class="import-row"><div><strong>Viewpoints &amp; view cones</strong><span class="import-feedback" id="spatialFeedback" role="status"></span></div><label data-tooltip="Choose viewpoint and view-cone shapefiles or a ZIP" class="choose-file">Files / ZIP<input type="file" id="spatialInput" aria-label="Choose viewpoint and view-cone shapefiles or a ZIP" data-tooltip="Choose viewpoint and view-cone shapefiles or a ZIP" accept=".zip,.shp,.dbf,.shx,.prj,.cpg" multiple></label></div>
+      <div class="import-row"><div><strong>360° photographs</strong><span class="import-feedback" id="photosFeedback" role="status"></span></div><label data-tooltip="Choose a photo folder, including its subfolders" class="choose-file">Folder<input type="file" id="photosInput" aria-label="Choose a photo folder, including its subfolders" data-tooltip="Choose a photo folder, including its subfolders" accept=".jpg,.jpeg,.png,.webp" webkitdirectory directory multiple></label></div>
+      <div class="import-row"><div><strong>3D Models</strong><span class="import-feedback" id="objFeedback" role="status"></span></div><div class="import-choices"><label data-tooltip="Choose 3D model OBJ files or a ZIP" class="choose-file">Files / ZIP<input type="file" id="objInput" aria-label="Choose 3D model OBJ files or a ZIP" data-tooltip="Choose 3D model OBJ files or a ZIP" accept=".obj,.zip,.json,.mtl" multiple></label><label data-tooltip="Choose a 3D model folder, including its subfolders" class="choose-file secondary">Folder<input type="file" id="objFolderInput" aria-label="Choose a 3D model folder, including its subfolders" data-tooltip="Choose a 3D model folder, including its subfolders" webkitdirectory directory multiple></label></div></div>
+      <div class="import-row"><div><strong>Reference JSON</strong><span class="import-feedback" id="referenceFeedback" role="status"></span></div><label data-tooltip="Choose the reference JSON for scene-local 3D models" class="choose-file">File<input type="file" id="referenceInput" aria-label="Choose the reference JSON for scene-local 3D models" data-tooltip="Choose the reference JSON for scene-local 3D models" accept=".json"></label></div>
+    </div>
+    <div class="modal-actions"><button class="button primary" data-close="importModal">Done</button></div>
+  </dialog>
+  <dialog id="chooseWorkspace" class="modal compact" aria-labelledby="chooseWorkspaceHeading">
+    <div class="modal-top"><h2 id="chooseWorkspaceHeading">Choose a workspace</h2></div>
+    <div id="workspaceChoices" class="workspace-actions"></div>
+    <div class="modal-actions"><button type="button" class="text-button" data-close="chooseWorkspace">Cancel</button></div>
+  </dialog>
+  <dialog id="workspaceReconnect" class="modal" aria-labelledby="workspaceReconnectHeading">
+    <div class="modal-top"><h2 id="workspaceReconnectHeading">Reconnect workspace</h2></div>
+    <p>Choose the original files or folders for the packs below. Cancelling keeps your current workspace.</p>
+    <div id="workspaceSources" class="workspace-sources"></div>
+    <div class="workspace-actions"><button type="button" class="button primary" id="workspaceLoad">Load workspace</button><button type="button" class="button secondary" id="workspacePartial">Load available data</button><button type="button" class="text-button" id="workspaceCancel">Cancel</button></div>
+  </dialog>
+  <dialog id="sourceConflict" class="modal compact" aria-labelledby="sourceConflictHeading">
+    <div class="modal-top"><h2 id="sourceConflictHeading">Update or add pack?</h2></div>
+    <p>The selected paths match an existing pack. Choose whether to update it or keep both packs.</p>
+    <div class="workspace-actions" id="sourceConflictChoices"></div>
+    <div class="workspace-actions"><button type="button" class="button secondary" id="sourceAddNew">Add as new pack</button><button type="button" class="text-button" id="sourceConflictCancel">Cancel</button></div>
+  </dialog>
+  <dialog id="metroModal" class="modal compact" aria-labelledby="metroHeading">
+    <div class="modal-top"><h2 id="metroHeading">MetroMap access</h2><button class="icon-button" data-close="metroModal" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+    <label class="form-label" for="metroKeyInput">API key</label><input id="metroKeyInput" class="text-input" type="password" autocomplete="off">
+    <label class="checkline"><input type="checkbox" id="rememberMetro"> Remember key in this browser</label>
+    <div class="modal-actions"><button class="text-button" id="forgetMetro">Forget key</button><button class="button primary" id="applyMetro">Apply key</button></div><div class="import-feedback" id="metroFeedback" role="status"></div>
+  </dialog>
+  <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+  <script src="../geoglyph/src/scripts/survey-results.js" defer></script>
+  <script src="../../shared/suite-routing.js" defer></script>
+  <script src="../../shared/app-return.js" defer></script>
+  <script>
+    const appScript=document.createElement('script');
+    appScript.id='appModule';
+    if(location.protocol==='file:'){
+      appScript.src='js/app-local.bundle.js';
+    }else{
+      appScript.type='module';
+      appScript.src='js/app.js?v=20261109-workspace-north1';
+    }
+    document.body.append(appScript);
+  </script>
+</body>
+</html>

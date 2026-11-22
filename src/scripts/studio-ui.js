@@ -238,7 +238,7 @@
     const current = mapEngine()?.state;
     if (!current) return null;
     const result = { version:3 };
-    for (const key of ["mode", "message", "baseHeightMeters", "relativeSize", "bearing", "tracking", "lineHeight", "fill", "outline", "outlineWidth", "opacity", "quality", "selectedCode", "basemap", "renderStyle", "anchorPinned"]) {
+    for (const key of ["mode", "message", "baseHeightMeters", "relativeSize", "bearing", "tracking", "lineHeight", "fill", "outline", "outlineWidth", "opacity", "quality", "basemap", "renderStyle", "anchorPinned"]) {
       if (["string", "number", "boolean"].includes(typeof current[key])) result[key] = current[key];
     }
     result.anchor = { lng:current.anchor.lng, lat:current.anchor.lat };
@@ -253,7 +253,7 @@
     // Save the model that is actually visible while a new font is preparing,
     // or when that font cannot replace the current 3D outline model.
     const committed=current.previewActive&&current.lastRenderMode!=='none'&&current.committedSelection;
-    if(committed)for(const key of ['mode','message','selectedCode','tracking','lineHeight','quality'])result[key]=committed[key];
+    if(committed)for(const key of ['mode','message','tracking','lineHeight','quality'])result[key]=committed[key];
     result.font = fontIdentity(current.fontRecords?.get(committed?.selectedFontId||current.selectedFontId));
     const map = current.map;
     if (map?.getCenter) {
@@ -279,8 +279,14 @@
         current.arcgisTimer = 0;
         current.arcgisPolling = false;
       }
-      if (["message", "glyph", "arcgis"].includes(value.mode)) current.mode = value.mode;
+      if (["message", "arcgis"].includes(value.mode)) current.mode = value.mode;
       if (typeof value.message === "string") current.message = value.message.slice(0, 100000);
+      if (value.mode === 'glyph') {
+        const code = Number.isInteger(value.selectedCode) && value.selectedCode >= 0 && value.selectedCode <= 0x10FFFF && !(value.selectedCode >= 0xD800 && value.selectedCode <= 0xDFFF) ? value.selectedCode : 65;
+        current.mode = 'message';
+        current.message = String.fromCodePoint(code);
+      }
+      if (current.mode !== 'arcgis') current.adminMode = false;
       const limits = { baseHeightMeters:[1,300000], relativeSize:[5,1000], bearing:[-360,360], tracking:[-20,100], lineHeight:[0.5,3], outlineWidth:[0,20], opacity:[0.05,1], quality:[4,36] };
       Object.entries(limits).forEach(([key, [min, max]]) => { current[key] = bounded(value[key], min, max, current[key]); });
       current.quality = Math.round(current.quality);
@@ -294,7 +300,6 @@
       ["fill", "outline"].forEach(key => { if (colour(value[key])) current[key] = colour(value[key]); });
       if (["aerial", "world", "metromap"].includes(value.basemap)) current.basemap = value.basemap;
       if (["auto", "native", "styled", "fill-outline", "native-color"].includes(value.renderStyle)) { current.renderStyle=value.renderStyle; current.nativeColor=['native','native-color'].includes(value.renderStyle); }
-      if (Number.isInteger(value.selectedCode) && value.selectedCode >= 0 && value.selectedCode <= 0x10FFFF && !(value.selectedCode >= 0xD800 && value.selectedCode <= 0xDFFF)) current.selectedCode = value.selectedCode;
       if (value.anchor && finite(value.anchor.lng) && finite(value.anchor.lat)) engine.placeAnchor({ lng:bounded(value.anchor.lng,-180,180,0), lat:bounded(value.anchor.lat,-85.051129,85.051129,0) }, 'restore');
       if (typeof value.anchorPinned === "boolean") current.anchorPinned = value.anchorPinned;
       const identity = value.font;

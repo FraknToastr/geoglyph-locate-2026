@@ -25,44 +25,84 @@
   height: auto;
   padding: 10px;
 }
-
-.map-controls-head .panel-title {
-  font-size: 11px;
-  line-height: 1.35;
-  white-space: normal;
-}
+#mapControlsHeader { height:29px;min-height:0;padding:0;border:0;background:transparent;box-shadow:none; }
+#geoglyphMapEditor #mapControlsHeader .controls-bulk { width:auto;min-height:29px;gap:4px;border:0;background:transparent; }
+#geoglyphMapEditor #mapControlsHeader [data-collapse-all] { flex:0 0 29px;width:29px;min-width:29px;height:29px;padding:0;border:1px solid var(--control-border); }
+.geoglyph-map-editor.is-collapsed #mapControlsHeader { display:none; }
+.map-icon-button { display:inline-flex;align-items:center;justify-content:center;gap:5px; }
+.map-icon-button > svg, .map-script-panel svg, .script-dialog svg { width:16px;height:16px;flex:0 0 16px;pointer-events:none; }
+.map-section-head .module-collapse-mark svg { width:11px;height:11px; }
+.icon-caption { min-width:0; }
+#mapArcgisAuth { display:grid;gap:10px;min-width:0; }
+#mapArcgisAuth .map-token-field { position:relative;margin-top:2px;display:block;min-width:0; }
+.map-token-field input { height:36px;width:100%;min-width:0;padding:6px 6px 6px 36px;border:1px solid var(--control-border);background:var(--panel-deep);color:var(--text);font:500 12px/1.25 Oxanium,sans-serif; }
+.map-step-number { display:inline-grid;place-items:center;flex:0 0 20px;width:20px;height:20px;border:1px solid currentColor;font-size:11px;line-height:1; }
+#mapArcgisAuth .map-token-field>.map-step-number { position:absolute;top:50%;left:8px;transform:translateY(-50%);color:var(--text-2);font-size:11px;letter-spacing:0;pointer-events:none; }
+#mapArcgisAuth .arcgis-token-actions { gap:0; }
+#mapArcgisAuth :is(.arcgis-signin-actions,.arcgis-exchange-actions) { display:grid;grid-template-columns:minmax(0,1fr); }
+#mapArcgisAuth .arcgis-session-actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr)); }
+#geoglyphMapEditor .arcgis-token-actions>.map-action { min-width:0; }
+#geoglyphMapEditor .map-numbered-step { display:flex;align-items:center;justify-content:flex-start;gap:6px;text-align:left; }
+.map-numbered-step>span { min-width:0; }
+#map3DStatus:empty { display:none; }
+.map-3d-toggle .map-switch { appearance:none;position:relative;flex:0 0 34px;width:34px;height:20px;border:1px solid var(--control-border);border-radius:12px!important;background:var(--surface-input);cursor:pointer; }
+.map-switch::after { content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--text-2); }
+.map-3d-toggle .map-switch:checked { background:var(--green-hi); }
+.map-switch:checked::after { transform:translateX(14px);background:var(--panel-deep); }
+#geoglyphMapEditor .map-editor-head :is(.map-collapsed-action,.map-editor-collapse) { background:linear-gradient(180deg,var(--control-fill-top),var(--control-fill-bottom));color:var(--text-2);border:1px solid var(--control-border); }
+html[data-theme="light"] #geoglyphMapEditor .map-editor-head :is(.map-collapsed-action,.map-editor-collapse) { background:linear-gradient(180deg,#f9fbfc,#dfe5e8);color:#344047; }
+#geoglyphMapEditor .map-editor-head :is(.map-collapsed-action,.map-editor-collapse):hover { background:linear-gradient(180deg,#216944,#123b29);color:#f4fff8; }
+html[data-theme="light"] #geoglyphMapEditor .map-editor-head :is(.map-collapsed-action,.map-editor-collapse):hover { background:linear-gradient(180deg,#bce8cf,#84c9a2);color:#0d2417; }
 
 .geoglyph-map-editor:not(.is-collapsed) > .control-section {
-  padding: 16px 10px;
-  margin: 0;
+  position: relative;
+  padding: 25px 12px 14px;
+  margin: 24px 10px 12px;
   gap: 10px;
-  border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--text, #edf2f4) 24%, transparent);
+  border: 1px solid var(--control-border);
+  background: var(--panel-deep);
 }
 
 .geoglyph-map-editor:not(.is-collapsed) > .map-3d-panel.control-section {
   gap: 12px;
-  border-bottom: 0;
 }
 
 .geoglyph-map-editor > .control-section.is-collapsed {
+  min-height: 36px;
   padding-block: 12px;
   gap: 0;
 }
 
 .map-section-head {
+  position: relative;
+  display: flex;
+  align-self: start;
+  justify-self: start;
   grid-column: 1 / -1;
   min-width: 0;
-  margin: 0;
+  max-width: calc(100% + 8px);
+  margin: -39px 0 0 -4px;
+  padding: 0 6px;
+  background: var(--panel-deep);
 }
+.map-section-head::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px auto;
+  height: 14px;
+  border: 1px solid var(--control-border);
+  border-bottom: 0;
+  pointer-events: none;
+}
+.control-section.is-collapsed > .map-section-head { margin-top: -26px; }
 
 .map-section-head .map-section-collapse {
   width: 100%;
-  min-height: 26px;
+  min-height: 28px;
   height: auto;
-  font-size: 11px;
+  font-size: 18px;
   line-height: 1.3;
-  color: #e7eef1;
+  color: var(--text);
 }
 
 .map-section-head .map-section-collapse:hover {
@@ -79,21 +119,22 @@
   outline-color: var(--map-orange);
 }
 .arcgis-token-actions{display:flex;flex-wrap:wrap;gap:4px}
-.arcgis-poll-actions{display:flex;flex-wrap:wrap;align-items:end}
-.arcgis-poll-actions>.map-action{flex:1 0 46px}
-.arcgis-poll-interval{display:grid;grid-template-columns:28px 48px 28px;gap:3px;margin-left:auto}
+.arcgis-poll-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(76px,1.3fr);align-items:end;gap:0}
+#geoglyphMapEditor .arcgis-poll-actions>.map-action{min-width:0;padding-inline:4px}
+.arcgis-poll-interval{display:grid;grid-template-columns:20px minmax(28px,1fr) 20px;gap:2px;min-width:0;margin:0 0 0 4px}
 .arcgis-poll-interval>span{grid-column:1/-1}
+.arcgis-poll-interval>.map-action{width:100%;min-width:0;padding:0!important}
+.arcgis-poll-interval input{height:31px;padding:4px;text-align:center}
 .arcgis-poll-interval input{-moz-appearance:textfield}
 .arcgis-poll-interval input::-webkit-inner-spin-button,.arcgis-poll-interval input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.arcgis-reset-action{width:100%}
 #mapArcgisAuth[hidden],#mapArcgisReset123Btn[hidden]{display:none!important}
 .map-font-filter-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
 .map-font-filter-row label{display:flex;align-items:center;gap:4px;min-width:0}
 .map-font-filter-row .map-action{flex:none}
 .map-morph-panel{display:grid;gap:var(--studio-field-gap,6px);min-width:0;padding:8px;border:1px solid var(--control-border);background:var(--panel-deep)}
-.map-morph-heading,.map-morph-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.map-morph-heading{font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
-.map-morph-heading>span:last-child{font-size:9px;color:var(--muted)}
-.map-morph-actions{display:grid;grid-template-columns:minmax(64px,1fr) auto auto;gap:6px;align-items:end}
+.map-morph-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.map-morph-actions{display:grid;grid-template-columns:minmax(64px,1fr) auto;gap:6px;align-items:end}
 .map-morph-panel .map-field>span{display:flex;justify-content:space-between;gap:8px}
 .map-morph-panel input[type=range]{width:100%;min-width:0;accent-color:var(--green-hi)}
 .map-morph-panel .map-action:disabled{opacity:.45;cursor:default}
@@ -106,6 +147,7 @@
 
 /* The full controls reserve their own column; the mini panel keeps its original
    map-relative geometry. Explorer temporarily owns the left half instead. */
+:root { --map-sidebar-width: min(425px, 62.5vw); }
 #mapSidebarToggle {
   flex: 0 0 146px;
   padding: 0;
@@ -129,7 +171,7 @@
   bottom: 0;
   left: 0;
   box-sizing: border-box;
-  width: min(340px, 50vw);
+  width: var(--map-sidebar-width);
   min-width: 0;
   overflow: auto;
   overscroll-behavior: contain;
@@ -149,26 +191,118 @@
   border: 0;
   box-shadow: none;
 }
+html[data-theme="light"] .map-control-sidebar {
+  --panel-deep: #fff;
+  background: #fff;
+}
+html[data-theme="light"] .map-control-sidebar > .geoglyph-map-editor,
+html[data-theme="light"] .map-control-sidebar .map-editor-head {
+  background: #fff;
+}
+html[data-theme="light"] .map-control-sidebar :is(.arcgis-live,.arcgis-poll-interval input,.map-field input[type="color"]) {
+  background: #fff;
+  color: var(--text);
+}
+html[data-theme="light"] .map-control-sidebar .arcgis-live strong {
+  color: var(--text-2);
+}
+html[data-theme="light"] .map-control-sidebar .arcgis-live span {
+  color: var(--text);
+}
+html[data-theme="light"] .map-control-sidebar .arcgis-poll-interval > span {
+  color: var(--muted);
+}
 body.geoglyph-map-preview.map-sidebar-open:not(.drawer-open) #geoglyphMapWorkspace {
-  left: min(340px, 50vw) !important;
+  left: var(--map-sidebar-width) !important;
 }
 body:not(.map-controls-mini) #mapQuickStatus { display: none !important; }
 
-/* Labels and groups wrap within the half-width sidebar on narrow windows. */
+/* Labels and groups wrap within the sidebar on narrow windows. */
 .map-control-sidebar :is(.map-editor-head, .control-section, .map-morph-panel, .map-3d-toggle) {
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.map-control-sidebar :is(.map-action, .map-chip) { white-space: normal; line-height: 1.25; }
+.map-control-sidebar .map-action { white-space: normal; line-height: 1.25; }
 .map-control-sidebar .map-section-collapse { color: var(--text, #edf2f4); }
 .map-control-sidebar .map-font-filter-row { flex-wrap: wrap; }
+.geoglyph-map-editor .map-editor-head .map-mode-switch {
+  border-color: var(--control-border);
+  background: var(--surface-input);
+}
+.map-mode-switch > .square-btn {
+  width: 100%;
+  min-width: 0;
+  height: 31px;
+  padding-inline: 3px;
+}
+.map-mode-switch > .square-btn:last-child { border-right: 0; }
+.geoglyph-map-editor .map-header-fit {
+  width: 29px;
+  min-width: 29px;
+  padding: 0;
+  font-size: 17px;
+}
+.geoglyph-map-editor.is-collapsed .map-header-fit { display: none; }
+#mapObjStatus[data-state="error"] { color: var(--danger); }
+
+/* All CP action rows use the header's square metal buttons and green states.
+   Colour swatches still display the artwork colours they select. */
+:is(#geoglyphMapEditor, #mapMetroMapDialog, #mapScriptDialog) :is(.map-action, .map-collapsed-action, .map-editor-collapse, .map-motion-action) {
+  border: 1px solid var(--control-border);
+  border-radius: 0;
+  background: linear-gradient(180deg,var(--control-fill-top),var(--control-fill-bottom));
+  color: var(--text-2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+:is(#geoglyphMapEditor, #mapMetroMapDialog, #mapScriptDialog) .map-action { min-height: 31px; padding: 6px 8px; line-height: 1.25; }
+#geoglyphMapEditor :is(.map-header-fit, .map-collapsed-fit) { font-size: 17px; }
+#geoglyphMapEditor .map-editor-collapse { font-size: 15px; }
+:is(#geoglyphMapEditor, #mapMetroMapDialog, #mapScriptDialog) :is(.map-action, .map-collapsed-action, .map-editor-collapse, .map-motion-action):is(:hover, [aria-pressed="true"], .is-active):not(:disabled) {
+  color: #f4fff8;
+  background: linear-gradient(180deg,#216944,#123b29);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12),inset 0 -2px 0 var(--green-hi);
+}
+html[data-theme="light"] :is(#geoglyphMapEditor, #mapMetroMapDialog, #mapScriptDialog) :is(.map-action, .map-collapsed-action, .map-editor-collapse, .map-motion-action) {
+  background: linear-gradient(180deg,#f9fbfc,#dfe5e8);
+  color: #344047;
+  box-shadow: inset 0 1px 0 #fff;
+}
+html[data-theme="light"] :is(#geoglyphMapEditor, #mapMetroMapDialog, #mapScriptDialog) :is(.map-action, .map-collapsed-action, .map-editor-collapse, .map-motion-action):is(:hover, [aria-pressed="true"], .is-active):not(:disabled) {
+  color: #0d2417;
+  background: linear-gradient(180deg,#bce8cf,#84c9a2);
+  box-shadow: inset 0 1px 0 #effff5,inset 0 -2px 0 #278752;
+}
+#geoglyphMapEditor :is(.map-action-row, .map-font-actions, .map-morph-buttons, .controls-bulk) {
+  gap: 0;
+  border: 1px solid var(--control-border);
+  background: var(--surface-input);
+}
+.map-font-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.map-morph-buttons { display: flex; align-self: stretch; align-items: stretch; }
+.map-morph-buttons .map-action { white-space: nowrap; }
+#geoglyphMapEditor :is(.map-font-actions, .map-morph-buttons, .controls-bulk) > button { flex: 1; min-width: 0; }
+#geoglyphMapEditor :is(.map-action-row, .map-font-actions, .map-morph-buttons, .controls-bulk) > button {
+  border: 0;
+  border-right: 1px solid var(--control-divider);
+}
+#geoglyphMapEditor :is(.map-action-row, .map-font-actions, .map-morph-buttons, .controls-bulk) > button:last-child { border-right: 0; }
+#geoglyphMapEditor .controls-bulk { display: flex; width: 100%; }
+#geoglyphMapEditor .map-motion-action.is-running::after { border-color: var(--green-hi); background: var(--green-hi); }
 @container (max-width: 280px) {
+  #mapControlSidebar .map-motion-action { font-size:9px;letter-spacing:0; }
+  #geoglyphMapEditor .arcgis-poll-actions>.map-icon-button { flex-direction:column;gap:3px;padding:5px 1px;font-size:9px; }
+  #geoglyphMapEditor .arcgis-token-actions>.map-action { padding:5px 3px;font-size:9px;gap:3px; }
+  .arcgis-poll-actions>.map-icon-button>.icon-caption { white-space:nowrap; }
+  .map-control-sidebar .map-mode-switch > .map-icon-button { flex-direction:column;height:auto;min-height:48px;gap:2px;white-space:normal; }
   .map-control-sidebar .map-morph-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .map-control-sidebar .map-morph-actions > .map-field { grid-column: 1 / -1; }
+  .map-control-sidebar .map-morph-buttons { grid-column: 1 / -1; }
   .map-control-sidebar :is(.map-pair, .arcgis-pair, .map-3d-toggles) { grid-template-columns: minmax(0, 1fr); }
-  .map-control-sidebar .map-morph-heading { flex-wrap: wrap; }
-  .map-control-sidebar .map-mode-switch { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  .map-control-sidebar .map-glyph-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .map-control-sidebar .map-editor-titleblock strong { white-space: normal; }
   .map-control-sidebar .map-editor-title-row { align-items: center; }
   .map-control-sidebar :is(.map-control-grid > .map-action, .map-basemap-row > .map-action) { padding: 4px 2px; }

@@ -1,0 +1,12 @@
+node_modules/
+playwright-report/
+test-results/
+.git-local/
+.metro-recordings/
+
+# Downloaded GTFS feed data
+**/[Gg][Tt][Ff][Ss]/
+**/[Gg][Tt][Ff][Ss]*[Dd][Aa][Tt][Aa]*/
+
+# Windows alternate-data-stream exports
+*:Zone.Identifier

@@ -11,7 +11,7 @@ function extract(name) {
 }
 function harness() {
   const jobs = new Map(), gates = new Map(), draws = [], rollbacks = [];
-  let sequence = 0, orbitStops = 0;
+  let sequence = 0, orbitStops = 0, cameraCancels = 0;
   const state = { fontRecords: new Map([['cue', {}], ['manual', {}]]), previewActive: true,
     rebuilding: false, buildToken: 0, fontChoiceVersion: 0, conferenceApplying: false,
     conferenceRebuildPending: false, selectedFontId: 'previous', message: 'previous',
@@ -22,7 +22,7 @@ function harness() {
     clearTimeout(id) { jobs.delete(id); },
     window: { GeoGlyphUi: { isRestoring: () => false }, GeoGlyph3D: {
       stopOrbit() { orbitStops++; }, refreshControls() {}, isVisible: () => true, update: async () => {} } },
-    $: () => null, waitForCondition: async () => {}, cancelRandomSearch() {},
+    $: () => null, waitForCondition: async () => {}, cancelRandomSearch() {},cancelCameraFlight(){cameraCancels++;},
     syncUiFromState() {}, updateAnchorStats() {}, activateSelectedFont() {}, notifyManualMapChange() {},
     emptyFeatureCollection: () => ({ features: [] }), setGroundDecal() {}, clearGroundDecal() {},
     waitForGroundFrame: async () => {}, fitDrawnGeometry: async () => {},
@@ -36,7 +36,7 @@ function harness() {
   function gate(id) { let release; const promise = new Promise(resolve => { release = resolve; }); gates.set(id, { promise }); return release; }
   const cue = id => context.applyConferenceCue({ objectId: id, fontId: 'cue', message: 'cue-' + id,
     nativeColor: false, extrusionEnabled: true });
-  return { context, state, draws, jobs, gate, cue, rollbacks, orbitStops: () => orbitStops,
+  return { context, state, draws, jobs, gate, cue, rollbacks, orbitStops: () => orbitStops,cameraCancels:()=>cameraCancels,
     flush() { const pending = [...jobs.values()]; jobs.clear(); pending.forEach(fn => fn()); } };
 }
 test('Reset opening explicitly selects colour emoji in 2D', async () => {
@@ -77,6 +77,7 @@ test('explicit cancellation invalidates ownership before another cue starts', as
   const h = harness(), first = h.gate(1), second = h.gate(2);
   const old = h.cue(1).catch(error => error.message); await entered();
   h.context.cancelConferenceWork(); assert.equal(h.state.conferenceApplying, false);
+  assert.equal(h.cameraCancels(),1);
   assert.equal(h.state.message, 'previous', 'uncommitted cue state must not leak into the manual edit');
   const latest = h.cue(2); await entered(); first(); await old;
   assert.equal(h.state.conferenceApplying, true); second(); await latest;

@@ -1,0 +1,1049 @@
+const { test, expect } = require('@playwright/test');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+const { config } = require('../../src/scripts/survey-results.js');
+const hostedSmoke=process.env.GEOGLYPH_HOSTED_SMOKE==='1';
+const conferenceAnchor={lng:144.95604,lat:-37.82402};
+
+test.setTimeout(90_000);
+const tile = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', 'base64');
+const cueFields = ['emojis', 'geoglyph_speaks', 'whats_on_your_mind', 'random_font', 'choose_a_font_font', 'choose_a_colour_colour', '_2d_or_3d', 'fit', 'animation', '_size_size', 'special_commands'];
+const introductionMessages=['🥱','😶','😏','😏','😎','Hello',"I'm Geoglyph",'Call me Geo','Everything you about to see','was made by ChatGPT','including me!','Today I will be presenting','with my best friend','Josh Roberts','Where are you Josh?'];
+const introductionDelays=[0,5000,3000,3000,3000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000];
+function cue(id, attributes = {}, point) {
+  return { attributes: { objectid: id, CreationDate: 1000 + id, ...attributes }, ...(point ? { geometry: { x: point[0], y: point[1], spatialReference: { wkid: 4326 } } } : {}) };
+}
+function metadata() {
+  return { id: 7, name: 'Conference cues', capabilities: 'Query', objectIdField: 'objectid', maxRecordCount: 2,
+    geometryType: 'esriGeometryPoint', spatialReference: { wkid: 4326 }, editFieldsInfo: { creationDateField: 'CreationDate' },
+    advancedQueryCapabilities: { supportsOrderBy: true, supportsPagination: true },
+    fields: [{ name: 'objectid', type: 'esriFieldTypeOID' }, { name: 'CreationDate', type: 'esriFieldTypeDate' },
+      ...cueFields.map(name => ({ name, type: 'esriFieldTypeString' }))] };
+}
+async function open(page, { records = [], portable = false, localModular = false, delayTiles = false, overview = false } = {}) {
+  const server = { records: overview ? [...records] : [], queries: [], requests: [] };
+  const diagnostics = [];
+  await page.addInitScript(()=>{
+    // These timing assertions use the original editable introduction.
+    Object.defineProperty(window,'GeoGlyphScripts',{
+      configurable:true,
+      set(api){Object.defineProperty(window,'GeoGlyphScripts',{configurable:true,writable:true,value:{...api,playRehearsal:api.playConference}});}
+    });
+  });
+  page.on('pageerror', error => diagnostics.push(error.message));
+  page.on('console', message => { if (['warning', 'error'].includes(message.type()) && diagnostics.length < 30) diagnostics.push(message.text()); });
+  const tileGate = delayTiles ? new Promise(resolve => { server.releaseTiles = resolve; }) : Promise.resolve();
+  await page.route('**/MapServer/tile/**', async route => { await tileGate; await route.fulfill({ body: tile, contentType: 'image/png' }); });
+  await page.route(`${config.serviceUrl}**`, async route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const params = request.method() === 'POST' ? new URLSearchParams(request.postData()) : url.searchParams;
+    server.requests.push({ url: request.url(), method: request.method(), headers: request.headers(), params });
+    if (url.pathname.endsWith('/FeatureServer')) return route.fulfill({ json: { layers: [{ id: 7, name: 'Conference cues' }], tables: [] } });
+    if (!url.pathname.endsWith('/query')) return route.fulfill({ json: metadata() });
+    server.queries.push(params);
+    let records = [...server.records];
+    const newer = /objectid\s*>\s*(\d+)/i.exec(params.get('where') || '');
+    if (newer) records = records.filter(row => row.attributes.objectid > Number(newer[1]));
+    if (/UPPER\(/i.test(params.get('where') || '')) records = records.filter(row => String(row.attributes.special_commands || '').toUpperCase().includes('RESET'));
+    const ascending = !/DESC/i.test(params.get('orderByFields') || '');
+    records.sort((a, b) => (a.attributes.objectid - b.attributes.objectid) * (ascending ? 1 : -1));
+    const offset = Number(params.get('resultOffset') || 0);
+    const count = Math.min(2, Number(params.get('resultRecordCount') || 2));
+    return route.fulfill({ json: { features: records.slice(offset, offset + count), exceededTransferLimit: offset + count < records.length } });
+  });
+  await page.goto(portable || localModular ? pathToFileURL(path.resolve(__dirname, localModular ? '../../index.html' : '../../dist/GeoGlyph.html')).href : '/');
+  try {
+    await page.waitForFunction(() => (window.GeoGlyphConference?.state.ready && window.GeoGlyphMapEngine?.state.mapReady) || window.GeoGlyphConference?.state.error, null, { timeout: 60_000 });
+    const error = await page.evaluate(() => GeoGlyphConference.state.error);
+    if (error) throw Error(error);
+  } catch (error) {
+    const status = await page.evaluate(() => ({ error: window.GeoGlyphConference?.state.error, ready: window.GeoGlyphConference?.state.ready, mapReady: window.GeoGlyphMapEngine?.state.mapReady, fonts: window.GeoGlyphFontService?.stats() }));
+    error.message += '\nStartup diagnostics: ' + JSON.stringify({ status, diagnostics });
+    throw error;
+  }
+  // Polling is now a deliberate user action, including in cue regressions.
+  await page.locator('[data-map-mode="arcgis"]').click();
+  await page.locator('#mapArcgisStartBtn').click();
+  await page.waitForFunction(() => GeoGlyphConference.state.baselined);
+  if (!overview) {
+    // Existing cue regressions exercise the live stage; command tests below
+    // exercise the real overview -> Begin -> live transition separately.
+    await page.evaluate(() => { GeoGlyphConference.state.phase = 'live'; GeoGlyphMapEngine.state.conferenceOverview = false; });
+    server.records.push(...records);
+    if (records.length) await poll(page);
+  }
+  return server;
+}
+async function poll(page) {
+  await expect.poll(() => page.evaluate(() => GeoGlyphMapEngine.state.arcgisPollBusy)).toBe(false);
+  await page.locator('#mapArcgisPollBtn').evaluate(button => button.click());
+}
+async function applied(page, id) {
+  await page.waitForFunction(expected => GeoGlyphConference.state.lastAppliedId === expected && !GeoGlyphConference.state.applying, id, { timeout: 60_000 });
+}
+async function submit(page, server, record) {
+  const command=Object.entries(record.attributes).find(([name])=>name.toLowerCase()==='special_commands')?.[1];
+  if(String(command).trim().toLowerCase()==='begin geoglyph')await installIntroductionClock(page);
+  server.records.push(record);
+  await poll(page);
+  if(String(command).trim().toLowerCase()==='begin geoglyph')await completeIntroduction(page,record.attributes.objectid);
+  await applied(page, record.attributes.objectid);
+}
+const introductionClocks=new WeakSet();
+async function installIntroductionClock(page){
+  if(introductionClocks.has(page))return;
+  await page.clock.install();introductionClocks.add(page);
+}
+async function completeIntroduction(page,id){
+  const flying=await page.evaluate(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='flight'),id);
+  if(!flying){
+    await page.waitForFunction(()=>document.getElementById('geoglyphConferenceTitle'));
+    for(let i=0;i<5;i++)await page.clock.fastForward(2000);
+    await page.clock.runFor(34);
+  }
+  await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='flight'),id);
+  await page.clock.fastForward(30000);
+  await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='fit'),id);
+  for(let index=0;index<introductionMessages.length;index++){
+    const done=await page.evaluate(({id,index})=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase===`introduction-${index}`),{id,index});
+    if(!done)await page.clock.fastForward(introductionDelays[index]);
+    await page.waitForFunction(({id,index})=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase===`introduction-${index}`),{id,index});
+  }
+  await page.waitForFunction(id=>GeoGlyphConference.state.history.some(item=>item.objectId===id&&item.phase==='applied'),id);
+}
+async function snapshot(page) {
+  return page.evaluate(() => {
+    const s = GeoGlyphMapEngine.state;
+    return { content: { ...GeoGlyphConference.state.content }, font: s.selectedFontId, displayedFont: s.displayedFontId,
+      nativeColor: s.nativeColor, extrusion: s.extrusionEnabled, height: s.baseHeightMeters, depth: s.extrusionDepthMeters,
+      relativeSize: s.relativeSize, fill: s.fill, outline: s.outline, anchor: { ...s.anchor }, orientation: s.orientationMode,
+      animation: GeoGlyph3D.stats().animation, history: [...GeoGlyphConference.state.history] };
+  });
+}
+async function gateModel(page, message) {
+  await page.evaluate(text => {
+    const service = GeoGlyphFontService;
+    window.conferenceModelEntered = false;
+    window.GeoGlyphFontService = { ...service, model: async (...args) => {
+      if (args[1] === text && !window.conferenceModelEntered) {
+        window.conferenceModelEntered = true;
+        window.conferenceModeAtModel = GeoGlyphMapEngine.state.extrusionEnabled;
+        await new Promise(resolve => { window.releaseConferenceModel = resolve; });
+      }
+      return service.model(...args);
+    } };
+  }, message);
+}
+
+async function expectAustralia(page) {
+  const view = await page.evaluate(() => {
+    const map = GeoGlyphMapEngine.state.map;
+    const canvas = map.getCanvas();
+    return { corners:[[112,-44],[154,-10]].map(point => { const p=map.project(point); return [p.x,p.y]; }),
+      width:canvas.clientWidth, height:canvas.clientHeight, pitch:map.getPitch(), bearing:map.getBearing(),
+      phase:GeoGlyphConference.state.phase, moving:map.isMoving() };
+  });
+  expect(view.phase).toBe('overview');
+  expect(view.moving).toBe(false);
+  expect(view.pitch).toBe(0);
+  expect(view.bearing).toBe(0);
+  for (const [x,y] of view.corners) {
+    expect(x).toBeGreaterThanOrEqual(40);
+    expect(x).toBeLessThanOrEqual(view.width-40);
+    expect(y).toBeGreaterThanOrEqual(40);
+    expect(y).toBeLessThanOrEqual(view.height-40);
+  }
+}
+
+test(`Begin scripted introduction renders Medium 3D Turn and retains final text for Response 169 colour control and Response 184 location control [${hostedSmoke?'hosted':'disk'}]`,async({page})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const server=await open(page,{overview:true,localModular:!hostedSmoke});
+  expect(new URL(page.url()).protocol).toBe(hostedSmoke?'http:':'file:');
+  await installIntroductionClock(page);
+  await page.evaluate(()=>{
+    const api=GeoGlyphMapEngine;window.introductionFrames=[];
+    window.introductionTitles=[];
+    window.introductionTitleObserver=new MutationObserver(()=>{
+      const title=document.getElementById('geoglyphConferenceTitle');
+      if(title&&window.introductionTitles.at(-1)!==title.textContent)window.introductionTitles.push(title.textContent);
+    });
+    window.introductionTitleObserver.observe(document.getElementById('geoglyphMapWorkspace'),{childList:true,subtree:true,characterData:true});
+    window.GeoGlyphMapEngine={...api,applyScriptCue:async(...args)=>{
+      const result=await api.applyScriptCue(...args),s=api.state;
+      window.introductionFrames.push({message:s.message,mirrorX:s.mirrorX,height:s.baseHeightMeters,
+        depth:s.extrusionDepthMeters,extrusion:s.extrusionEnabled,font:s.selectedFontId,nativeColor:s.nativeColor,fill:s.fill});
+      return result;
+    }};
+  });
+  server.records.push(cue(1,{special_commands:'Begin Geoglyph'}));await poll(page);
+  const title=page.locator('#geoglyphConferenceTitle');
+  await expect(title).toHaveText('Conference day.');await expect(title).toBeVisible();
+  const titleView=await title.evaluate(element=>{
+    const style=getComputedStyle(element),area=element.parentElement.getBoundingClientRect(),range=document.createRange();
+    range.selectNodeContents(element);const text=range.getBoundingClientRect();
+    return {pointerEvents:style.pointerEvents,font:style.fontFamily,fontSize:parseFloat(style.fontSize),color:style.color,
+      expectedFont:GeoGlyphMapEngine.state.fontRecords.get(GeoGlyphConference.state.fontIds['Gill Sans']).cssFamily,
+      centerX:(text.left+text.right)/2-(area.left+area.right)/2,centerY:(text.top+text.bottom)/2-(area.top+area.bottom)/2,
+      fits:text.width<area.width&&text.height<area.height,message:GeoGlyphMapEngine.state.message,nativeColor:GeoGlyphMapEngine.state.nativeColor};
+  });
+  expect(titleView.pointerEvents).toBe('none');expect(titleView.font).toContain(titleView.expectedFont);
+  expect(titleView.color).toBe('rgb(255, 255, 255)');
+  expect(titleView.fontSize).toBeGreaterThan(96);expect(titleView.fits).toBe(true);
+  expect(Math.abs(titleView.centerX)).toBeLessThan(1);expect(Math.abs(titleView.centerY)).toBeLessThan(titleView.fontSize*.3);
+  expect(titleView.message).toBe('😴');expect(titleView.nativeColor).toBe(true);
+  await page.screenshot({path:'/tmp/geoglyph-begin-title.png'});
+  await completeIntroduction(page,1);
+  const result=await page.evaluate(()=>({frames:window.introductionFrames,phase:GeoGlyphConference.state.phase,
+    titles:window.introductionTitles,font:GeoGlyphConference.state.fontIds['Gill Sans'],animation:GeoGlyph3D.stats().animation,mirrorX:GeoGlyphMapEngine.state.mirrorX}));
+  await page.evaluate(()=>window.introductionTitleObserver.disconnect());
+  expect(result.titles).toEqual(['Conference day.','Conference day..','Conference day...','Conference day....','Conference day.....']);
+  await expect(title).toHaveCount(0);
+  expect(result.frames.map(frame=>frame.message)).toEqual(introductionMessages);
+  expect(result.frames.map(frame=>frame.mirrorX)).toEqual(introductionMessages.map((_,i)=>i===3));
+  expect(result.frames.slice(0,5).every(frame=>frame.nativeColor&&!frame.extrusion&&frame.fill.toUpperCase()==='#31A765')).toBe(true);
+  expect(result.frames.slice(5).every(frame=>frame.font===result.font&&!frame.nativeColor&&frame.fill.toUpperCase()==='#F47D22')).toBe(true);
+  expect(result.frames.at(-1)).toMatchObject({height:3000,depth:300,extrusion:true});
+  expect(await page.evaluate(()=>GeoGlyphMapEngine.state.map.getLayer('geoglyph-extruded-font').implementation.front.color.getHexString())).toBe('f47d22');
+  expect(result.phase).toBe('live');expect(result.animation.orbiting).toBe(true);expect(result.mirrorX).toBe(false);
+  const before=await page.evaluate(async()=>({uploads:GeoGlyph3D.stats().uploads,disposals:GeoGlyph3D.stats().disposals,
+    meshKey:GeoGlyph3D.stats().meshKey,meshBuilds:(await GeoGlyphFontService.workerStats()).meshBuilds}));
+  await submit(page,server,cue(169,{whats_on_your_mind:'😴',emojis:null,geoglyph_speaks:null,
+    choose_a_colour_colour:'Yellow',special_commands:null,_2d_or_3d:null,animation:null}));
+  await page.clock.runFor(100);
+  const after=await snapshot(page);
+  expect(after.content).toEqual({kind:'text',message:'Where are you Josh?'});
+  expect(after.font).toBe(result.font);expect(after.displayedFont).toBe(result.font);
+  expect(after.fill).toBe('#FFE747');expect(after.nativeColor).toBe(false);
+  expect(after.extrusion).toBe(true);expect(after.height).toBe(3000);expect(after.depth).toBe(300);
+  expect(after.orientation).toBe('yaw');expect(after.animation.orbiting).toBe(true);
+  expect(after.animation.phase).toBe('orbiting');expect(after.animation.frames).toBeGreaterThan(result.animation.frames);
+  expect(after.history.filter(item=>item.objectId===169).some(item=>item.phase==='fit')).toBe(false);
+  const rendered=await page.evaluate(async()=>{
+    const s=GeoGlyphMapEngine.state,stats=GeoGlyph3D.stats(),layer=s.map.getLayer('geoglyph-extruded-font').implementation;
+    return {message:s.message,frontColour:layer.front.color.getHexString(),error:GeoGlyphConference.state.error,
+      geometry:{uploads:stats.uploads,disposals:stats.disposals,meshKey:stats.meshKey,meshBuilds:(await GeoGlyphFontService.workerStats()).meshBuilds}};
+  });
+  expect(rendered.message).toBe('Where are you Josh?');expect(rendered.frontColour).toBe('ffe747');
+  expect(rendered.error).toBe('');expect(rendered.geometry).toEqual(before);
+  const point=[138.529318747,-34.882387214];
+  const location={whats_on_your_mind:'😴',emojis:null,geoglyph_speaks:null,choose_a_colour_colour:null,
+    choose_a_font_font:null,random_font:null,_size_size:null,fit:null,special_commands:null,_2d_or_3d:null,animation:null};
+  await submit(page,server,cue(184,location,point));await page.clock.runFor(100);
+  const moved=await snapshot(page);
+  expect(moved.content).toEqual(after.content);expect(moved.font).toBe(after.font);expect(moved.displayedFont).toBe(after.displayedFont);
+  expect(moved.anchor).toEqual({lng:point[0],lat:point[1]});expect(moved.fill).toBe('#FFE747');
+  expect(moved.nativeColor).toBe(false);expect(moved.extrusion).toBe(true);expect(moved.height).toBe(3000);expect(moved.depth).toBe(300);
+  expect(moved.orientation).toBe('yaw');expect(moved.animation.orbiting).toBe(true);expect(moved.animation.phase).toBe('orbiting');
+  expect(moved.animation.frames).toBeGreaterThan(after.animation.frames);
+  expect(moved.history.filter(item=>item.objectId===184&&item.phase==='fit')).toHaveLength(1);
+  const view=await page.evaluate(async()=>{
+    const s=GeoGlyphMapEngine.state,map=s.map,b=GeoGlyph3D.getBounds(),stats=GeoGlyph3D.stats();
+    const origin=maplibregl.MercatorCoordinate.fromLngLat(s.anchor),u=origin.meterInMercatorCoordinateUnits();
+    const values={heightMeters:s.baseHeightMeters*s.relativeSize/100,depthMeters:s.extrusionDepthMeters,...stats.animation.angles};
+    const matrix=map.transform.getProjectionDataForCustomLayer().mainMatrix;
+    const project=local=>{
+      const p=GeoGlyphGroundTransform.point(local,values,b),world=[origin.x+p[0]*u,origin.y-p[1]*u,p[2]*u,1];
+      const clip=[0,1,2,3].map(i=>world.reduce((sum,value,j)=>sum+matrix[j*4+i]*value,0));
+      return {x:(clip[0]/clip[3]+1)/2,y:(1-clip[1]/clip[3])/2,w:clip[3]};
+    };
+    const corners=[];for(const x of [b.minX,b.maxX])for(const y of [b.minY,b.maxY])for(const z of [b.minZ,b.maxZ])corners.push(project([x,y,z]));
+    return {center:project([(b.minX+b.maxX)/2,(b.minY+b.maxY)/2,(b.minZ+b.maxZ)/2]),corners,error:GeoGlyphConference.state.error,
+      geometry:{uploads:stats.uploads,disposals:stats.disposals,meshKey:stats.meshKey,meshBuilds:(await GeoGlyphFontService.workerStats()).meshBuilds}};
+  });
+  expect(view.center.x).toBeCloseTo(.5,4);expect(view.center.y).toBeCloseTo(.5,4);
+  for(const corner of view.corners){expect(corner.w).toBeGreaterThan(0);expect(Math.min(corner.x,1-corner.x,corner.y,1-corner.y)).toBeGreaterThanOrEqual(.095);}
+  expect(view.error).toBe('');expect(view.geometry).toEqual(before);
+  await submit(page,server,cue(185,location,point));await page.clock.runFor(100);
+  const repeated=await snapshot(page);
+  expect(repeated.content).toEqual(moved.content);expect(repeated.anchor).toEqual(moved.anchor);expect(repeated.fill).toBe('#FFE747');
+  expect(repeated.animation.orbiting).toBe(true);expect(repeated.animation.frames).toBeGreaterThan(moved.animation.frames);
+  expect(repeated.history.filter(item=>item.objectId===185&&item.phase==='fit')).toHaveLength(0);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.error)).toBe('');
+  await submit(page,server,cue(186,{special_commands:'Reset',whats_on_your_mind:'😴',choose_a_colour_colour:'Yellow'}));
+  const reset=await snapshot(page);
+  expect(reset.content).toEqual({kind:'emoji',message:'😴'});
+  expect(reset.font).toBe(await page.evaluate(()=>GeoGlyphConference.state.fontIds['Segoe UI Emoji']));
+  expect(reset.nativeColor).toBe(true);expect(reset.extrusion).toBe(false);expect(reset.animation.orbiting).toBe(false);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.error)).toBe('');
+  expect(errors).toEqual([]);
+});
+
+test('Begin requests a 30-second flight and holds later cues through the scripted introduction', async ({ page }) => {
+  const server = await open(page, { overview:true });
+  await installIntroductionClock(page);
+  await expectAustralia(page);
+  const anchor = (await snapshot(page)).anchor;
+  await page.evaluate(() => {
+    const map = GeoGlyphMapEngine.state.map, fly = map.flyTo.bind(map);
+    window.introFlights = [];
+    map.flyTo = options => {
+      window.introFlights.push({ duration:options.duration, start:performance.now(),
+        titleVisible:Boolean(document.getElementById('geoglyphConferenceTitle')),
+        phases:GeoGlyphConference.state.history.filter(item => item.objectId === 1).map(item => item.phase) });
+      // Verify the production request while completing this fixture's flight
+      // immediately: MapLibre may retain a real-time clock from construction.
+      return fly({...options,duration:0});
+    };
+    map.on('moveend', () => {
+      const flight = window.introFlights.at(-1);
+      if (flight && !flight.end) flight.end = performance.now();
+    });
+  });
+  server.records.push(cue(1, { special_commands:' Begin Geoglyph ', emojis:'👋', animation:'Face', _size_size:'Huge' }));
+  await poll(page);
+  await page.waitForFunction(() => window.introFlights.length === 1);
+  await page.emulateMedia({reducedMotion:'reduce'});
+  server.records.push(cue(2, { geoglyph_speaks:'AWAKE' }), cue(3, { special_commands:'Begin Geoglyph' }));
+  await poll(page);
+  expect(await page.evaluate(() => GeoGlyphConference.state.phase)).toBe('beginning');
+  expect((await snapshot(page)).history.some(item => item.objectId === 2 && item.phase === 'started')).toBe(false);
+  await completeIntroduction(page,1);
+  await applied(page, 2);
+  const flights = await page.evaluate(() => window.introFlights);
+  expect(flights).toHaveLength(1);
+  expect(flights[0]).toMatchObject({duration:30000,titleVisible:false});
+  expect(flights[0].phases).toEqual(['started','drawn','flight']);
+  const result = await snapshot(page);
+  expect(result.anchor).toEqual(anchor);
+  expect(result.content.message).toBe('AWAKE');
+  expect(result.history.filter(item => item.objectId === 1).map(item => item.phase)).toEqual(['started','drawn','flight','fit',...introductionMessages.map((_,index)=>`introduction-${index}`),'animation','applied']);
+  expect(result.history.filter(item => item.objectId === 3).map(item => item.phase)).toEqual(['ignored']);
+  expect(await page.evaluate(() => GeoGlyphConference.state.phase)).toBe('live');
+});
+
+test('Begin preserves native emoji colours before, during and after the flight', async ({ page }) => {
+  const server = await open(page, { overview:true, localModular:true });
+  await page.evaluate(() => {
+    const map = GeoGlyphMapEngine.state.map, fly = map.flyTo.bind(map);
+    const colours = () => {
+      const canvas = GeoGlyphMapEngine.state.lastDecal.canvas;
+      const pixels = canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+      let opaque=0, coloured=0, white=0;
+      for(let i=0;i<pixels.length;i+=4) if(pixels[i+3]>128) {
+        opaque++;
+        const r=pixels[i],g=pixels[i+1],b=pixels[i+2];
+        if(Math.max(r,g,b)-Math.min(r,g,b)>40)coloured++;
+        if(r>235&&g>235&&b>235)white++;
+      }
+      return { coloured:coloured/opaque, white:white/opaque, width:canvas.width, height:canvas.height,
+        samplingHeightPx:GeoGlyphMapEngine.state.lastDecal.samplingHeightPx };
+    };
+    window.beginColourSamples = {};
+    window.sampleBeginColours = colours;
+    map.flyTo = options => { window.beginColourSamples.before=colours(); return fly(options); };
+    map.on('render', () => {
+      if(window.beginColourSamples.mid || GeoGlyphConference.state.phase!=='beginning' || map.getZoom()<13 || !map.isMoving())return;
+      const decal=GeoGlyphMapEngine.state.lastDecal;
+      const points=decal.coordinates.map(point=>map.project(point));
+      const left=Math.max(0,Math.floor(Math.min(...points.map(p=>p.x))));
+      const top=Math.max(0,Math.floor(Math.min(...points.map(p=>p.y))));
+      const right=Math.min(map.getCanvas().width,Math.ceil(Math.max(...points.map(p=>p.x))));
+      const bottom=Math.min(map.getCanvas().height,Math.ceil(Math.max(...points.map(p=>p.y))));
+      if(right<=left||bottom<=top)return;
+      const capture=document.createElement('canvas');capture.width=map.getCanvas().width;capture.height=map.getCanvas().height;
+      const ctx=capture.getContext('2d');ctx.drawImage(map.getCanvas(),0,0);
+      const pixels=ctx.getImageData(left,top,right-left,bottom-top).data;
+      let yellow=0;
+      for(let i=0;i<pixels.length;i+=4)if(pixels[i]>150&&pixels[i+1]>90&&pixels[i+2]<180)yellow++;
+      window.beginColourSamples.mid={...colours(), yellowPixels:yellow, moving:map.isMoving()};
+    });
+  });
+  server.records.push(cue(1, { special_commands:'Begin Geoglyph' }));
+  await poll(page);
+  await page.waitForFunction(() => window.beginColourSamples.before);
+  const before=await page.evaluate(() => window.beginColourSamples.before);
+  expect(before.coloured).toBeGreaterThan(.65);
+  expect(before.white).toBeLessThan(.15);
+  // The expanded script changes to text later; sample the sleeping emoji at
+  // descent arrival, during its first five-second hold.
+  await page.waitForFunction(()=>GeoGlyphConference.state.history.some(item=>item.objectId===1&&item.phase==='fit'));
+  await page.waitForFunction(() => !GeoGlyphMapEngine.state.pendingBuild && !GeoGlyphMapEngine.state.rebuilding);
+  const samples=await page.evaluate(() => ({...window.beginColourSamples,after:window.sampleBeginColours()}));
+  expect(samples.mid.moving).toBe(true);
+  expect(samples.mid.yellowPixels).toBeGreaterThan(50);
+  for(const sample of [samples.mid,samples.after]) {
+    expect(sample.coloured).toBeGreaterThan(.65);
+    expect(sample.white).toBeLessThan(.15);
+  }
+  expect(samples.before.width).toBe(samples.after.width);
+  expect(samples.before.height).toBe(samples.after.height);
+  require('node:fs').writeFileSync(path.resolve(__dirname,'../../validation/intro-colour-samples.json'),JSON.stringify(samples,null,2)+'\n');
+});
+
+test('Begin waits for a delayed sleeping-emoji draw before starting its flight', async ({ page }) => {
+  const server = await open(page, { overview:true, portable:true });
+  await installIntroductionClock(page);
+  await page.emulateMedia({ reducedMotion:'reduce' });
+  await page.evaluate(() => {
+    const service = GeoGlyphFontService;
+    const gate = new Promise(resolve => { window.releaseSleepingFace = resolve; });
+    window.sleepingFaceEntered = false;
+    window.GeoGlyphFontService = { ...service, ensureFace:async (...args) => {
+      window.sleepingFaceEntered = true;
+      await gate;
+      return service.ensureFace(...args);
+    } };
+  });
+  const zoom = await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom());
+  server.records.push(cue(1, { special_commands:'Begin Geoglyph' }));
+  await poll(page);
+  await page.waitForFunction(() => window.sleepingFaceEntered);
+  expect((await snapshot(page)).history.map(item => item.phase)).toEqual(['started']);
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom())).toBeCloseTo(zoom, 8);
+  await page.evaluate(() => window.releaseSleepingFace());
+  await completeIntroduction(page,1);
+  expect((await snapshot(page)).history.map(item => item.phase)).toEqual(['started','drawn','flight','fit',...introductionMessages.map((_,i)=>`introduction-${i}`),'animation','applied']);
+});
+
+test('Reset interrupts a flight, drops preceding queued messages and prevents a late camera move', async ({ page }) => {
+  const server = await open(page, { overview:true });
+  server.records.push(cue(1, { special_commands:'Begin Geoglyph' }));
+  await poll(page);
+  await page.waitForFunction(() => GeoGlyphConference.state.history.some(item => item.phase === 'flight'));
+  server.records.push(cue(2, { geoglyph_speaks:'DISCARD' }), cue(3, { special_commands:'Reset', emojis:'👋' }, [140,-36]));
+  await poll(page);
+  await applied(page, 3);
+  await expectAustralia(page);
+  const before = await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom());
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom())).toBeCloseTo(before, 8);
+  const state = await snapshot(page);
+  expect(state.content).toEqual({ kind:'emoji', message:'😴' });
+  expect(state.anchor).toEqual(conferenceAnchor);
+  expect(state.history.some(item => item.objectId === 2)).toBe(false);
+  expect(state.history.some(item => item.objectId === 1 && item.phase === 'applied')).toBe(false);
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.arcgisPolling)).toBe(true);
+  // A second introduction remains usable after cancellation, including reduced motion.
+  await page.emulateMedia({ reducedMotion:'reduce' });
+  await submit(page, server, cue(4, { special_commands:'Begin Geoglyph' }));
+  expect(await page.evaluate(() => GeoGlyphConference.state.phase)).toBe('live');
+});
+
+test('Reset does not wait for a superseded font model to load', async ({ page }) => {
+  const server = await open(page, { records:[cue(1, { geoglyph_speaks:'BEFORE', _2d_or_3d:'3D' })] });
+  await applied(page, 1);
+  await gateModel(page, 'DELAYED');
+  server.records.push(cue(2, { geoglyph_speaks:'DELAYED' }));
+  await poll(page);
+  await page.waitForFunction(() => window.conferenceModelEntered);
+  server.records.push(cue(3, { special_commands:'Reset' }));
+  await poll(page);
+  await page.waitForFunction(() => GeoGlyphConference.state.lastAppliedId === 3, null, { timeout:5000 });
+  await page.evaluate(() => window.releaseConferenceModel());
+  await page.waitForTimeout(250);
+  await expectAustralia(page);
+  const state = await snapshot(page);
+  expect(state.content.message).toBe('😴');
+  expect(state.extrusion).toBe(false);
+  expect(state.history.some(item => item.objectId === 2 && item.phase === 'applied')).toBe(false);
+  expect(await page.evaluate(() => [GeoGlyphMapEngine.state.rebuilding, GeoGlyphMapEngine.state.conferenceApplying, GeoGlyphConference.state.applying])).toEqual([false,false,false]);
+});
+
+test('leaving Map during Begin releases the introduction so it can be started again', async ({ page }) => {
+  const server = await open(page, { overview:true });
+  server.records.push(cue(1, { special_commands:'Begin Geoglyph' }));
+  await poll(page);
+  await page.waitForFunction(() => GeoGlyphConference.state.history.some(item => item.phase === 'flight'));
+  await page.evaluate(() => GeoGlyphMapEngine.showCanvas());
+  await page.waitForFunction(() => GeoGlyphConference.state.phase !== 'beginning' && !GeoGlyphConference.state.applying);
+  await page.emulateMedia({ reducedMotion:'reduce' });
+  await page.evaluate(() => GeoGlyphMapEngine.showMap());
+  await page.evaluate(() => GeoGlyphMapEngine.startPolling());
+  await submit(page, server, cue(2, { special_commands:'Begin Geoglyph' }));
+  expect(await page.evaluate(() => GeoGlyphConference.state.phase)).toBe('live');
+});
+
+for (const animation of ['Orbit','Turn','Face']) test(`Reset restores the opening after ${animation} and keeps polling`, async ({ page }) => {
+  const server = await open(page, { records:[cue(1, { geoglyph_speaks:'LOCATE', animation,
+    _size_size:'Large', choose_a_font_font:'Forte', choose_a_colour_colour:'Pink' }, [140,-36])] });
+  await applied(page, 1);
+  expect((await snapshot(page)).animation.orbiting).toBe(true);
+  await submit(page, server, cue(2, { special_commands:'RESET', fit:'Fit' }));
+  await expectAustralia(page);
+  const state = await snapshot(page);
+  expect(state.content.message).toBe('😴');
+  expect(state.nativeColor).toBe(true);
+  expect(state.extrusion).toBe(false);
+  expect(state.height).toBe(300);
+  expect(state.depth).toBe(30);
+  expect(state.animation.orbiting).toBe(false);
+  expect(state.anchor).toEqual(conferenceAnchor);
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.arcgisPolling)).toBe(true);
+});
+
+test('overview suppresses automatic Fit and animation; reduced-motion Begin finishes the script at its anchor', async ({ page }) => {
+  await page.setViewportSize({ width:1000, height:720 });
+  const server = await open(page, { overview:true });
+  await expectAustralia(page);
+  const zoom = await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom());
+  await submit(page, server, cue(1, { geoglyph_speaks:'WAIT', animation:'Face', fit:'Fit' }, [139,-35]));
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom())).toBeCloseTo(zoom, 8);
+  expect((await snapshot(page)).animation.orbiting).toBe(false);
+  await page.emulateMedia({ reducedMotion:'reduce' });
+  await submit(page, server, cue(2, { SPECIAL_COMMANDS:'bEgIn' }));
+  const state = await snapshot(page);
+  expect(state.content).toEqual({ kind:'text', message:'Where are you Josh?' });
+  expect(state.extrusion).toBe(true);
+  expect(state.nativeColor).toBe(false);
+  expect(state.anchor).toEqual({ lng:139, lat:-35 });
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom())).toBeGreaterThan(zoom+2);
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.isMoving())).toBe(false);
+});
+
+test('modular startup opens the Map sidebar with emoji defaults and anonymous polling even with no responses', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => { window.conferenceLocalFontCalls = 0; window.queryLocalFonts = () => { window.conferenceLocalFontCalls++; throw new Error('Conference fonts must be bundled'); }; });
+  const server = await open(page, { overview:true });
+  expect(await page.evaluate(() => window.conferenceLocalFontCalls)).toBe(0);
+  await expect(page.locator('#mapControlSidebar')).toBeVisible();
+  await expect(page.locator('#geoglyphMapEditor')).not.toHaveClass(/is-collapsed/);
+  await expect(page.locator('#mapArcgisInterval')).toHaveValue('1');
+  const state = await page.evaluate(() => ({
+    preview: GeoGlyphMapEngine.state.previewActive, mode: GeoGlyphMapEngine.state.mode,
+    polling: GeoGlyphMapEngine.state.arcgisPolling, font: GeoGlyphMapEngine.state.selectedFontId,
+    emoji: GeoGlyphConference.state.fontIds['Segoe UI Emoji'], native: GeoGlyphMapEngine.state.nativeColor,
+    extrusion: GeoGlyphMapEngine.state.extrusionEnabled, fontCount: Object.keys(GeoGlyphConference.state.fontIds).length
+  }));
+  expect(state).toEqual({ preview: true, mode: 'arcgis', polling: true, font: state.emoji, emoji: state.emoji, native: true, extrusion: false, fontCount: 6 });
+  await expect.poll(() => server.queries.length).toBeGreaterThan(0);
+  for (const request of server.requests) {
+    expect(request.params.has('token')).toBe(false);
+    expect(request.headers.authorization).toBeUndefined();
+    expect(request.headers.cookie).toBeUndefined();
+  }
+  expect(errors).toEqual([]);
+});
+
+test('modular file startup can load conference fonts without fetch access to local files', async ({ page }) => {
+  const fontRequests = [];
+  page.on('request', request => { if (/\/fonts\/.*\.(ttf|otf)$/i.test(request.url())) fontRequests.push(request.url()); });
+  await open(page, { localModular:true, overview:true });
+  await expectAustralia(page);
+  expect(await page.evaluate(() => GeoGlyphConference.state.error)).toBe('');
+  expect((await snapshot(page)).content.message).toBe('😴');
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.displayedFontId)).toBe(await page.evaluate(() => GeoGlyphConference.state.fontIds['Segoe UI Emoji']));
+  expect(fontRequests).toEqual([]);
+});
+
+test('an unavailable local font pack explains how to open or rebuild the app', async ({ page }) => {
+  await page.route('**/conference-font-data.js', route => route.abort());
+  await expect(open(page, { localModular:true, overview:true })).rejects.toThrow(/Could not load the local font pack.*GeoGlyph_Locate_2026.html/);
+  await expect(page.locator('#mapArcgisLiveValue')).toContainText('local font pack');
+});
+
+test('HTTP font acquisition failures identify the bundled font instead of only Failed to fetch', async ({ page }) => {
+  await page.route('**/src/fonts/seguiemj.ttf', route => route.abort());
+  await expect(open(page, { overview:true })).rejects.toThrow(/Could not load bundled font Segoe UI Emoji/);
+  expect(await page.evaluate(() => GeoGlyphConference.state.ready)).toBe(false);
+});
+
+test('portable startup holds Australia and ignores historical commands and content', async ({ page }) => {
+  const server = await open(page, { portable:true, overview:true, records:[cue(1, { special_commands:'Begin Geoglyph' }), cue(2, { special_commands:'Reset', emojis:'👋' }, [138.6, -34.9])] });
+  const before = await snapshot(page);
+  expect(before.content).toEqual({ kind: 'emoji', message: '😴' });
+  expect(before.nativeColor).toBe(true);
+  expect(before.extrusion).toBe(false);
+  expect(before.height).toBe(300);
+  expect(before.anchor).toEqual(conferenceAnchor);
+  expect(server.queries[0].get('orderByFields')).toMatch(/CreationDate DESC.*objectid DESC/i);
+  expect(server.queries[0].get('returnGeometry')).toBe('true');
+  expect(server.queries[0].get('outSR')).toBe('4326');
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.initialFitCount)).toBe(0);
+  await poll(page);
+  await expect.poll(() => page.evaluate(() => GeoGlyphMapEngine.state.arcgisPollBusy)).toBe(false);
+  expect((await snapshot(page)).history).toEqual([]);
+  expect(await page.evaluate(() => ({ phase:GeoGlyphConference.state.phase, cursor:GeoGlyphConference.state.lastQueuedId }))).toEqual({ phase:'overview', cursor:2 });
+});
+
+test('emoji cues override text styling, 3D and animation while still applying point, size and Fit', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'LOCATE', choose_a_font_font: 'Forte', animation: 'Turn' })] });
+  await applied(page, 1);
+  expect((await snapshot(page)).animation.orbiting).toBe(true);
+  await submit(page, server, cue(2, { emojis: '😴', geoglyph_speaks: 'Ignored', random_font: 'Yes', choose_a_font_font: 'Chiller',
+    choose_a_colour_colour: 'Orange', _2d_or_3d: '3D', animation: 'Face', _size_size: 'Medium', fit: 'Fit' }, [139, -35]));
+  const state = await snapshot(page);
+  expect(state.content).toEqual({ kind: 'emoji', message: '😴' });
+  expect(state.displayedFont).toBe(await page.evaluate(() => GeoGlyphConference.state.fontIds['Segoe UI Emoji']));
+  expect(state.nativeColor).toBe(true);
+  expect(state.extrusion).toBe(false);
+  expect(state.animation.orbiting).toBe(false);
+  expect(state.height).toBe(3000);
+  expect(state.depth).toBe(300);
+  expect(state.anchor).toEqual({ lng: 139, lat: -35 });
+  const phases = state.history.filter(item => item.objectId === 2).map(item => item.phase);
+  expect(phases.indexOf('drawn')).toBeLessThan(phases.indexOf('fit'));
+  expect(phases.at(-1)).toBe('applied');
+});
+
+test('text prioritises speech and restores the last text font after emoji while applying the bright fill', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'HELLO', choose_a_font_font: 'Chiller', choose_a_colour_colour: 'Orange' })] });
+  await applied(page, 1);
+  const first = await snapshot(page);
+  expect(first.fill.toUpperCase()).toBe('#FF8500');
+  await submit(page, server, cue(2, { emojis: '👋' }));
+  await submit(page, server, cue(3, { geoglyph_speaks: 'Speech wins', whats_on_your_mind: 'Ignored', choose_a_colour_colour: 'Pink' }));
+  const state = await snapshot(page);
+  expect(state.content).toEqual({ kind: 'text', message: 'Speech wins' });
+  expect(state.font).toBe(first.font);
+  expect(state.nativeColor).toBe(false);
+  expect(state.fill.toUpperCase()).toBe('#FF45B8');
+  expect(state.outline).toBe(first.outline);
+  await submit(page, server, cue(4, { whats_on_your_mind: 'Fallback thought' }));
+  expect((await snapshot(page)).content.message).toBe('Fallback thought');
+});
+
+test('new submission IDs randomise only approved text fonts once, even for identical messages', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'SAME' })] });
+  await applied(page, 1);
+  const ids = await page.evaluate(() => ({ ...GeoGlyphConference.state.fontIds }));
+  const eligible = ['Gill Sans', 'Forte', 'Chiller', 'Magneto', 'Showcard Gothic'].map(name => ids[name]);
+  let previous = (await snapshot(page)).font;
+  for (let id = 2; id <= 5; id++) {
+    await submit(page, server, cue(id, { geoglyph_speaks: 'SAME', random_font: 'Yes', choose_a_font_font: 'Forte' }));
+    const current = (await snapshot(page)).font;
+    expect(eligible).toContain(current);
+    expect(current).not.toBe(ids['Segoe UI Emoji']);
+    expect(current).not.toBe(previous);
+    previous = current;
+  }
+  const before = await snapshot(page);
+  await poll(page);
+  await expect.poll(() => page.evaluate(() => GeoGlyphMapEngine.state.arcgisPollBusy)).toBe(false);
+  const after = await snapshot(page);
+  expect(after.font).toBe(before.font);
+  expect(after.history.filter(item => item.phase === 'applied').map(item => item.objectId)).toEqual([1, 2, 3, 4, 5]);
+});
+
+test('controls-only cues retain content and an existing emoji keeps its drawing restrictions', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { emojis: '😴' })] });
+  await applied(page, 1);
+  await submit(page, server, cue(2, { _2d_or_3d: '3D', animation: 'Orbit', random_font: 'Yes', _size_size: 'Medium' }));
+  const emoji = await snapshot(page);
+  expect(emoji.content).toEqual({ kind: 'emoji', message: '😴' });
+  expect(emoji.extrusion).toBe(false);
+  expect(emoji.nativeColor).toBe(true);
+  expect(emoji.height).toBe(3000);
+  await submit(page, server, cue(3, { geoglyph_speaks: 'TEXT', choose_a_font_font: 'Magneto' }));
+  await submit(page, server, cue(4, { _2d_or_3d: '3D', choose_a_colour_colour: 'Yellow' }));
+  const text = await snapshot(page);
+  expect(text.content).toEqual({ kind: 'text', message: 'TEXT' });
+  expect(text.extrusion).toBe(true);
+  expect(text.fill.toUpperCase()).toBe('#FFE747');
+});
+
+test('a paginated burst is rendered in Object ID order without dropping or replaying cues', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'START' })] });
+  await applied(page, 1);
+  server.records.push(...[2, 3, 4, 5, 6, 7].map(id => cue(id, { geoglyph_speaks: `CUE ${id}` })));
+  await poll(page);
+  await applied(page, 7);
+  const history = (await snapshot(page)).history;
+  expect(history.filter(item => item.phase === 'applied').map(item => item.objectId)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  expect(history.filter(item => item.phase === 'failed')).toEqual([]);
+  const ascending = server.queries.filter(params => /objectid ASC/i.test(params.get('orderByFields') || ''));
+  expect(ascending.length).toBeGreaterThanOrEqual(3);
+  expect(ascending.every(params => params.get('returnGeometry') === 'true')).toBe(true);
+  expect((await snapshot(page)).content.message).toBe('CUE 7');
+});
+
+test('2D and Fit wait for the requested font model to finish drawing', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'BEFORE', _2d_or_3d: '3D' })] });
+  await applied(page, 1);
+  await gateModel(page, 'Await draw');
+  server.records.push(cue(2, { geoglyph_speaks: 'Await draw', _2d_or_3d: '2D', fit: 'Fit' }, [139.5, -35.5]));
+  await poll(page);
+  await page.waitForFunction(() => window.conferenceModelEntered);
+  expect(await page.evaluate(() => window.conferenceModeAtModel)).toBe(false);
+  expect(await page.evaluate(() => GeoGlyphConference.state.lastAppliedId)).toBe(1);
+  const blocked = (await snapshot(page)).history.filter(item => item.objectId === 2).map(item => item.phase);
+  expect(blocked).toContain('started');
+  expect(blocked).not.toContain('drawn');
+  expect(blocked).not.toContain('fit');
+  await page.evaluate(() => window.releaseConferenceModel());
+  await applied(page, 2);
+  const finished = await snapshot(page);
+  expect(finished.history.filter(item => item.objectId === 2).map(item => item.phase)).toEqual(['started', 'drawn', 'fit', 'applied']);
+  expect(finished.anchor).toEqual({ lng: 139.5, lat: -35.5 });
+  expect(finished.extrusion).toBe(false);
+});
+
+test('animation selections ensure the chosen mode runs, override 2D and continue through blank selections', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'ORBIT', _2d_or_3d: '2D', animation: 'Orbit', fit: 'Fit' })] });
+  await applied(page, 1);
+  for (const [id, animation, orientation] of [[2, 'Orbit', 'fixed'], [3, 'Turn', 'yaw'], [4, 'Face', 'billboard']]) {
+    await submit(page, server, cue(id, { geoglyph_speaks: animation.toUpperCase(), _2d_or_3d: '2D', animation }));
+    const current = await snapshot(page);
+    expect(current.extrusion).toBe(true);
+    expect(current.orientation).toBe(orientation);
+    expect(current.animation.orbiting).toBe(true);
+  }
+  await submit(page, server, cue(5, { geoglyph_speaks: 'LOCATE', choose_a_font_font: 'Forte' }));
+  expect((await snapshot(page)).animation.orbiting).toBe(true);
+  await submit(page, server, cue(6, { fit: 'Fit' }));
+  expect((await snapshot(page)).animation.orbiting).toBe(false);
+  const phases = (await snapshot(page)).history.filter(item => item.objectId === 1).map(item => item.phase);
+  expect(phases.indexOf('fit')).toBeLessThan(phases.indexOf('animation'));
+});
+
+test('all four size presets remain exact in 2D and 3D and Huge survives settings restoration', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'A', _size_size: 'Small' })] });
+  await applied(page, 1);
+  let id = 1;
+  for (const [size, height, depth] of [['Small', 300, 30], ['Medium', 3000, 300], ['Large', 30000, 3000], ['Huge', 300000, 6000]]) {
+    for (const mode of ['2D', '3D']) {
+      await submit(page, server, cue(++id, { _size_size: size, _2d_or_3d: mode }));
+      const state = await snapshot(page);
+      expect(state.height).toBe(height);
+      expect(state.depth).toBe(depth);
+      expect(state.extrusion).toBe(mode === '3D');
+      expect(state.relativeSize).toBe(100);
+    }
+  }
+  const saved = await page.evaluate(() => GeoGlyphUi.collectMapSettings());
+  expect(saved.baseHeightMeters).toBe(300000);
+  expect(saved.extrusionDepthMeters).toBe(6000);
+  await page.evaluate(settings => {
+    GeoGlyphMapEngine.state.baseHeightMeters = 300;
+    GeoGlyphMapEngine.state.extrusionDepthMeters = 30;
+    GeoGlyphUi.applyMapSettings(settings);
+  }, saved);
+  await expect.poll(() => page.evaluate(() => GeoGlyphMapEngine.state.baseHeightMeters)).toBe(300000);
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.extrusionDepthMeters)).toBe(6000);
+});
+
+test('manual placement survives repeated polls until a new cue supplies another survey point', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { emojis: '😴' }, [138.6, -34.9])] });
+  await applied(page, 1);
+  await page.evaluate(() => GeoGlyphMapEngine.state.map.fire('click', { lngLat: { lng: 140, lat: -36 } }));
+  await expect.poll(() => page.evaluate(() => ({ ...GeoGlyphMapEngine.state.anchor }))).toEqual({ lng: 140, lat: -36 });
+  await poll(page);
+  await expect.poll(() => page.evaluate(() => GeoGlyphMapEngine.state.arcgisPollBusy)).toBe(false);
+  expect((await snapshot(page)).anchor).toEqual({ lng: 140, lat: -36 });
+  await submit(page, server, cue(2, { emojis: '👋' }));
+  expect((await snapshot(page)).anchor).toEqual({ lng: 140, lat: -36 });
+  await submit(page, server, cue(3, { emojis: '😴' }, [139, -35]));
+  expect((await snapshot(page)).anchor).toEqual({ lng: 139, lat: -35 });
+});
+
+test('Stop lets an accepted cue finish and Resume drains queued submissions without replay', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'START' })] });
+  await applied(page, 1);
+  await gateModel(page, 'BLOCKED');
+  server.records.push(cue(2, { geoglyph_speaks: 'BLOCKED' }), cue(3, { geoglyph_speaks: 'NEXT' }), cue(4, { geoglyph_speaks: 'LAST' }));
+  await poll(page);
+  await page.waitForFunction(() => window.conferenceModelEntered && GeoGlyphConference.state.lastQueuedId === 4);
+  await page.locator('#mapArcgisStopBtn').evaluate(button => button.click());
+  await page.evaluate(() => window.releaseConferenceModel());
+  await applied(page, 2);
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.arcgisPolling)).toBe(false);
+  expect(await page.evaluate(() => GeoGlyphConference.state.queue.length)).toBe(2);
+  const queryCount = server.queries.length;
+  await page.waitForTimeout(1200);
+  expect(server.queries.length).toBe(queryCount);
+  expect(await page.evaluate(() => GeoGlyphConference.state.lastAppliedId)).toBe(2);
+  await page.locator('#mapArcgisStartBtn').evaluate(button => button.click());
+  await applied(page, 4);
+  expect((await snapshot(page)).history.filter(item => item.phase === 'applied').map(item => item.objectId)).toEqual([1, 2, 3, 4]);
+});
+
+test('an unsupported 3D outline preserves the previous display and does not block later cues', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'LOCATE', _2d_or_3d: '3D' })] });
+  await applied(page, 1);
+  const before = await snapshot(page);
+  server.records.push(cue(2, { geoglyph_speaks: 'CONTINUE', choose_a_font_font: 'Forte', _2d_or_3d: '3D' }));
+  await poll(page);
+  await page.waitForFunction(() => GeoGlyphConference.state.history.some(item => item.objectId === 2 && item.phase === 'failed'));
+  const after = await snapshot(page);
+  expect(after.content).toEqual(before.content);
+  expect(after.displayedFont).toBe(before.displayedFont);
+  expect(await page.evaluate(() => [GeoGlyphMapEngine.state.message, GeoGlyphMapEngine.state.arcgisMessage])).toEqual(['LOCATE', 'LOCATE']);
+  await submit(page, server, cue(3, { emojis: '😎' }));
+  expect((await snapshot(page)).content.message).toBe('😎');
+});
+
+test('random 3D selection skips incompatible outlines using the normal rendering policy', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { geoglyph_speaks: 'START', _2d_or_3d: '3D' })] });
+  await applied(page, 1);
+  await page.evaluate(() => { Math.random = () => 0; });
+  await submit(page, server, cue(2, { geoglyph_speaks: 'CONTINUE', random_font: 'Yes', _2d_or_3d: '3D' }));
+  expect((await snapshot(page)).font).not.toBe(await page.evaluate(() => GeoGlyphConference.state.fontIds.Forte));
+  expect((await snapshot(page)).extrusion).toBe(true);
+});
+
+test('a failed opening Fit leaves the startup fit available for the next valid cue', async ({ page }) => {
+  const server = await open(page);
+  await page.evaluate(() => {
+    window.savedConference3D = GeoGlyph3D;
+    window.GeoGlyph3D = { ...GeoGlyph3D, fitCurrent: () => false };
+  });
+  server.records.push(cue(1, { geoglyph_speaks: 'LOCATE', _2d_or_3d: '3D' }));
+  await poll(page);
+  await page.waitForFunction(() => GeoGlyphConference.state.history.some(item => item.objectId === 1 && item.phase === 'failed'));
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.initialFitCount)).toBe(0);
+  await page.evaluate(() => { window.GeoGlyph3D = window.savedConference3D; });
+  await submit(page, server, cue(2, { emojis: '😴' }));
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.initialFitCount)).toBe(1);
+});
+
+test('unanswered Survey123 location retains the conference anchor at startup and manual placement on later cues', async ({ page }) => {
+  const server = await open(page, { records: [cue(1, { emojis:'😴', fit:'Fit' }, [0,0])] });
+  await applied(page, 1);
+  expect((await snapshot(page)).anchor).toEqual(conferenceAnchor);
+  const center = await page.evaluate(() => GeoGlyphMapEngine.state.map.getCenter().toArray());
+  expect(center[0]).toBeCloseTo(conferenceAnchor.lng, 2);
+  expect(center[1]).toBeCloseTo(conferenceAnchor.lat, 2);
+  await page.evaluate(() => GeoGlyphMapEngine.state.map.fire('click', { lngLat:{ lng:140, lat:-36 } }));
+  await submit(page, server, cue(2, { emojis:'😎', fit:'Fit' }, [0,0]));
+  expect((await snapshot(page)).anchor).toEqual({ lng:140, lat:-36 });
+  await submit(page, server, cue(3, { emojis:'😴', fit:'Fit' }, [139,-35]));
+  expect((await snapshot(page)).anchor).toEqual({ lng:139, lat:-35 });
+});
+
+test('every new content submission fits once, including identical text, but unchanged polls and controls do not', async ({ page }) => {
+  const server = await open(page, { records:[cue(1,{ emojis:'😴' })] });
+  await applied(page,1);
+  for (const [id, attributes] of [[2,{ emojis:'😎' }], [3,{ geoglyph_speaks:'HELLO' }],
+      [4,{ whats_on_your_mind:'HELLO' }], [5,{ whats_on_your_mind:'HELLO', fit:'Fit' }]]) {
+    await submit(page,server,cue(id,attributes));
+    const phases = (await snapshot(page)).history.filter(item=>item.objectId===id).map(item=>item.phase);
+    expect(phases).toEqual(['started','drawn','fit','applied']);
+  }
+  await submit(page,server,cue(6,{ choose_a_colour_colour:'Orange' }));
+  expect((await snapshot(page)).history.filter(item=>item.objectId===6).map(item=>item.phase)).toEqual(['started','drawn','applied']);
+  const before = (await snapshot(page)).history;
+  await poll(page);
+  await expect.poll(()=>page.evaluate(()=>GeoGlyphMapEngine.state.arcgisPollBusy)).toBe(false);
+  expect((await snapshot(page)).history).toEqual(before);
+});
+
+test('automatic Fit waits for a delayed new message after switching from 3D to 2D', async ({ page }) => {
+  const server = await open(page,{ records:[cue(1,{ geoglyph_speaks:'BEFORE', _2d_or_3d:'3D' })] });
+  await applied(page,1);
+  await gateModel(page,'AUTOMATIC');
+  server.records.push(cue(2,{ geoglyph_speaks:'AUTOMATIC', _2d_or_3d:'2D' }));
+  await poll(page);
+  await page.waitForFunction(()=>window.conferenceModelEntered);
+  expect(await page.evaluate(()=>window.conferenceModeAtModel)).toBe(false);
+  expect((await snapshot(page)).history.filter(item=>item.objectId===2).map(item=>item.phase)).toEqual(['started']);
+  await page.evaluate(()=>window.releaseConferenceModel());
+  await applied(page,2);
+  expect((await snapshot(page)).history.filter(item=>item.objectId===2).map(item=>item.phase)).toEqual(['started','drawn','fit','applied']);
+});
+
+test('explicit controls-only Fit waits for the requested 3D mesh before fitting', async ({ page }) => {
+  const server = await open(page,{ records:[cue(1,{ geoglyph_speaks:'HELLO' })] });
+  await applied(page,1);
+  await page.evaluate(()=>{
+    const api=GeoGlyph3D;
+    window.conferenceMeshEntered=false;
+    window.GeoGlyph3D={...api,prepare:async(...args)=>{
+      if(!window.conferenceMeshEntered){window.conferenceMeshEntered=true;await new Promise(resolve=>{window.releaseConferenceMesh=resolve;});}
+      return api.prepare(...args);
+    }};
+  });
+  server.records.push(cue(2,{ _2d_or_3d:'3D', fit:'Fit' }));
+  await poll(page);
+  await page.waitForFunction(()=>window.conferenceMeshEntered);
+  expect((await snapshot(page)).history.filter(item=>item.objectId===2).map(item=>item.phase)).toEqual(['started']);
+  await page.evaluate(()=>window.releaseConferenceMesh());
+  await applied(page,2);
+  expect((await snapshot(page)).extrusion).toBe(true);
+  expect((await snapshot(page)).history.filter(item=>item.objectId===2).map(item=>item.phase)).toEqual(['started','drawn','fit','applied']);
+});
+
+test('automatic message fits preserve an active animation through framing, while explicit Fit stops it', async ({ page }) => {
+  const server = await open(page,{ records:[cue(1,{ geoglyph_speaks:'HELLO', animation:'Turn' })] });
+  await applied(page,1);
+  await page.evaluate(()=>{
+    window.conferenceFitFrames=[];
+    GeoGlyphMapEngine.state.map.on('move',()=>{
+      if(GeoGlyphConference.state.applying){const a=GeoGlyph3D.stats().animation;
+        if(a.phase==='framing')window.conferenceFitFrames.push(a.orbiting);
+      }
+    });
+  });
+  await submit(page,server,cue(2,{ whats_on_your_mind:'LOCATE' }));
+  expect((await snapshot(page)).animation.orbiting).toBe(true);
+  expect((await snapshot(page)).orientation).toBe('yaw');
+  const frames=await page.evaluate(()=>window.conferenceFitFrames);
+  expect(frames.length).toBeGreaterThan(0);
+  expect(frames.every(Boolean)).toBe(true);
+  await submit(page,server,cue(3,{ whats_on_your_mind:'HELLO', fit:'Fit' }));
+  expect((await snapshot(page)).animation.orbiting).toBe(false);
+  expect((await snapshot(page)).history.filter(item=>item.objectId===3&&item.phase==='fit')).toHaveLength(1);
+});
+
+test('slow basemap tiles do not block startup, polling or the first glyph Fit', async ({ page }) => {
+  const server = await open(page, { delayTiles: true, records: [cue(1, { emojis: '😴' })] });
+  try {
+    await applied(page, 1);
+    expect((await snapshot(page)).content.message).toBe('😴');
+    expect(await page.evaluate(() => GeoGlyphMapEngine.state.initialFitCount)).toBe(1);
+  } finally { server.releaseTiles(); }
+});
+
+for (const failure of ['read', 'write']) test(`Tier 1: denied storage ${failure} preserves startup and theme controls`, async ({ page }) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(kind => {
+    if (kind === 'read') Object.defineProperty(window, 'localStorage', { configurable:true,
+      get() { throw new DOMException('Synthetic denied storage', 'SecurityError'); } });
+    else Storage.prototype.setItem = function () { throw new DOMException('Synthetic full storage', 'QuotaExceededError'); };
+  }, failure);
+  await open(page, { overview:true });
+  await page.locator('#themeLightBtn').evaluate(button => button.click());
+  expect(await page.evaluate(() => GeoGlyphStudio.state.theme)).toBe('light');
+  expect(await page.evaluate(() => GeoGlyphConference.state.ready)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('Tier 1: manual selection during a delayed cue releases rebuilding without another submission', async ({ page }) => {
+  const server = await open(page, { records:[cue(1, { geoglyph_speaks:'INITIAL', _2d_or_3d:'3D' })] });
+  await gateModel(page, 'DELAYED CUE');
+  server.records.push(cue(2, { geoglyph_speaks:'DELAYED CUE' })); await poll(page);
+  await page.waitForFunction(() => window.conferenceModelEntered);
+  await page.evaluate(async () => {
+    await GeoGlyphMapEngine.selectFont(GeoGlyphConference.state.fontIds['Magneto']);
+    window.releaseConferenceModel();
+  });
+  await page.waitForFunction(() => {
+    const s=GeoGlyphMapEngine.state;
+    return !s.rebuilding && !s.conferenceApplying && !s.pendingBuild && s.displayedFontId===GeoGlyphConference.state.fontIds['Magneto'];
+  });
+  await page.evaluate(() => {
+    GeoGlyphMapEngine.state.message='MANUAL AFTER CUE';
+    GeoGlyphMapEngine.state.arcgisMessage='MANUAL AFTER CUE';
+    GeoGlyphMapEngine.queueRebuild(false);
+  });
+  await page.waitForFunction(() => {
+    const s=GeoGlyphMapEngine.state;
+    return !s.rebuilding && !s.pendingBuild && s.committedSelection?.message==='MANUAL AFTER CUE';
+  });
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.conferenceRebuildPending)).toBe(false);
+  expect(await page.evaluate(() => GeoGlyph3D.isVisible())).toBe(true);
+});
+
+test('Tier 1: worker failure replaces the worker and renders the next text', async ({ page }) => {
+  await page.addInitScript(() => {
+    const NativeWorker=window.Worker;
+    window.Worker=class extends NativeWorker {
+      terminate() { this.regressionTerminated=true; return super.terminate(); }
+      postMessage(message, ...rest) {
+        if (message?.type==='model' && window.failNextFontWorker) {
+          window.failNextFontWorker=false; window.regressionFailedWorker=this;
+          setTimeout(() => this.onerror?.({message:'Synthetic worker failure'}), 0); return;
+        }
+        return super.postMessage(message, ...rest);
+      }
+    };
+  });
+  const server=await open(page, { records:[cue(1, {geoglyph_speaks:'FIRST', _2d_or_3d:'3D'})] });
+  await page.evaluate(() => { window.failNextFontWorker=true; });
+  await submit(page, server, cue(2, {geoglyph_speaks:'WORKER RECOVERED'}));
+  expect(await page.evaluate(() => window.regressionFailedWorker?.regressionTerminated)).toBe(true);
+  expect((await snapshot(page)).content.message).toBe('WORKER RECOVERED');
+  expect(await page.evaluate(() => GeoGlyph3D.isVisible())).toBe(true);
+});
+
+test('Tier 1: Start recovers failed font startup without duplicate fonts or reload', async ({ page }) => {
+  let unavailable=true, attempts=0;
+  await page.route('**/src/fonts/seguiemj.ttf', route => {
+    attempts++;
+    return unavailable ? route.fulfill({status:404,body:'Synthetic font failure'}) : route.continue();
+  });
+  await expect(open(page, {overview:true})).rejects.toThrow(/HTTP 404/);
+  expect(attempts).toBe(1); unavailable=false;
+  await page.locator('#mapArcgisStartBtn').evaluate(button => button.click());
+  await page.waitForFunction(() => GeoGlyphConference.state.ready && GeoGlyphConference.state.baselined);
+  expect(attempts).toBe(2);
+  const registered=require('../../src/fonts/manifest.json').filter(font=>!font.fallback).length;
+  expect(await page.evaluate(() => GeoGlyphStudio.state.fonts.filter(font => font.source==='conference').length)).toBe(registered);
+  expect(await page.evaluate(() => GeoGlyphConference.state.error)).toBe('');
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.arcgisPolling)).toBe(true);
+  expect(await page.evaluate(() => GeoGlyphConference.retryStartup())).toBe(true);
+  expect(attempts).toBe(2);
+});
+
+test('Tier 2: shared graphics context restores and accepts another 3D cue', async ({ page }, testInfo) => {
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const server=await open(page,{records:[cue(1,{geoglyph_speaks:'RESTORE',_2d_or_3d:'3D'})]});
+  await applied(page,1);
+  const graphics=await page.evaluate(()=>{
+    const map=GeoGlyphMapEngine.state.map,gl=map.getCanvas().getContext('webgl2');
+    const debug=gl.getExtension('WEBGL_debug_renderer_info');
+    window.regressionContext=gl.getExtension('WEBGL_lose_context');
+    if(!window.regressionContext)return {supported:false};
+    window.contextLostCount=0;window.contextRestoredCount=0;window.restoredRenderCount=0;
+    map.on('webglcontextlost',()=>window.contextLostCount++);
+    map.on('webglcontextrestored',()=>window.contextRestoredCount++);
+    map.on('render',()=>{if(window.contextRestoredCount)window.restoredRenderCount++;});
+    return {supported:true,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):'unavailable',dpr:devicePixelRatio,
+      width:map.getCanvas().width,height:map.getCanvas().height};
+  });
+  test.skip(!graphics.supported,'Context-loss extension unavailable');
+  await testInfo.attach('graphics-environment',{body:JSON.stringify(graphics),contentType:'application/json'});
+  await page.evaluate(()=>window.regressionContext.loseContext());
+  await page.waitForFunction(()=>window.contextLostCount===1);
+  await page.evaluate(()=>window.regressionContext.restoreContext());
+  await page.waitForFunction(()=>window.contextRestoredCount===1&&window.restoredRenderCount>0);
+  await submit(page,server,cue(2,{geoglyph_speaks:'RECOVERED',_2d_or_3d:'3D'}));
+  expect(await page.evaluate(()=>GeoGlyph3D.isVisible())).toBe(true);
+  expect((await snapshot(page)).content.message).toBe('RECOVERED');
+  expect(errors).toEqual([]);
+});
+
+test('Tier 2: a paused cue queue bounds admission without skipping its cursor', async ({page}) => {
+  const server=await open(page,{overview:true});
+  await page.evaluate(()=>GeoGlyphConference.pause());
+  for(let id=1;id<=125;id++)server.records.push(cue(id,{geoglyph_speaks:'BOUNDED '+id}));
+  for(let batch=0;batch<13;batch++){
+    const before=await page.evaluate(()=>GeoGlyphConference.state.lastQueuedId);
+    if(before===100)break;
+    await poll(page);
+    await page.waitForFunction(previous=>!GeoGlyphMapEngine.state.arcgisPollBusy&&GeoGlyphConference.state.lastQueuedId>previous,before);
+  }
+  expect(await page.evaluate(()=>GeoGlyphConference.state.queue.length)).toBe(100);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.lastQueuedId)).toBe(100);
+  const queries=server.queries.length;await poll(page);
+  await page.waitForFunction(()=>!GeoGlyphMapEngine.state.arcgisPollBusy);
+  expect(server.queries.length).toBe(queries+1);
+  expect(server.queries.at(-1).get('where')).toContain('UPPER(');
+  expect(await page.evaluate(()=>GeoGlyphConference.state.queue.map(row=>row.objectId))).toEqual(Array.from({length:100},(_,i)=>i+1));
+  server.records.push(cue(126,{special_commands:' ReSeT '}));await poll(page);
+  await page.waitForFunction(()=>!GeoGlyphMapEngine.state.arcgisPollBusy);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.queue.map(row=>row.objectId))).toEqual([126]);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.lastQueuedId)).toBe(126);
+});
+
+test('Tier 2: injected visibility pauses camera deadlines and cue admission until return', async ({ page }) => {
+  const server=await open(page, {records:[cue(1,{geoglyph_speaks:'VISIBLE',_2d_or_3d:'3D'})]});
+  await applied(page,1);
+  await page.evaluate(() => {
+    const map=GeoGlyphMapEngine.state.map;
+    window.visibilityMoving=map.isMoving;
+    map.isMoving=()=>true;
+    window.visibilityWait='pending';
+    window.visibilityPromise=GeoGlyphMapEngine.waitForCamera(()=>true,100).then(
+      ()=>{window.visibilityWait='complete';}, error=>{window.visibilityWait=error.message;});
+    Object.defineProperty(document,'hidden',{configurable:true,value:true});
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  server.records.push(cue(2,{geoglyph_speaks:'AFTER VISIBILITY'}));
+  await poll(page);
+  // This explicitly injects visibility and exercises a real map/DOM wait. It
+  // does not emulate browser background throttling or run a prolonged hide.
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(()=>window.visibilityWait)).toBe('pending');
+  expect(await page.evaluate(()=>GeoGlyphConference.state.lastAppliedId)).toBe(1);
+  await page.evaluate(() => {
+    GeoGlyphMapEngine.state.map.isMoving=window.visibilityMoving;
+    delete document.hidden;
+    document.dispatchEvent(new Event('visibilitychange'));
+    return window.visibilityPromise;
+  });
+  expect(await page.evaluate(()=>window.visibilityWait)).toBe('complete');
+  await poll(page);await applied(page,2);
+  expect((await snapshot(page)).content.message).toBe('AFTER VISIBILITY');
+});

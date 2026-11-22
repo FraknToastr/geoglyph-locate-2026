@@ -4,5 +4,6 @@
   {"key":"Forte","name":"Forte","family":"Forte","style":"Regular","file":"src/fonts/FORTE.TTF"},
   {"key":"Chiller","name":"Chiller","family":"Chiller","style":"Regular","file":"src/fonts/CHILLER.TTF"},
   {"key":"Magneto","name":"Magneto Bold","family":"Magneto","style":"Bold","file":"src/fonts/MAGNETOB.TTF"},
-  {"key":"Showcard Gothic","name":"Showcard Gothic","family":"Showcard Gothic","style":"Regular","file":"src/fonts/SHOWG.TTF"}
+  {"key":"Showcard Gothic","name":"Showcard Gothic","family":"Showcard Gothic","style":"Regular","file":"src/fonts/SHOWG.TTF"},
+  {"key":"Emoji Flags","name":"Emoji Flags (fallback)","family":"Noto Color Emoji","style":"Regular","file":"src/fonts/geoglyph-emoji-flags.ttf","emoji":true,"fallback":true}
 ]

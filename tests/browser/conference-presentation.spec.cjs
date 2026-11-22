@@ -54,6 +54,8 @@ async function open(page, { records = [], portable = false, localModular = false
     error.message += '\nStartup diagnostics: ' + JSON.stringify({ status, diagnostics });
     throw error;
   }
+  // Polling is now a deliberate user action, including in cue regressions.
+  await page.locator('#mapArcgisStartBtn').click();
   await page.waitForFunction(() => GeoGlyphConference.state.baselined);
   if (!overview) {
     // Existing cue regressions exercise the live stage; command tests below
@@ -159,8 +161,8 @@ test(`Begin scripted introduction renders Medium 3D Turn and retains final text 
       if(title&&window.introductionTitles.at(-1)!==title.textContent)window.introductionTitles.push(title.textContent);
     });
     window.introductionTitleObserver.observe(document.getElementById('geoglyphMapWorkspace'),{childList:true,subtree:true,characterData:true});
-    window.GeoGlyphMapEngine={...api,applyConferenceCue:async(...args)=>{
-      const result=await api.applyConferenceCue(...args),s=api.state;
+    window.GeoGlyphMapEngine={...api,applyScriptCue:async(...args)=>{
+      const result=await api.applyScriptCue(...args),s=api.state;
       window.introductionFrames.push({message:s.message,mirrorX:s.mirrorX,height:s.baseHeightMeters,
         depth:s.extrusionDepthMeters,extrusion:s.extrusionEnabled,font:s.selectedFontId,nativeColor:s.nativeColor,fill:s.fill});
       return result;
@@ -476,7 +478,7 @@ test('overview suppresses automatic Fit and animation; reduced-motion Begin fini
   expect(state.extrusion).toBe(true);
   expect(state.nativeColor).toBe(false);
   expect(state.anchor).toEqual({ lng:139, lat:-35 });
-  expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom())).toBeGreaterThan(10);
+  expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.getZoom())).toBeGreaterThan(zoom+2);
   expect(await page.evaluate(() => GeoGlyphMapEngine.state.map.isMoving())).toBe(false);
 });
 

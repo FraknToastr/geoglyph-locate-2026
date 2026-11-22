@@ -1,0 +1,365 @@
+LOCATE 2026 - BEGIN GEOGLYPH REHEARSAL
+======================================
+
+Start with the Survey123 command Begin Geoglyph. The control panel hides
+and playback prepares the fonts and morphs before the first cue.
+
+Map messages are indented under their labels. Line breaks are
+intentional. The \u{...} notation represents Unicode characters in this
+ASCII transcript. Cue holds begin after the actions and any morph in that
+cue finish. The opening camera flight runs across several cues.
+
+Playback source
+apps/geoglyph/src/scripts/locate-2026-rehearsal.json
+
+CONFERENCE DAY OPENING
+----------------------
+
+01  conference-day
+    Place Geo beside the Melbourne Convention and Exhibition Centre in South Wharf.
+    Set the anchor to latitude -37.82402 and longitude 144.95604.
+    Show in 2D using Segoe UI Emoji in native colour (300 m high).
+    Map message (sleeping face)
+      \u{1F634}
+    White opening title in Gill Sans Ultra Bold Condensed - "Conference Day."
+    Start the 20-second camera flight to Geo as the opening title appears.
+    Hold for 2 seconds.
+
+02  conference-day-2
+    White opening title in Gill Sans Ultra Bold Condensed - "Conference Day.."
+    Hold for 2 seconds.
+
+03  conference-day-3
+    White opening title in Gill Sans Ultra Bold Condensed - "Conference Day..."
+    Hold for 2 seconds.
+
+04  conference-day-4
+    White opening title in Gill Sans Ultra Bold Condensed - "Conference Day...."
+    Hold for 2 seconds.
+
+05  conference-day-5
+    White opening title in Gill Sans Ultra Bold Condensed - "Conference Day....."
+    Hold for 2 seconds.
+
+06  approach
+    Clear the white overlay.
+    Wait for the camera to arrive before the yawn cue.
+
+GEO WAKES UP
+------------
+
+07  yawn
+    Show in 2D using Segoe UI Emoji in native colour (300 m high).
+    Map message (yawning face)
+      \u{1F971}
+    Hold for 3 seconds.
+
+08  awake
+    Show in 2D using Segoe UI Emoji in native colour (300 m high).
+    Map message (face without a mouth)
+      \u{1F636}
+    Hold for 3 seconds.
+
+09  smirk
+    Show in 2D using Segoe UI Emoji in native colour (300 m high).
+    Map message (smirking face)
+      \u{1F60F}
+    Hold for 3 seconds.
+
+10  smirk-mirror
+    Mirror the message horizontally.
+    Show in 2D using Segoe UI Emoji in native colour (300 m high).
+    Map message (smirking face)
+      \u{1F60F}
+    Hold for 3 seconds.
+
+11  sunglasses
+    Turn off horizontal mirroring.
+    Show in 2D using Segoe UI Emoji in native colour (300 m high).
+    Map message (face with sunglasses)
+      \u{1F60E}
+    Hold for 3 seconds.
+
+INTRODUCTION
+------------
+
+12  hello
+    Set the fill to #FF8500 and the outline to #FFFFFF.
+    Show in 2D using Gill Sans Ultra Bold Condensed (300 m high).
+    Map message
+      Hello!
+    Fit the message to the map view.
+    Hold for 3 seconds.
+
+GREETINGS AROUND THE WORLD
+--------------------------
+
+13  seoul
+    Cut directly to Gwanghwamun Square, Seoul, South Korea.
+    Set the anchor to latitude 37.57273 and longitude 126.97684.
+    Use the fill #FF8500 and a white outline.
+    Show in 3D using Gugi (72 m high, 9 m deep, district view).
+    Map message (Hangul)
+      \u{C548}\u{B155}\u{D558}\u{C138}\u{C694}
+    Fit the message and hold the camera still.
+    White top caption - "Hello in Korean \u{B7} Seoul, South Korea"
+    Hold for 4 seconds.
+
+14  tbilisi
+    Cut directly to Rike Park by the Bridge of Peace, Tbilisi, Georgia.
+    Set the anchor to latitude 41.6932 and longitude 44.8094.
+    Use the fill #FF45B8 and a white outline.
+    Show in 3D using Noto Sans Georgian Bold (95 m high, 13 m deep, riverside district).
+    Map message (Mkhedruli)
+      \u{10D2}\u{10D0}\u{10DB}\u{10D0}\u{10E0}\u{10EF}\u{10DD}\u{10D1}\u{10D0}
+    Fit the message and hold the camera still.
+    White top caption - "Hello in Georgian \u{B7} Tbilisi, Georgia"
+    Hold for 4 seconds.
+
+15  yerevan
+    Cut directly to Republic Square, Yerevan, Armenia.
+    Set the anchor to latitude 40.17745 and longitude 44.51263.
+    Use the fill #FF45B8 and a white outline.
+    Show in 2D using Noto Serif Armenian Bold (75 m high, public square).
+    Map message (Armenian alphabet)
+      \u{532}\u{561}\u{580}\u{587}
+    Fit the message and hold the camera still.
+    White top caption - "Hello in Armenian \u{B7} Yerevan, Armenia"
+    Hold for 4 seconds.
+
+16  kyiv
+    Cut directly to Independence Square, Kyiv, Ukraine.
+    Set the anchor to latitude 50.45013 and longitude 30.5234.
+    Use the fill #28EFFF and a white outline.
+    Show in 2D using Montserrat Alternates Bold (180 m high, district scale).
+    Map message (Ukrainian Cyrillic)
+      \u{41F}\u{440}\u{438}\u{432}\u{456}\u{442}
+    Fit the message and hold the camera still.
+    White top caption - "Hello in Ukrainian \u{B7} Kyiv, Ukraine"
+    Hold for 5 seconds.
+
+17  sounion
+    Cut directly to the Temple of Poseidon at Cape Sounion, Greece.
+    Set the anchor to latitude 37.6497 and longitude 24.0287.
+    Face inland from offshore at a camera bearing of 345 degrees.
+    Use the fill #28EFFF and a white outline.
+    Show in 3D using Fira Sans ExtraBold (120 m high, 12 m deep, coastal view).
+    Map message (Greek alphabet)
+      \u{393}\u{3B5}\u{3B9}\u{3B1} \u{3C3}\u{3B1}\u{3C2}
+    Fit the message and hold the camera still.
+    White top caption - "Hello in Greek \u{B7} Cape Sounion, Greece"
+    Hold for 5 seconds.
+
+18  marrakesh
+    Cut directly to Jemaa el-Fnaa, Marrakesh, Morocco.
+    Set the anchor to latitude 31.62585 and longitude -7.9891.
+    Use the fill #FFE747 and a white outline.
+    Show in 3D using Noto Sans Tifinagh (1500 m high, 150 m deep, city scale).
+    Map message (Tifinagh)
+      \u{2D30}\u{2D63}\u{2D53}\u{2D4D}
+    Fit the message and hold the camera still.
+    White top caption - "Hello in Tamazight \u{B7} Marrakesh, Morocco"
+    Hold for 7 seconds.
+
+BACK IN MELBOURNE
+-----------------
+
+19  my-name
+    Cut directly to the Melbourne Convention and Exhibition Centre.
+    Set the anchor to latitude -37.82402 and longitude 144.95604.
+    Clear the top caption.
+    Restore the base height to 300 m and the extrusion depth to 30 m.
+    Use the fill #FFE747 and a white outline.
+    Show in 2D using Righteous (300 m high).
+    Map message
+      I'm Geoglyph
+    Fit the message to the map view.
+    Hold for 3 seconds.
+
+20  call-me
+    Set the fill to #FF45B8 and the outline to #FFFFFF.
+    Show in 2D using Bangers (300 m high).
+    Map message
+      Call me Geo
+    Fit the message to the map view.
+    Hold for 3 seconds.
+
+21  made-by
+    Set the fill to #FFE747 and the outline to #FFFFFF.
+    Show in 2D using Archivo Black (300 m high).
+    Map message
+      I was made by ChatGPT
+    Fit the message to the map view.
+    Hold for 3 seconds.
+
+22  dialects
+    Set the fill to #28EFFF and the outline to #FFFFFF.
+    Show in 3D using Anton (300 m high, 30 m deep).
+    Map message
+      I speak all
+      2D and 3D dialects
+    Fit the message to the map view.
+    Hold for 5 seconds.
+
+23  interesting
+    Set the fill to #FF45B8 and the outline to #FFFFFF.
+    Show in 2D using Graduate (300 m high).
+    Map message
+      But here is something
+      amazing about me
+    Fit the message to the map view.
+    Hold for 3 seconds.
+
+24  change-fonts
+    Set the fill to #FFE747 and the outline to #FFFFFF.
+    Show in 2D using Changa One (300 m high).
+    Map message
+      I don't just change fonts
+    Fit the message to the map view.
+    Hold for 3 seconds.
+
+25  morph-between
+    Set the fill to #BFFF18 and the outline to #FFFFFF.
+    Show in 2D using Passion One (300 m high).
+    Map message
+      I morph between them
+    Fit the message to the map view.
+    Hold for 3 seconds.
+
+2D FONT MORPHS AT FEDERATION SQUARE
+-----------------------------------
+
+26  watch
+    Move to Federation Square, Melbourne.
+    Set the anchor to latitude -37.81785 and longitude 144.96896.
+    Set the fill to #CE82FF and the outline to #FFFFFF.
+    Show in 2D using Alfa Slab One (300 m high).
+    Map message
+      Watch closely
+    Fit the message to the map view.
+    Hold for 3 seconds.
+
+27  simple
+    Set the fill to #28EFFF and the outline to #FFFFFF.
+    Show in 2D using Staatliches (300 m high).
+    Map message
+      The amazing
+      Geoglyph
+    Fit the message to the map view.
+    White top caption in Staatliches - "I can start with something simple"
+    Hold for 3 seconds.
+
+28  elegant
+    Fit the morph bounds to the viewport before playback.
+    White top caption in Berkshire Swash - "Then become something elegant"
+    Morph in 2D from Staatliches to Berkshire Swash over 2 seconds.
+    Starting map message
+      The amazing
+      Geoglyph
+    Target map message
+      The amazing
+      Geoglyph
+    Hold for 3 seconds.
+
+29  ancient
+    Fit the morph bounds to the viewport before playback.
+    White top caption in Cinzel Decorative - "Or something ancient"
+    Morph in 2D from Berkshire Swash to Cinzel Decorative over 2 seconds.
+    Starting map message
+      The amazing
+      Geoglyph
+    Target map message
+      The amazing
+      Geoglyph
+    Hold for 3 seconds.
+
+30  future
+    Fit the morph bounds to the viewport before playback.
+    White top caption in Audiowide - "Or something from the future"
+    Morph in 2D from Cinzel Decorative to Audiowide over 2 seconds.
+    Starting map message
+      The amazing
+      Geoglyph
+    Target map message
+      The amazing
+      Geoglyph
+    Hold for 3 seconds.
+
+3D FINALE IN MELBOURNE
+----------------------
+
+31  speak-languages
+    Move to the Royal Exhibition Building, Melbourne.
+    Set the anchor to latitude -37.8046 and longitude 144.97152.
+    Clear the top caption.
+    Switch to 3D (300 m high, 30 m deep).
+    Fit the morph bounds to the viewport before playback.
+    Start the camera orbit with Geo turning toward the camera (yaw).
+    Morph from Audiowide to Bree Serif over 2 seconds.
+    Starting map message
+      The amazing
+      Geoglyph
+    Target map message
+      I don't just speak languages
+    Hold for 5 seconds.
+
+32  become-them
+    Move to Convention Centre Place forecourt, Melbourne.
+    Set the anchor to latitude -37.82461 and longitude 144.95163.
+    Fit the morph bounds to the viewport before playback.
+    Morph in 3D from Bree Serif to Bungee over 2 seconds.
+    Continue the camera orbit through the transition.
+    Starting map message
+      I don't just speak languages
+    Target map message
+      I become them
+    Hold for 3 seconds.
+
+33  thanks
+    Fit the morph bounds to the viewport before playback.
+    Morph the message in Bungee over 2 seconds as the camera keeps orbiting.
+    Starting map message
+      I become them
+    Target map message
+      Thanks for watching
+
+REPEATING FINALE
+----------------
+
+Keep "Thanks for watching" on the map in 3D at Convention Centre Place.
+Keep the camera orbit running and begin with Bungee.
+Hold the starting font for 2 seconds.
+Morph to each font below over 2 seconds, then hold the completed font for 2 seconds.
+After the last entry, continue again from the first entry.
+
+Font order
+  01  Secular One
+  02  Saira Stencil One
+  03  Marcellus
+  04  Gill Sans Ultra Bold Condensed
+  05  Chiller
+  06  Magneto Bold
+  07  Showcard Gothic
+  08  Righteous
+  09  Bangers
+  10  Archivo Black
+  11  Patua One
+  12  Lilita One
+  13  Bebas Neue
+  14  Anton
+  15  Graduate
+  16  Changa One
+  17  Passion One
+  18  Alfa Slab One
+  19  Staatliches
+  20  Berkshire Swash
+  21  Cinzel Decorative
+  22  Audiowide
+  23  Rubik Mono One
+  24  Fjalla One
+  25  Black Ops One
+  26  Paytone One
+  27  Bree Serif
+  28  Bungee
+
+A new Survey123 message, Reset, or Stop in Geo's Script ends the loop.

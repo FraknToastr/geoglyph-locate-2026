@@ -1,0 +1,15 @@
+{
+  "name":"geoglyph-launcher-v3",
+  "version":"3.0.0",
+  "private":true,
+  "description":"Independent Geoglyph copy with the space launcher and Survey123 routing",
+  "scripts":{
+    "setup":"npm ci --prefix apps/geoglyph --no-audit --no-fund",
+    "build":"node scripts/build-suite.cjs",
+    "dev":"node scripts/dev-server.cjs",
+    "verify:preservation":"node scripts/verify-preservation.cjs",
+    "test:unit":"node --test tests/unit/*.test.cjs",
+    "test:app":"npm run test:unit --prefix apps/geoglyph",
+    "test:browser":"node apps/geoglyph/node_modules/@playwright/test/cli.js test --config=playwright.config.cjs"
+  }
+}
