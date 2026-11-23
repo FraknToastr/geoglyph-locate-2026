@@ -251,8 +251,22 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
   --empty-muted: #2d4054;
   border-color: rgba(23, 42, 59, .28);
 }
+.empty-state .eyebrow {
+  color: var(--empty-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
 .empty-state h1,
 .empty-state h1 em { color: var(--empty-ink); }
+.empty-state h1 {
+  align-self: stretch;
+  container-type: inline-size;
+}
+.empty-state h1 em {
+  font-size: min(.85em, 8cqi);
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
 .empty-state p { color: var(--empty-muted); }
 :root:not([data-lighting="day"]) .umbramatic-control:is(.primary-button, .secondary-button, .play-button) {
   color: var(--ink);
@@ -270,7 +284,7 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
   border-color: #8dc0ce;
 }
 
-.umbramatic-control:is([aria-pressed="true"], :where(#toggleSolar, #togglePlayer)[aria-expanded="true"]) {
+.umbramatic-control:is([aria-pressed="true"], :where(#toggleSolar, #togglePanel, #togglePlayer)[aria-expanded="true"]) {
   --amb-albedo: var(--selected-albedo);
   --amb-shade: .85;
   border-color: var(--focus);
