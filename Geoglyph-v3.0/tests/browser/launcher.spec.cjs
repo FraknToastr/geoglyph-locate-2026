@@ -338,15 +338,32 @@ for(const output of ['GeoGlyph_Locate_2026.html','dist/GeoGlyph.html'])test(`sta
 });
 
 for(const portable of [false,true])test(`alien opens the remote control QR code (${portable?'file':'HTTP'} launcher)`,async({page})=>{
+  const qrAsset='assets/Geoglyph-s-remote-control-combined.webp';
+  const qrRequests=[];
+  page.on('request',request=>{
+    if(new URL(request.url()).pathname.includes('/Geoglyph-s-remote-control-combined.'))qrRequests.push(request.url());
+  });
   const {errors}=await setup(page,{portable,width:portable?360:1440});
   const trigger=page.getByRole('button',{name:'Open Geoglyph remote control QR code'});
   const dialog=page.getByRole('dialog',{name:"Geoglyph's remote control"});
+  await expect(trigger).toHaveAttribute('href',qrAsset);
+  expect(await page.locator('#remote-qr-dialog img').getAttribute('src')).toBeNull();
+  expect(qrRequests).toHaveLength(0);
   const originalUrl=page.url();
+  const qrUrl=new URL(qrAsset,originalUrl).href;
   const head=await trigger.evaluate(node=>new DOMPoint(770,90).matrixTransform(node.getScreenCTM()).toJSON());
-  await page.mouse.click(head.x,head.y);
+  const [response]=await Promise.all([
+    portable?Promise.resolve():page.waitForResponse(qrUrl),
+    page.mouse.click(head.x,head.y)
+  ]);
+  if(response){
+    expect(response.ok()).toBe(true);
+    expect(response.headers()['content-type']).toBe('image/webp');
+  }
   await expect(dialog).toBeVisible();
   const graphic=dialog.getByRole('img');
-  await expect.poll(()=>graphic.evaluate(image=>image.naturalWidth)).toBe(2048);
+  await expect.poll(()=>graphic.evaluate(image=>[image.naturalWidth,image.naturalHeight])).toEqual([2048,2048]);
+  expect(qrRequests).toEqual([qrUrl]);
   const box=await graphic.boundingBox();
   const viewport=page.viewportSize();
   expect(box.width).toBeGreaterThan(Math.min(viewport.width,viewport.height)*.8);
@@ -359,6 +376,8 @@ for(const portable of [false,true])test(`alien opens the remote control QR code 
   await expect(trigger).toBeFocused();
   await trigger.press('Enter');
   await expect(dialog).toBeVisible();
+  expect(await graphic.evaluate(image=>image.naturalWidth)).toBe(2048);
+  expect(qrRequests).toHaveLength(1);
   await close.click();
   await expect(dialog).toBeHidden();
   await trigger.press('Space');

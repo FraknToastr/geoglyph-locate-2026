@@ -3,11 +3,16 @@
 'use strict';
 const $=id=>document.getElementById(id),reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const remoteQrTrigger=$('open-remote-qr'),remoteQrDialog=$('remote-qr-dialog');
+const remoteQrImage=remoteQrDialog.querySelector('img');
 remoteQrTrigger.addEventListener('click',event=>{
  event.preventDefault();
  window.UOSTooltips?.hide();
- if(!remoteQrDialog.open)remoteQrDialog.showModal();
+ if(!remoteQrDialog.open){
+  if(!remoteQrImage.hasAttribute('src'))remoteQrImage.src=remoteQrImage.dataset.src;
+  remoteQrDialog.showModal();
+ }
 });
+remoteQrImage.addEventListener('error',()=>remoteQrImage.removeAttribute('src'));
 remoteQrTrigger.addEventListener('keydown',event=>{
  if(event.key!==' ')return;
  event.preventDefault();
