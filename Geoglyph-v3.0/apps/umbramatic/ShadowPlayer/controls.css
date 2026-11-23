@@ -189,12 +189,42 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
   .empty-state h1, .empty-state p, .empty-state em, .empty-state .eyebrow) { color: var(--ink); }
 .main-view[data-basemap="dark"] { --map-ink: #f4f7ff; --map-soft-ink: #c5cfdf; }
 .main-view[data-basemap="light"] { --map-ink: #172a3b; --map-soft-ink: #2a3c50; }
-.main-view:is([data-basemap="dark"], [data-basemap="light"]) :is(.empty-state, .empty-state em, .map-meta, .map-meta strong) {
-  color: var(--map-ink);
+.empty-state {
+  --empty-surface: color-mix(in srgb, var(--panel-fallback) 88%, transparent);
+  --empty-ink: var(--ink);
+  --empty-muted: var(--soft-ink);
+  padding: clamp(20px, 2.4vw, 32px);
+  border: 1px solid color-mix(in srgb, var(--rim) 72%, transparent);
+  border-radius: 14px;
+  background: var(--empty-surface);
+  color: var(--empty-ink);
+  box-shadow: 0 14px 38px rgba(2, 12, 24, .22), inset 0 1px 0 rgba(255,255,255,.3);
+  -webkit-backdrop-filter: blur(14px) saturate(.82);
+  backdrop-filter: blur(14px) saturate(.82);
 }
-.main-view:is([data-basemap="dark"], [data-basemap="light"]) :is(.empty-state .eyebrow, .empty-state p, .meta-kicker, .hero-date, .sun-metrics span) {
-  color: var(--map-soft-ink);
+.main-view[data-basemap="dark"] .empty-state,
+.main-view[data-basemap="aerial"] .empty-state {
+  --empty-surface: rgba(7, 21, 35, .86);
+  --empty-ink: #f4f7ff;
+  --empty-muted: #d4e2ed;
+  border-color: rgba(177, 217, 232, .42);
+  box-shadow: 0 16px 42px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.16);
 }
+.main-view[data-basemap="light"] .empty-state {
+  --empty-surface: rgba(248, 250, 252, .9);
+  --empty-ink: #172a3b;
+  --empty-muted: #2d4054;
+  border-color: rgba(23, 42, 59, .28);
+}
+.main-view:is([data-basemap="dark"], [data-basemap="light"], [data-basemap="aerial"]) :is(.empty-state, .empty-state em, .map-meta, .map-meta strong) {
+  color: var(--empty-ink, var(--map-ink));
+}
+.main-view:is([data-basemap="dark"], [data-basemap="light"], [data-basemap="aerial"]) :is(.empty-state .eyebrow, .empty-state p, .meta-kicker, .hero-date, .sun-metrics span) {
+  color: var(--empty-muted, var(--map-soft-ink));
+}
+.empty-state h1,
+.empty-state h1 em { color: var(--empty-ink); }
+.empty-state p { color: var(--empty-muted); }
 :root:not([data-lighting="day"]) .umbramatic-control:is(.primary-button, .secondary-button, .play-button) {
   color: var(--ink);
 }

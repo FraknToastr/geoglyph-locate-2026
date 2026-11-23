@@ -15,6 +15,7 @@
     localFiles: null, rootUrl: null, memoryCache: new Map(), cacheLimit: 32,
     focusedDate: '', loading: false, defaultFitted: false,
   };
+  let referencesVisible = true;
   const mapEmpty = {version:8, sources:{}, layers:[
     {id:'background',type:'background',paint:{'background-color':blankBackground()}}
   ]};
@@ -117,6 +118,23 @@
     for(const {id} of basemap.layers)if(map.getLayer(id))map.removeLayer(id);
     for(const id of Object.keys(basemap.sources))if(map.getSource(id))map.removeSource(id);
   }
+  function referenceLayerIds(basemap){
+    return basemap?.layers.filter(layer=>layer.id==='light-gray-labels' || layer.type==='symbol').map(layer=>layer.id) ?? [];
+  }
+  function applyReferenceVisibility(basemap=displayedBasemap){
+    if(!state.mapReady)return;
+    const ids=referenceLayerIds(basemap);
+    for(const id of ids)if(state.map.getLayer(id))state.map.setLayoutProperty(id,'visibility',referencesVisible?'visible':'none');
+  }
+  function updateReferencesControl(){
+    const button=$('basemapReferences');
+    const available=referenceLayerIds(displayedBasemap).length>0;
+    button.disabled=!available;
+    button.setAttribute('aria-pressed',String(available&&referencesVisible));
+    button.dataset.tooltip=available
+      ? `${referencesVisible?'Hide':'Show'} the selected basemap's reference layer.`
+      : 'This basemap has no separate reference layer.';
+  }
   async function applyBasemap(choice){
     requestedBasemap=choice;
     if(!state.mapReady)return;
@@ -149,6 +167,8 @@
     state.basemap=choice;
     document.querySelector('.main-view').dataset.basemap=choice;
     document.querySelectorAll('button[data-basemap]').forEach(button=>selectButton(button,button.dataset.basemap===choice));
+    applyReferenceVisibility(displayedBasemap);
+    updateReferencesControl();
     updateMapBackground();
   }
   function updateMapBackground(){
@@ -642,6 +662,12 @@
     document.querySelectorAll('button[data-basemap]').forEach(button=>button.addEventListener('click',()=>{
       void applyBasemap(button.dataset.basemap);
     }));
+    $('basemapReferences').addEventListener('click',()=>{
+      if($('basemapReferences').disabled)return;
+      referencesVisible=!referencesVisible;
+      applyReferenceVisibility();
+      updateReferencesControl();
+    });
     document.querySelectorAll('[data-loop]').forEach(btn=>btn.addEventListener('click',()=>{
       state.playbackMode=btn.dataset.loop;state.direction=1;
       document.querySelectorAll('[data-loop]').forEach(x=>selectButton(x,x===btn));
