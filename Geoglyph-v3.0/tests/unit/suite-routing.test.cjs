@@ -69,7 +69,7 @@ test('unlinked apps are recognised without navigation or stopping an active poll
 
 test('imported app commands and return handoffs keep the surveyed cursor and connection settings',async t=>{
   const destinations={panoptigon:'apps/panoptigon/index.html',umbramatic:'apps/umbramatic/ShadowPlayer/index.html',
-    transitron:'apps/transitron/launcher-placeholder.html'};
+    transitron:'http://127.0.0.1:8090/'};
   for(const [target,path] of Object.entries(destinations)){
     const initial=handoff({active:false});
     let navigation;
@@ -79,10 +79,12 @@ test('imported app commands and return handoffs keep the surveyed cursor and con
     }});
     await value.fetch();
     const url=new URL(navigation);
-    assert.equal(url.pathname,'/suite/'+path);
+    assert.equal(url.href.split('#')[0],new URL(path,'file:///suite/').href);
     const checkpoint=routing.decodeHandoff(url.hash,source,target);
     assert.deepEqual(checkpoint,handoff({app:target,cursor:21,active:false,launchReason:'survey'}));
-    const returnUrl=new URL(routing.destination(routing.suiteRoot(url.href),'launcher',{...checkpoint,returnFrom:target},source));
+    const root=target==='transitron'?new URL('/suite/',url).href:routing.suiteRoot(url.href);
+    const returnUrl=new URL(routing.destination(root,'launcher',{...checkpoint,returnFrom:target},source));
+    assert.equal(returnUrl.origin,url.origin);
     assert.equal(returnUrl.pathname,'/suite/index.html');
     assert.deepEqual(routing.decodeHandoff(returnUrl.hash,source,'launcher'),{...checkpoint,app:'launcher',returnFrom:target});
   }

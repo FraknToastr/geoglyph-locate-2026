@@ -32,6 +32,8 @@ rtk npm run dev
 
 Then open **http://127.0.0.1:4186/**. Keep the directory structure intact for navigation between the launcher and the app, including the app's standalone HTML outputs.
 
+For Transitron, run `python3 apps/transitron/open_transitron.py --no-browser` from `Geoglyph-v3.0/` before using the logo or sending `Launch Transitron`. The dashboard opens at `http://127.0.0.1:8090/`. The same server hosts the launcher at `http://127.0.0.1:8090/suite/` for return navigation. For background recording, see [Transitron's server instructions](apps/transitron/README.md).
+
 ## Survey123 app launch
 
 Use these stored values in the existing `special_commands` field:
@@ -44,7 +46,7 @@ Use these stored values in the existing `special_commands` field:
 | `Return to Launcher` | Leaves the launcher open | Returns from the open app and resumes polling from this command |
 | `Launch Panoptigon` | Opens the Views & Vistas panorama explorer | Switches directly from another imported app to Panoptigon |
 | `Launch Umbramatic` | Opens the ShadowPlayer | Switches directly from another imported app to Umbramatic |
-| `Launch Transitron` | Opens the Transitron placeholder | Switches directly from another imported app to the Transitron placeholder |
+| `Launch Transitron` | Opens the live local Transitron dashboard | Switches directly from another app to the live dashboard |
 
 Capitalization and surrounding whitespace are ignored. The former `Begin` value is no longer a conference-start command. This implementation reads the existing public results view; it does not edit or publish the Survey123 form.
 
@@ -53,7 +55,7 @@ Capitalization and surrounding whitespace are ignored. The former `Begin` value 
 - A new launch command opens Geoglyph without starting its script. When polling was active, Geoglyph continues from that submission and receives subsequent Begin Geoglyph, Reset and message records, including records submitted during navigation.
 - Fetch while stopped can open the app but leaves its polling stopped. A duplicate launch command inside Geoglyph is acknowledged without reloading or changing its artwork.
 - **Return to launcher** resumes polling and keeps the incoming interval, selected results layer and processed submission cursor. Opening Geoglyph directly starts with its polling stopped.
-- Panoptigon, Umbramatic and the Transitron placeholder continue active Survey123 polling while open. They accept `Begin Geoglyph`, linked launch commands and `Return to Launcher`. Duplicate launches of the current app leave it open. Their **Return to launcher** links use the latest polling checkpoint. `Launch Assassin's Leaves` displays an unlinked-app notice.
+- Panoptigon, Umbramatic and Transitron continue active Survey123 polling while open. They accept `Begin Geoglyph`, linked launch commands and `Return to Launcher`. Duplicate launches of the current app leave it open. Their **Return to launcher** links use the latest polling checkpoint. `Launch Assassin's Leaves` displays an unlinked-app notice.
 
 Panoptigon imports your photos and models from disk. Its source is pinned to [commit `7dab21d`](https://github.com/FraknToastr/adelaide-views-vistas-panorama-explorer/tree/7dab21dadf56f42c4a1db2e2c90696d4e1c168f3). The sample-export test expects a separately supplied `samples/Park_10.zip`. Umbramatic includes the original `SampleExport` folder. Use **Open export folder** in ShadowPlayer to load it. MapLibre and the online basemaps require network access. The Transitron dashboard and its GTFS data are in `apps/transitron/` for independent server use.
 

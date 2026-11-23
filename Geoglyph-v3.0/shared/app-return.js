@@ -7,7 +7,7 @@
   if (!link || !routing || !suite || !survey) return;
   const app = link.dataset.suiteReturn;
   const serviceUrl = survey.config.serviceUrl;
-  const root = routing.suiteRoot(location.href);
+  const root = app === 'transitron' ? new URL('./', link.href).href : routing.suiteRoot(location.href);
   let handoff;
   try {
     handoff = routing.decodeHandoff(location.hash, serviceUrl, app);

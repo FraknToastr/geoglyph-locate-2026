@@ -127,8 +127,10 @@ body, .sidebar, .timeline-card { color: var(--ink); }
 }
 body.panel-hidden .main-view { --sidebar-clearance: 0px; }
 body.panel-hidden .timeline-card { grid-column: 1 / -1; }
+#mediaPlayer[hidden] { display: none; }
 .empty-state { left: calc(var(--sidebar-clearance) + clamp(42px, 6vw, 112px)); }
 .map-topbar { justify-content: flex-end; }
+#toggleSolar, #togglePlayer { display: grid; place-items: center; }
 #map .maplibregl-ctrl-top-left {
   left: calc(var(--sidebar-clearance) + var(--panel-inset-inline));
   top: var(--panel-inset-block);
@@ -185,10 +187,43 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
 }
 
 .main-view[data-basemap="none"] { background-color: var(--blank-map); }
-:root[data-lighting="day"] .main-view[data-basemap="none"] :is(.map-meta, .map-meta span, .map-meta strong, .hero-date,
-  .empty-state h1, .empty-state p, .empty-state em, .empty-state .eyebrow) { color: var(--ink); }
-.main-view[data-basemap="dark"] { --map-ink: #f4f7ff; --map-soft-ink: #c5cfdf; }
-.main-view[data-basemap="light"] { --map-ink: #172a3b; --map-soft-ink: #2a3c50; }
+.map-meta {
+  top: calc(var(--panel-inset-block) + 52px);
+  right: var(--panel-inset-inline);
+  max-width: calc(100% - 2 * var(--panel-inset-inline));
+  width: 266px;
+  padding: 13px 15px;
+  border: 1px solid var(--rim);
+  border-radius: 12px;
+  background-color: var(--panel-fallback);
+  background-color: color-mix(in srgb, var(--panel-fallback) 82%, var(--amb-lit));
+  color: var(--ink);
+  text-align: left;
+}
+.map-meta :is(.meta-kicker, .hero-date, .sun-metrics span) { color: var(--soft-ink); }
+.map-meta .meta-kicker {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  white-space: normal;
+}
+.map-meta .hero-time {
+  font-size: clamp(34px, 4vw, 48px);
+  font-weight: 650;
+  letter-spacing: -.04em;
+  text-shadow: none;
+}
+.map-meta .sun-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--rim) 55%, transparent);
+}
+.map-meta .sun-metrics > div { gap: 3px; }
+.map-meta .sun-metrics span { letter-spacing: .06em; }
+.map-meta .sun-metrics strong { font-size: 15px; }
 .empty-state {
   --empty-surface: color-mix(in srgb, var(--panel-fallback) 88%, transparent);
   --empty-ink: var(--ink);
@@ -216,12 +251,6 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
   --empty-muted: #2d4054;
   border-color: rgba(23, 42, 59, .28);
 }
-.main-view:is([data-basemap="dark"], [data-basemap="light"], [data-basemap="aerial"]) :is(.empty-state, .empty-state em, .map-meta, .map-meta strong) {
-  color: var(--empty-ink, var(--map-ink));
-}
-.main-view:is([data-basemap="dark"], [data-basemap="light"], [data-basemap="aerial"]) :is(.empty-state .eyebrow, .empty-state p, .meta-kicker, .hero-date, .sun-metrics span) {
-  color: var(--empty-muted, var(--map-soft-ink));
-}
 .empty-state h1,
 .empty-state h1 em { color: var(--empty-ink); }
 .empty-state p { color: var(--empty-muted); }
@@ -241,7 +270,7 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
   border-color: #8dc0ce;
 }
 
-.umbramatic-control[aria-pressed="true"] {
+.umbramatic-control:is([aria-pressed="true"], :where(#toggleSolar, #togglePlayer)[aria-expanded="true"]) {
   --amb-albedo: var(--selected-albedo);
   --amb-shade: .85;
   border-color: var(--focus);
@@ -257,6 +286,24 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
 
 .umbramatic-control.amb-groove { --amb-albedo: var(--recess-albedo); }
 .umbramatic-control#dateInput { color-scheme: inherit; }
+.shadow-colour-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: var(--soft-ink);
+  font-size: 12px;
+}
+.shadow-colour-row input {
+  width: 45px;
+  height: 34px;
+  padding: 3px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.shadow-colour-row button { min-height: 34px; }
+.shadow-colour-row :disabled { opacity: .55; cursor: default; }
 .umbramatic-control.range {
   border-radius: 999px;
   min-width: 0;

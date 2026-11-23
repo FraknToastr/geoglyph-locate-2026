@@ -7,6 +7,7 @@
   <title>Shadow / Time — Adelaide Shadow Player</title>
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.13.0/dist/maplibre-gl.css">
   <link rel="stylesheet" href="controls.css">
+  <link rel="stylesheet" href="solar.css">
 </head>
 <body>
   <div class="app-shell">
@@ -62,6 +63,11 @@
               <button class="active seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-basemap="none" type="button" aria-pressed="true" data-tooltip="Show shadows on a plain background.">Blank</button>
             </div>
           <button class="basemap-references light-follow ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="basemapReferences" type="button" aria-pressed="false" data-tooltip="Show or hide the selected basemap's reference layer." disabled>Basemap References</button>
+            <div class="shadow-colour-row">
+              <label for="shadowColour">Shadow colour</label>
+              <input class="ambient amb-groove umbramatic-control" id="shadowColour" type="color" value="#172a3b" data-tooltip="Recolour the shadows in the preview." disabled>
+              <button class="text-action ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="resetShadowColour" type="button" data-tooltip="Restore the raster's original colours." disabled>Original</button>
+            </div>
             <div class="value-label"><label for="opacity">Shadow layer opacity</label><output id="opacityValue" for="opacity">100%</output></div>
             <input class="range ambient amb-groove umbramatic-control" id="opacity" type="range" min="0" max="100" value="100" step="5" data-tooltip="Adjust how transparent the shadow images are.">
             <div class="control-label" style="margin-top:17px">Playback behaviour</div>
@@ -80,13 +86,48 @@
         <div class="top-actions ambient-button-group">
           <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="fitBounds" aria-label="Fit image bounds" data-tooltip="Fit all shadows on screen (F).">⌖</button>
           <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="togglePanel" aria-label="Toggle controls" aria-controls="controlsPanel" aria-expanded="true" data-tooltip="Show or hide the controls sidebar.">☷</button>
+          <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="toggleSolar" type="button" aria-label="Sun Dome" aria-haspopup="dialog" aria-controls="solarConsole" aria-expanded="false" data-tooltip="Open the sun dome.">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
+          </button>
+          <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="togglePlayer" type="button" aria-label="Media Player" aria-controls="mediaPlayer" aria-expanded="true" data-tooltip="Hide the media player.">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m10 8 5 4-5 4z"/></svg>
+          </button>
           <a class="icon-button suite-return ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="suiteReturnLauncher" href="../../../index.html" data-suite-return="umbramatic" aria-label="Return to launcher" data-tooltip="Return to the launcher.">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg><span>Return to launcher</span>
           </a>
         </div>
       </div>
-      <div class="map-meta" id="mapMeta">
-        <div class="meta-kicker">CURRENT SOLAR SNAPSHOT <span class="meta-line"></span></div>
+      <dialog class="solar-console ambient amb-surface amb-chamfer-2 amb-elevation-3" id="solarConsole" aria-labelledby="solarTitle">
+        <header class="solar-console-heading">
+          <h2 id="solarTitle">Sun Dome</h2>
+          <div class="solar-head-actions ambient-button-group">
+            <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="resetDome" type="button" aria-label="Reset dome rotation" data-tooltip="Reset the sun dome's rotation." disabled>⟲</button>
+            <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="minimiseDome" type="button" aria-label="Minimise Sun Dome" data-tooltip="Minimise the sun dome." autofocus>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+            </button>
+          </div>
+        </header>
+        <p id="solarEmpty">Open an export folder to see the sun path and select captures.</p>
+        <div id="solarData" hidden>
+          <div class="solar-observatory">
+            <div class="solar-observatory-bar"><strong id="solarCapture"></strong><span id="domeDirection"></span></div>
+            <svg id="solarDome" class="solar-dome" viewBox="0 0 340 260" tabindex="0" role="group" aria-label="Sun path and capture markers" aria-describedby="solarHelp"></svg>
+            <div class="solar-dome-footer">
+              <div class="solar-legend"><span>Sun</span><span>Captures</span></div>
+              <small id="solarHelp">Drag or use arrow keys to rotate.</small>
+            </div>
+          </div>
+          <label class="solar-seasons"><input id="showSeasons" type="checkbox"> Compare seasonal paths</label>
+          <ul class="solar-season-key" id="solarSeasonKey" hidden><li>December solstice</li><li>March equinox</li><li>June solstice</li></ul>
+          <dl class="solar-readouts">
+            <div><dt>Azimuth</dt><dd id="domeAzimuth">—</dd></div>
+            <div><dt>Altitude</dt><dd id="domeAltitude">—</dd></div>
+          </dl>
+          <p id="solarPositionSource" class="solar-source"></p>
+        </div>
+      </dialog>
+      <section class="map-meta ambient amb-surface amb-chamfer-2 amb-elevation-3" id="mapMeta" aria-labelledby="snapshotTitle">
+        <h2 class="meta-kicker" id="snapshotTitle">Current Solar Snapshot</h2>
         <div class="hero-time" id="heroTime">--:--</div>
         <div class="hero-date" id="heroDate">NO DATASET LOADED</div>
         <div class="sun-metrics">
@@ -94,16 +135,16 @@
           <div><span>ALTITUDE</span><strong id="solarAlt">—</strong></div>
           <div><span>CAPTURE</span><strong id="captureIndex">0 / 0</strong></div>
         </div>
-      </div>
+      </section>
       <div id="emptyState" class="empty-state">
         <div class="shadow-orb" aria-hidden="true"></div>
         <span class="eyebrow">TEMPORAL GEOSPATIAL PLAYER</span>
-        <h1>See the city<br><em>in another light.</em></h1>
+        <h1>See the city<br><em>where the sun don't shine</em></h1>
         <p>Load georeferenced LiDAR shadow snapshots and explore how shade moves across streets, buildings and public spaces.</p>
         <button id="emptyOpen" class="secondary-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" type="button" data-tooltip="Choose a folder containing a Shadow Player export.">Open export folder <span aria-hidden="true">↗</span></button>
       </div>
       <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-      <section class="timeline-card ambient amb-surface amb-chamfer-2 amb-elevation-3" aria-label="Animation controls">
+      <section class="timeline-card ambient amb-surface amb-chamfer-2 amb-elevation-3" id="mediaPlayer" aria-label="Animation controls">
         <div class="timeline-top">
           <div class="transport ambient-button-group">
             <button id="stepBack" aria-label="Previous capture" class="transport-small ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-tooltip="Previous capture (←)">⏮</button>
@@ -124,6 +165,7 @@
   </div>
   <div id="controlTooltip" class="control-tooltip" role="tooltip" hidden></div>
   <script src="https://unpkg.com/maplibre-gl@5.13.0/dist/maplibre-gl.js"></script>
+  <script src="solar.js"></script>
   <script src="app.js"></script>
   <script src="../../geoglyph/src/scripts/survey-results.js" defer></script>
   <script src="../../../shared/suite-routing.js" defer></script>

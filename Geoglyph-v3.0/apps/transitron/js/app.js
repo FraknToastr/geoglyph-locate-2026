@@ -11,8 +11,10 @@ const trackedVehicleTypes = new Set(['Bus', 'Train', 'Tram']);
 const trackedVehicles = rows => rows.filter(vehicle => trackedVehicleTypes.has(vehicle?.VehicleType));
 let state={vehicles:trackedVehicles(SNAP.vehicles),trips:[...SNAP.trips],alerts:[...SNAP.alerts]};
 let mode='snapshot',map=null,selectedKey=null,selectedVehicle=null,selectedNode=null,loadedMap=false;
-let usingFallback=false,activeTab='overview';
+let usingFallback=false,activeTab='recordings';
 let networkSelection=null;
+let playbackSource;
+let playbackFollow = null;
 let activeRecordings = [];
 let tickerShowsRecording = false;
 let dismissRefreshStatus;
@@ -84,8 +86,16 @@ function selectTab(name){
  document.querySelectorAll('.nav-hit[data-tab]').forEach(button=>{
   const on=button.dataset.tab===name;
   button.classList.toggle('active',on);
-  if(on)button.setAttribute('aria-current','page');
-  else button.removeAttribute('aria-current');
+  if (on) {
+   button.setAttribute('aria-current','page');
+   if (!button.hidden) {
+    const navigation = button.parentElement;
+    const bar = navigation.getBoundingClientRect();
+    const tab = button.getBoundingClientRect();
+    if (tab.right > bar.right) navigation.scrollLeft += tab.right - bar.right;
+    else if (tab.left < bar.left) navigation.scrollLeft += tab.left - bar.left;
+   }
+  } else button.removeAttribute('aria-current');
  });
  document.querySelectorAll('.tab-panel').forEach(panel=>panel.classList.toggle('active',panel.id==='tab-'+name));
  const wasShowingRecording = tickerShowsRecording;
@@ -94,7 +104,12 @@ function selectTab(name){
  else if (wasShowingRecording) syncTicker(true);
  if(map&&typeof map.resize==='function')setTimeout(()=>map.resize(),0);
 }
-function setupNavigation(){document.querySelectorAll('.nav-hit[data-tab]').forEach(btn=>btn.addEventListener('click',()=>selectTab(btn.dataset.tab)));}
+function setupNavigation() {
+ document.querySelectorAll('.nav-hit[data-tab]').forEach(button => {
+  button.addEventListener('click', () => selectTab(button.dataset.tab));
+ });
+ selectTab(activeTab);
+}
 function setBasemapStatus(message){const el=$('basemapStatus');if(el)el.textContent=message;}
 function safeStorage(action,value){
   try{
@@ -323,7 +338,7 @@ function getVehiclePixelAlpha(button,e){
 function setHeaderVehicleFilter(type){
   headerFilter=(headerFilter===type?'all':type);
   document.querySelectorAll('[data-vehicle-toggle]').forEach(el=>{el.checked=headerFilter==='all'||el.dataset.vehicleToggle===headerFilter;});
-  if(selectedVehicle && headerFilter!=='all' && selectedVehicle.VehicleType!==headerFilter){selectedVehicle=null;selectedKey=null;}
+ if(selectedVehicle && headerFilter!=='all' && selectedVehicle.VehicleType!==headerFilter) clearVehicleSelection();
   filterModes();updateSelectionUI();
   log('Header map filter: '+(headerFilter==='all'?'all vehicles':headerFilter));
 }
@@ -357,21 +372,44 @@ function routeBadge(route) {
 }
 function selectedSummary(){const el=$('selectedSummary');if(!selectedVehicle){el.hidden=true;el.innerHTML='';return;}const v=selectedVehicle;el.hidden=false;el.innerHTML=`<h2>Selected vehicle</h2><p><b>${esc(v.VehicleType||'Vehicle')} ${esc(v.VehicleLabel||v.VehicleID||'')}</b> — Route ${routeBadge(v.RouteID || '—').outerHTML}</p><p>Trip ${esc(v.TripID||'—')} · ${number(Number(v.Speed)*3.6,0)} km/h · Bearing ${number(v.Bearing,0)}°</p><p>${esc(modeLabel())} · ${esc(v.PositionTimestamp||'Time unavailable')}</p>`;}
 function updateSelectionUI(restartTicker=false){
- $('clearSelectionButton').disabled = !selectedVehicle && !networkSelection;
+ $('clearSelectionButton').disabled = !selectedVehicle && !networkSelection && !playbackFollow;
  syncTicker(restartTicker);
  selectedSummary();
  highlightRow();
  if(usingFallback)renderFallbackMap();else setMapSelection();
 }
-function clearSelection(){
+function clearVehicleSelection() {
  selectedVehicle = null;
  selectedKey = null;
+ playbackFollow = null;
+}
+function clearSelection(){
+ clearVehicleSelection();
  networkSelection = null;
  updateSelectionUI();
  announceSelection('Selection cleared');
 }
 function deselect(){clearSelection();fitHome();}
-function selectVehicle(v,{fly=true,toggle=false}={}){if(!v)return;tickerShowsRecording=false;const key=keyFor(v);if(toggle&&selectedKey===key){deselect();return;}networkSelection=null;selectedVehicle=v;selectedKey=key;updateSelectionUI(true);if(map&&fly&&hasCoordinates(v))map.flyTo({center:displayCoordinates(v),zoom:15.8,duration:450});}
+function selectVehicle(vehicle, {fly = true, toggle = false, follow = false} = {}) {
+ if (!vehicle) return;
+ tickerShowsRecording = false;
+ const key = keyFor(vehicle);
+ if (toggle && selectedKey === key) {
+  deselect();
+  return;
+ }
+ networkSelection = null;
+ selectedVehicle = vehicle;
+ selectedKey = key;
+ playbackFollow = follow && mode === 'playback' && key
+  ? {vehicleType: vehicle.VehicleType, center: null} : null;
+ updateSelectionUI(true);
+ if (playbackFollow) {
+  updatePlaybackCamera();
+ } else if (map && fly && hasCoordinates(vehicle)) {
+  map.flyTo({center: displayCoordinates(vehicle), zoom: 15.8, duration: 450});
+ }
+}
 function renderTable(el,items,cols,kind){
  el.replaceChildren();
  if (!items.length) {
@@ -402,7 +440,7 @@ function renderTable(el,items,cols,kind){
   }
   function select() {
    if (kind === 'vehicles') {
-    selectVehicle(record);
+    selectVehicle(record, {follow: true});
     return;
    }
    const vehicle = state.vehicles.find(item => (record.VehicleID && item.VehicleID === record.VehicleID)
@@ -439,6 +477,7 @@ function renderNetwork(){
 }
 function redrawVehiclePositions(){
   if(map&&map.getSource('vehicles'))map.getSource('vehicles').setData(geoVehicles());
+ updatePlaybackCamera();
   setMapSelection();
   if(usingFallback)renderFallbackMap();
 }
@@ -446,6 +485,17 @@ function hasCoordinates(vehicle){
   return vehicle.Longitude!=null&&vehicle.Latitude!=null&&Number.isFinite(+vehicle.Longitude)&&Number.isFinite(+vehicle.Latitude);
 }
 const displayCoordinates=vehicle=>NETWORK?.coordinates(vehicle)||[+vehicle.Longitude,+vehicle.Latitude];
+function updatePlaybackCamera() {
+ if (!map || !playbackFollow || !selectedVehicle || !hasCoordinates(selectedVehicle)) return;
+ const center = displayCoordinates(selectedVehicle);
+ if (Math.abs(center[1]) > 90) return;
+ const previous = playbackFollow.center;
+ if (previous && center[0] === previous[0] && center[1] === previous[1]) return;
+ const camera = {center};
+ if (!previous) camera.zoom = Math.max(map.getZoom(), 15.8);
+ map.jumpTo(camera);
+ playbackFollow.center = center;
+}
 const geoVehicles=()=>({type:'FeatureCollection',features:state.vehicles.filter(hasCoordinates).map(vehicle=>({
  type:'Feature',geometry:{type:'Point',coordinates:displayCoordinates(vehicle)},
  properties:{...vehicle,VehicleKey:keyFor(vehicle),RouteColour:NETWORK?.routeStyle(vehicle.RouteID)?.colour ?? null}
@@ -541,10 +591,9 @@ function fitMap() {
   return;
  }
  const {clientWidth, clientHeight} = $('map');
- const controlsWidth = $('fitMapButton').parentElement.offsetWidth;
  const edge = Math.min(32, Math.floor(Math.min(clientWidth, clientHeight) / 8));
  map.fitBounds(bounds, {
-  padding: {top: edge, left: edge, bottom: edge, right: Math.min(controlsWidth + edge, Math.floor(clientWidth / 2))},
+  padding: {top: edge, right: edge, bottom: edge, left: edge},
   maxZoom: 15.8,
   duration: 450
  });
@@ -552,6 +601,7 @@ function fitMap() {
 
 function filterModes(){
  const enabled=enabledVehicleTypes();
+ if (playbackFollow && !enabled.includes(playbackFollow.vehicleType)) clearSelection();
   if(map?.getLayer('vehicles-circle')){
     const filter=['in',['get','VehicleType'],['literal',enabled]];
     for(const layer of ['vehicle-halos','vehicles-circle','route-labels']){
@@ -623,11 +673,10 @@ async function inspectMapFeature(event) {
   const properties = feature.properties;
   if (feature.layer.id === 'vehicles-circle') {
     const vehicle = state.vehicles.find(row => keyFor(row) === keyFor(properties)) ?? properties;
-    selectVehicle(vehicle);
+    selectVehicle(vehicle, {follow: true});
     return;
   }
-  selectedVehicle = null;
-  selectedKey = null;
+  clearVehicleSelection();
  tickerShowsRecording = false;
  const selection = networkSelection = {feature};
   updateSelectionUI();
@@ -649,27 +698,34 @@ function initMap(){
  try{
   const style=mapStyle();
   $('map').replaceChildren();map=new maplibregl.Map({container:'map',style,center:[138.6007,-34.9285],zoom:11,attributionControl:false});loadedMap=true;usingFallback=false;
-  const fallback = $('mapControlFallback');
-  const buttons = [...fallback.children];
+  const slot = $('mapNavigation');
+  const offlineButtons = [...slot.children];
   class MapNavigationControl extends maplibregl.NavigationControl {
     onAdd(instance) {
       const controls = super.onAdd(instance);
-      controls.classList.add('map-control-stack');
-      controls.setAttribute('role', 'group');
-      controls.setAttribute('aria-label', 'Map controls');
-      controls.append(...buttons);
+      controls.classList.replace('maplibregl-ctrl-group', 'map-native-navigation');
+      this.deckElement = controls;
       return controls;
     }
     onRemove(instance) {
-      fallback.append(...buttons);
       super.onRemove(instance);
+      slot.replaceChildren(...offlineButtons);
     }
   }
-  map.addControl(new MapNavigationControl({visualizePitch:false}),'top-right');
-  map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
+  // Keep MapLibre's control lifecycle and mount its buttons in the bottom panel.
+  const navigation = new MapNavigationControl({visualizePitch:false});
+  map.addControl(navigation);
+  slot.replaceChildren(navigation.deckElement);
+  map.addControl(new maplibregl.AttributionControl({compact:true}),'top-left');
   $('fitMapButton').disabled = false;
   $('mapViewButton').disabled = false;
-  map.on('load',()=>{filterModes();fitHome();setMapSelection();log('MapLibre loaded. Vehicle points available: '+state.vehicles.length);});
+ map.on('load', () => {
+  filterModes();
+  if (!playbackFollow?.center) fitHome();
+  updatePlaybackCamera();
+  setMapSelection();
+  log('MapLibre loaded. Vehicle points available: ' + state.vehicles.length);
+ });
   map.on('style.load',()=>{filterModes();syncMapLabels();syncBasemapAnnotations();renderNetwork();redrawVehiclePositions();});
   map.on('pitchend', () => updateViewButton(map.getPitch() > 0));
   map.on('zoom',()=>{if(bearingDegrees(selectedVehicle)!==null)redrawVehicleSelection();});
@@ -715,14 +771,21 @@ function renderFallbackMap() {
       button.classList.add('has-bearing');
       button.style.setProperty('--vehicle-bearing', bearing + 'deg');
     }
-    button.addEventListener('click', () => selectVehicle(vehicle, {fly:false}));
+    button.addEventListener('click', () => selectVehicle(vehicle, {fly: false, follow: true}));
     wrap.append(button);
   }
   target.replaceChildren(wrap);
 }
 const cacheBust=url=>url+(url.includes('?')?'&':'?')+'_cb='+Date.now();
 function validProtobuf(bytes){return bytes.byteLength>2&&new Uint8Array(bytes)[0]===0x0a;}
-async function tryUrl(url,signal){const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),6500);let abort=()=>ctrl.abort();signal?.addEventListener('abort',abort,{once:true});try{const r=await fetch(url,{cache:'no-store',signal:ctrl.signal});if(!r.ok)throw new Error(`HTTP ${r.status}`);const bytes=await r.arrayBuffer();if(!validProtobuf(bytes))throw new Error('Not a GTFS protobuf response');return bytes;}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}}
+async function tryUrl(url, signal) {
+  const timeout = AbortSignal.timeout(6500);
+  const response = await fetch(url, {cache: 'no-store', signal: signal ? AbortSignal.any([signal, timeout]) : timeout});
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const bytes = await response.arrayBuffer();
+  if (!validProtobuf(bytes)) throw new Error('Not GTFS protobuf response');
+  return bytes;
+}
 function proxyList(url, endpoint, custom) {
   const candidates = [['Direct endpoint', cacheBust(url)]];
   if (custom) {
@@ -740,7 +803,23 @@ function proxyList(url, endpoint, custom) {
   candidates.push(['Local proxy', 'http://localhost:8080/proxy?url=' + encodeURIComponent(url)]);
   return candidates;
 }
-async function fetchFeed(endpoint,{baseUrl,customProxyUrl}){const base=baseUrl.replace(/\/+$/,'');const url=base+'/'+endpoint;let lastError=null;for(const [label,target] of proxyList(url,endpoint,customProxyUrl)){try{log(`${endpoint}: fetching via ${label}`);const bytes=await tryUrl(target);log(`${endpoint}: received ${bytes.byteLength} bytes via ${label}`,'SUCCESS');return bytes;}catch(e){lastError=e;log(`${endpoint}: ${label} failed — ${e.message}`,'WARN');}}throw lastError||new Error('No feed request succeeded');}
+async function fetchFeed(endpoint, {baseUrl, customProxyUrl}, signal) {
+  const url = baseUrl.replace(/\/+$/, '') + '/' + endpoint;
+  let lastError;
+  for (const [label, target] of proxyList(url, endpoint, customProxyUrl)) {
+    signal?.throwIfAborted();
+    try {
+      log(`${endpoint}: fetching via ${label}`);
+      const bytes = await tryUrl(target, signal);
+      log(`${endpoint}: received ${bytes.byteLength} bytes via ${label}`, 'SUCCESS');
+      return bytes;
+    } catch (error) {
+      lastError = error;
+      log(`${endpoint}: ${label} failed — ${error.message}`, 'WARN');
+    }
+  }
+  throw lastError || new Error('No feed request succeeded');
+}
 
 const feedSpecs = [
   ['vehicle_positions', 'vehicles', GTFS.parseVehicles],
@@ -773,7 +852,7 @@ let beforePlayback;
 const lastAppliedCapture = new Map();
 
 function feedConfig() {
-  return {baseUrl: $('refreshBaseUrl').value.trim(), customProxyUrl: $('customProxyUrl').value.trim()};
+  return {baseUrl: SNAP.baseUrl};
 }
 
 function base64(data) {
@@ -785,12 +864,12 @@ function base64(data) {
   return btoa(chunks.join(''));
 }
 
-async function capture(settings, includeRaw = true) {
+async function capture(settings, includeRaw = true, signal) {
   const time = Date.now();
   const entries = await Promise.all(feedSpecs.map(async ([endpoint, , parse]) => {
     let raw;
     try {
-      const data = await fetchFeed(endpoint, settings);
+      const data = await fetchFeed(endpoint, settings, signal);
       const fetchedAt = Date.now();
       if (includeRaw) raw = base64(data);
       return [endpoint, {time: fetchedAt, raw, rows: parse(data)}];
@@ -803,13 +882,15 @@ async function capture(settings, includeRaw = true) {
 
 function renderFrame() {
   selectedVehicle = selectedKey ? state.vehicles.find(row => keyFor(row) === selectedKey) : null;
-  if (!selectedVehicle) selectedKey = null;
+  if (!selectedVehicle && !playbackFollow) selectedKey = null;
   render();
   updateSelectionUI();
 }
 
-function displayPlayback(frame, history, cursorTime, startedAt, interval) {
+function displayPlayback(frame, history, cursorTime, startedAt, interval, source) {
   beforePlayback ??= {state, mode, selectedKey};
+  if (playbackFollow && source !== playbackSource) clearVehicleSelection();
+  playbackSource = source;
   mode = 'playback';
   $('refreshButton').disabled = true;
   state = Object.fromEntries(feedSpecs.map(([endpoint, key]) => [key, frame.feeds[endpoint]?.rows ?? []]));
@@ -826,6 +907,8 @@ function exitPlayback() {
   if (!beforePlayback) return;
   ({state, mode, selectedKey} = beforePlayback);
   beforePlayback = null;
+  playbackSource = undefined;
+  playbackFollow = null;
   $('refreshButton').disabled = $('refreshButton').getAttribute('aria-busy') === 'true';
   window.MetroNetwork?.setPlayback(null);
   renderFrame();
@@ -891,27 +974,6 @@ async function refresh() {
     dismissRefreshStatus = setTimeout(() => status.classList.remove('is-visible'), 7000);
   }
 }
-function restoreSnapshot(){if(mode==='playback')return;mode='snapshot';state={vehicles:trackedVehicles(SNAP.vehicles),trips:[...SNAP.trips],alerts:[...SNAP.alerts]};deselect();render();log('Restored historical bundled sample');$('refreshStatus').textContent='Bundled historical sample restored.';}
-async function loadOriginalSnapshot(){if(mode==='playback')return;
-  const btn=$('loadOriginalSnapshotButton');btn.disabled=true;btn.textContent='Loading original…';
-  const url='https://raw.githubusercontent.com/FraknToastr/toolbox-gtfs-live-refresh/main/index.html';
-  try{
-    log('Requesting full upstream historical snapshot (public GitHub read-only)');
-    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
-    let text;
-    try{const r=await fetch(url,{cache:'no-store',signal:controller.signal});if(!r.ok)throw new Error('HTTP '+r.status);text=await r.text();}finally{clearTimeout(timer);}
-    const doc=new DOMParser().parseFromString(text,'text/html');const script=doc.getElementById('uos-app-data');
-    if(!script)throw new Error('The upstream data script was not found');
-    const src=JSON.parse(script.textContent||'{}');const initial=src.initialRecords||{};
-    if (mode === 'playback') return;
-    if(!Array.isArray(initial.vehicle_positions)||!Array.isArray(initial.trip_updates)||!Array.isArray(initial.service_alerts))throw new Error('The upstream data arrays are incomplete');
-  mode='snapshot';state={vehicles:trackedVehicles(initial.vehicle_positions),trips:initial.trip_updates,alerts:initial.service_alerts};
-    selectedKey=null;selectedVehicle=null;render();updateSelectionUI();
-    $('refreshStatus').textContent=`Loaded full historical GitHub snapshot (${state.vehicles.length} vehicles, ${state.trips.length} trips, ${state.alerts.length} alerts). Not live.`;
-    log('Full upstream historical snapshot loaded successfully','SUCCESS');
-  }catch(err){$('refreshStatus').textContent='Could not load upstream snapshot: '+err.message+'. The existing data have been retained.';log('Upstream snapshot load failed: '+err.message,'ERROR');}
-  finally{btn.disabled=false;btn.textContent='Load full original snapshot';}
-}
 function exportLog(){const a=document.createElement('a');const blob=new Blob([debugEntries.join('\n')],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);a.href=url;a.download='AdelaideMetro_DebugLog_'+Date.now()+'.txt';a.click();URL.revokeObjectURL(url);}
 function installActions(){
  $('homeButton').addEventListener('click',deselect);
@@ -931,8 +993,6 @@ function installActions(){
  document.querySelectorAll('[data-vehicle-toggle]').forEach(el=>el.addEventListener('change',filterModes));
  $('vehicleSearch').addEventListener('input',renderVehicles);
  $('refreshButton').addEventListener('click',refresh);
- $('restoreSnapshotButton').addEventListener('click',restoreSnapshot);
- $('loadOriginalSnapshotButton').addEventListener('click',loadOriginalSnapshot);
  $('exportLogButton').addEventListener('click',exportLog);
  $('clearLogButton').addEventListener('click',()=>{debugEntries.length=0;$('debugLogWindow').value='';log('Debug log cleared');});
 }

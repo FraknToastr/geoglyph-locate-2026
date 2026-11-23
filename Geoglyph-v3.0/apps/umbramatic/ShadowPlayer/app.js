@@ -13,8 +13,15 @@
     playing: false, speed: 1, playbackMode: 'loop', direction: 1, opacity: 1,
     basemap: 'none', timer: null, renderToken: 0, tileSources: new Set(),
     localFiles: null, rootUrl: null, memoryCache: new Map(), cacheLimit: 32,
+    shadowColour: null, jpegMask: false, previewUrls: new Map(),
     focusedDate: '', loading: false, defaultFitted: false,
   };
+  const solarDialog = $('solarConsole');
+  const solar = ShadowSolar.create({onSelectFrame(index){
+    pause();
+    state.direction = 1;
+    void showFrame(index);
+  }});
   let referencesVisible = true;
   const mapEmpty = {version:8, sources:{}, layers:[
     {id:'background',type:'background',paint:{'background-color':blankBackground()}}
@@ -194,8 +201,10 @@
       if(entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
     }
     state.memoryCache.clear();
+    for(const url of state.previewUrls.values()) URL.revokeObjectURL(url);
+    state.previewUrls.clear();
   }
-  async function resolveImage(tile){
+  function resolveImage(tile){
     if(tile.direct_url)return tile.direct_url;
     const key=normalPath(tile.path);
     if(state.localFiles){
@@ -206,13 +215,13 @@
     if(!state.rootUrl)throw new Error('No loaded image folder or hosted URL.');
     return new URL(key,state.rootUrl).href;
   }
-  async function decodedImage(tile){
+  function decodedImage(tile){
     const key=tile.direct_url||normalPath(tile.path);
     const cached=state.memoryCache.get(key);
-    if(cached){state.memoryCache.delete(key);state.memoryCache.set(key,cached);return cached.promise;}
+    if(cached){state.memoryCache.delete(key);state.memoryCache.set(key,cached);return cached;}
     const entry={objectUrl:null,promise:null};
     const task=(async()=>{
-      const url=await resolveImage(tile);
+      const url=resolveImage(tile);
       if(state.localFiles && !tile.direct_url) entry.objectUrl=url;
       const img=new Image();
       img.decoding='async';img.crossOrigin='anonymous';img.src=url;
@@ -231,10 +240,41 @@
       const stale=state.memoryCache.get(oldest);state.memoryCache.delete(oldest);
       if(stale.objectUrl)URL.revokeObjectURL(stale.objectUrl);
     }
-    return task;
+    return entry;
+  }
+  function tintedImage(entry, colour, jpegMask){
+    if(entry.tint?.colour === colour) return entry.tint.promise;
+    const promise = entry.promise.then(async ({img})=>{
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d', {willReadFrequently: jpegMask});
+      ctx.drawImage(img, 0, 0);
+      if(jpegMask){
+        // ArcGIS exports encode shadow at gray 25 and sunlit/NoData at 246.
+        // The midpoint separates the binary classes despite JPEG compression.
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        for(let i = 0; i < pixels.data.length; i += 4) {
+          pixels.data[i + 3] = pixels.data[i] < 136 ? 255 : 0;
+        }
+        ctx.putImageData(pixels, 0, 0);
+      }
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.fillStyle = colour;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const blob = await new Promise((resolve,reject)=>canvas.toBlob(file=>{
+        if(file) resolve(file);
+        else reject(new Error('Could not recolour the shadow tile.'));
+      }, 'image/png'));
+      return {blob};
+    });
+    entry.tint = {colour,promise};
+    promise.catch(()=>{if(entry.tint?.promise === promise) entry.tint = null;});
+    return promise;
   }
   async function mapImages(tiles, token){
     const result=[];
+    const {shadowColour, jpegMask} = state;
     const parallel=Math.min(8,tiles.length);
     let next=0;
     async function worker(){
@@ -242,42 +282,44 @@
         if(token!==state.renderToken)return;
         const i=next++;
         const tile=tiles[i];
-        const {img,url}=await decodedImage(tile);
-        result[i]={tile,img,url};
+        const entry=decodedImage(tile);
+        const image=await (shadowColour ? tintedImage(entry, shadowColour, jpegMask) : entry.promise);
+        result[i]={tile,...image};
       }
     }
     await Promise.all(Array.from({length:parallel},worker));
     if(token!==state.renderToken)return false;
     const active=new Set();
-    for(const {tile,img,url} of result){
+    for(const {tile,blob,url:originalUrl} of result){
       const key=frameTileKey(tile), sid=mapSourceId(key), lid=mapLayerId(key);
       active.add(key);
       const source=state.map.getSource(sid);
-      if(!source){
-        // A newly created ImageSource is initialized *with* an image URL.
-        // The previous code created an empty source and immediately called
-        // getSource(sid).updateImage(), which can fail because getSource(sid)
-        // is undefined when MapLibre rejects/has not registered that source.
-        if(state.map.getLayer(lid))state.map.removeLayer(lid);
-        state.map.addSource(sid,{type:'image',url,coordinates:tile.coordinates});
-        state.map.addLayer({id:lid,type:'raster',source:sid,
-          paint:{'raster-opacity':state.opacity,'raster-fade-duration':0}});
-      }else{
-        if(typeof source.updateImage!=='function')
-          throw new Error(`MapLibre image source ${sid} cannot update. Reload the player and try again.`);
-        // MapLibre GL JS 5.13.0 accepts ONLY {url, coordinates} here.
-        // Passing {image: HTMLImageElement} silently does nothing in this pinned
-        // version: the date/time changes while the raster remains static.
-        // Keep the resolved URL (a blob: URL for folder-loaded files) for each
-        // frame so MapLibre fetches and uploads the new tile texture.
-        source.updateImage({url,coordinates:tile.coordinates});
+      const url = blob ? URL.createObjectURL(blob) : originalUrl;
+      try {
+        // MapLibre 5.13.0 requires a URL for both addSource and updateImage.
+        if(source) source.updateImage({url,coordinates:tile.coordinates});
+        else {
+          if(state.map.getLayer(lid))state.map.removeLayer(lid);
+          state.map.addSource(sid,{type:'image',url,coordinates:tile.coordinates});
+          state.map.addLayer({id:lid,type:'raster',source:sid,
+            paint:{'raster-opacity':state.opacity,'raster-fade-duration':0}});
+        }
+      } catch(error) {
+        if(blob) URL.revokeObjectURL(url);
+        throw error;
       }
+      const previousPreview = state.previewUrls.get(key);
+      if(previousPreview) URL.revokeObjectURL(previousPreview);
+      if(blob) state.previewUrls.set(key, url);
+      else state.previewUrls.delete(key);
       state.tileSources.add(key);
     }
     for(const key of [...state.tileSources]){
       if(!active.has(key)){
         if(state.map.getLayer(mapLayerId(key)))state.map.removeLayer(mapLayerId(key));
         if(state.map.getSource(mapSourceId(key)))state.map.removeSource(mapSourceId(key));
+        if(state.previewUrls.has(key)) URL.revokeObjectURL(state.previewUrls.get(key));
+        state.previewUrls.delete(key);
         state.tileSources.delete(key);
       }
     }
@@ -295,10 +337,19 @@
     if(!state.mapReady)return;
     const bounds=allCorners();
     if(!bounds)return;
+    const viewport = $('map').getBoundingClientRect();
     const panel = $('controlsPanel').getBoundingClientRect();
-    const player = document.querySelector('.timeline-card').getBoundingClientRect();
-    const left = 50 + (panel.right<=player.left ? panel.right : 0);
-    state.map.fitBounds(bounds,{padding:{top:105,bottom:242,left,right:50},maxZoom:18,duration:500});
+    const player = $('mediaPlayer').getBoundingClientRect();
+    const inset = Math.min(50, viewport.width * .12);
+    const sidebarBesideMap = panel.width && (player.width ? panel.right <= player.left : panel.width < viewport.width * .6);
+    const left = inset + (sidebarBesideMap ? panel.right - viewport.left : 0);
+    const padding = {
+      top: Math.min(105, viewport.height * .23),
+      bottom: Math.min(player.height ? viewport.bottom - player.top + 24 : 46, viewport.height * .5),
+      left: Math.min(left, viewport.width * .65),
+      right: inset,
+    };
+    state.map.fitBounds(bounds,{padding,maxZoom:18,duration:500});
   }
   function setPanelHidden(hidden){
     const restoreFocus = hidden && $('controlsPanel').contains(document.activeElement);
@@ -306,6 +357,22 @@
     document.body.classList.toggle('panel-hidden',hidden);
     toggle.setAttribute('aria-expanded',String(!hidden));
     if(restoreFocus)toggle.focus({preventScroll:true});
+  }
+  function setPlayerHidden(hidden){
+    const player = $('mediaPlayer');
+    const restoreFocus = hidden && player.contains(document.activeElement);
+    const toggle = $('togglePlayer');
+    player.hidden = hidden;
+    toggle.setAttribute('aria-expanded', String(!hidden));
+    toggle.dataset.tooltip = hidden ? 'Show the media player.' : 'Hide the media player.';
+    if(restoreFocus) toggle.focus({preventScroll:true});
+  }
+  function setShadowColour(colour){
+    if(state.shadowColour === colour) return;
+    state.shadowColour = colour;
+    $('resetShadowColour').disabled = colour === null;
+    if(colour === null) $('shadowColour').value = $('shadowColour').defaultValue;
+    void showFrame(state.selected);
   }
   function updateFrameUI(){
     const frame=state.frames[state.selected];
@@ -321,6 +388,7 @@
     $('timelineCaption').textContent=`${frame.date}  ·  ${frame.time}`;
     $('timelineSubtitle').textContent=`${frame.tiles.length} georeferenced image ${frame.tiles.length===1?'tile':'tiles'} · ${state.speed}× speed`;
     $('frameHint').textContent=`FRAME ${state.selected+1} OF ${state.frames.length}`;
+    if(solarDialog.open) solar.render(state.frames, state.selected);
   }
   async function showFrame(idx, initial=false){
     if(!state.frames.length)return false;
@@ -409,7 +477,7 @@
       const right = left + (viewport?.width ?? innerWidth) - 2*margin;
       const bottom = top + (viewport?.height ?? innerHeight) - 2*margin;
       const anchor = trigger.getBoundingClientRect();
-      const scroller = trigger.closest('.sidebar, .empty-state')?.getBoundingClientRect();
+      const scroller = trigger.closest('.sidebar, .empty-state, dialog')?.getBoundingClientRect();
       if(!anchor.width || !anchor.height || anchor.bottom<=top || anchor.top>=bottom ||
         (scroller && (anchor.bottom<=scroller.top || anchor.top>=scroller.bottom))){
         hideTooltip();
@@ -440,6 +508,7 @@
       trigger=control;
       pointer=point;
       previousDescription=control.getAttribute('aria-describedby');
+      (control.closest('dialog[open]') || document.body).append(tooltip);
       tooltip.textContent=control.dataset.tooltip;
       tooltip.hidden=false;
       control.setAttribute('aria-describedby',[previousDescription,tooltip.id].filter(Boolean).join(' '));
@@ -454,7 +523,7 @@
         control.removeAttribute('title');
       }
     });
-    observer.observe(app,{childList:true,subtree:true,attributes:true,attributeFilter:['title','hidden']});
+    observer.observe(app,{childList:true,subtree:true,attributes:true,attributeFilter:['title','hidden','open']});
     observer.observe(document.body,{attributes:true,attributeFilter:['class']});
 
     document.addEventListener('pointerout',event=>{
@@ -600,6 +669,11 @@
     if(data.encoding?.transparent_sunlit===false){state.opacity=.4;$('opacity').value=40;}
     else{state.opacity=1;$('opacity').value=100;}
     $('opacityValue').textContent=`${Math.round(state.opacity*100)}%`;
+    state.shadowColour = null;
+    state.jpegMask = data.encoding?.transparent_sunlit === false && /^jpe?g$/i.test(data.encoding.format);
+    $('shadowColour').disabled = data.encoding?.transparent_sunlit === false && !state.jpegMask;
+    $('shadowColour').value = $('shadowColour').defaultValue;
+    $('resetShadowColour').disabled = true;
     dateChips();updateFrameUI();applyOpacity();
     $('emptyState').hidden=true;
     if(compactLayout.matches)setPanelHidden(true);
@@ -677,9 +751,28 @@
       $('opacityValue').textContent=`${e.target.value}%`;
       applyOpacity();
     });
+    $('shadowColour').addEventListener('change',event=>setShadowColour(event.target.value));
+    $('resetShadowColour').addEventListener('click',()=>{
+      $('shadowColour').focus({preventScroll:true});
+      setShadowColour(null);
+    });
     $('fitBounds').addEventListener('click',fit);
     $('togglePanel').addEventListener('click',()=>setPanelHidden(!document.body.classList.contains('panel-hidden')));
+    $('togglePlayer').addEventListener('click',()=>setPlayerHidden(!$('mediaPlayer').hidden));
+    const solarToggle = $('toggleSolar');
+    solarToggle.addEventListener('click',()=>{
+      solarDialog.showModal();
+      solarToggle.setAttribute('aria-expanded','true');
+      solar.render(state.frames, state.selected);
+    });
+    $('minimiseDome').addEventListener('click',()=>solarDialog.close());
+    solarDialog.addEventListener('close',()=>{
+      if(solarDialog.open) return;
+      solarToggle.setAttribute('aria-expanded','false');
+      solarToggle.focus({preventScroll:true});
+    });
     window.addEventListener('keydown',e=>{
+      if(solarDialog.open)return;
       if(e.target instanceof Element && e.target.closest('input, textarea, select, button, a, [contenteditable]')) return;
       if(e.code==='Space'){e.preventDefault();play();}
       else if(e.key==='ArrowRight' && state.frames.length){e.preventDefault();step(1);}

@@ -3,6 +3,30 @@ const path=require('node:path');
 const {pathToFileURL}=require('node:url');
 const {config}=require('../../apps/geoglyph/src/scripts/survey-results.js');
 const rehearsal=require('../../apps/geoglyph/src/scripts/locate-2026-rehearsal.json');
+const transitronURL='http://127.0.0.1:8090/';
+const atApp=(url,route)=>route===transitronURL ? url.origin+url.pathname===transitronURL : url.pathname.endsWith('/'+route);
+const withTransitron=test.extend({
+  page:async({page},use,testInfo)=>{
+    const {createDashboardServer}=require('../../apps/transitron/server.cjs');
+    const server=await createDashboardServer({directory:testInfo.outputPath('recordings')});
+    try{
+      await new Promise((resolve,reject)=>server.once('error',reject).listen(0,'127.0.0.1',resolve));
+      const local=`http://127.0.0.1:${server.address().port}`;
+      await page.route(`${transitronURL}**`,async route=>{
+        const {pathname,search}=new URL(route.request().url());
+        if(pathname.startsWith('/api/gtfs/')) return route.fulfill({status:503});
+        const response=await route.fetch({url:local+pathname+search});
+        await route.fulfill({response});
+      });
+      await page.route('https://unpkg.com/maplibre-gl@5.24.0/**',route=>route.abort());
+      await use(page);
+    }finally{
+      server.closeAllConnections();
+      await new Promise(resolve=>server.close(resolve));
+      await server.closeRecorder();
+    }
+  }
+});
 const tile=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==','base64');
 const fields=['emojis','geoglyph_speaks','whats_on_your_mind','random_font','choose_a_font_font','choose_a_colour_colour','_2d_or_3d','fit','animation','_size_size','special_commands'];
 const cue=(id,attributes={})=>({attributes:{objectid:id,CreationDate:1000+id,...attributes}});
@@ -644,7 +668,7 @@ test('launcher lists the four logos and reports the unlinked Assassin’s Leaves
   expect(errors).toEqual([]);
 });
 
-for(const portable of [false,true])test(`imported app logos and Survey123 commands round trip (${portable?'file':'HTTP'})`,async({page})=>{
+for(const portable of [false,true])withTransitron(`imported app logos and Survey123 commands round trip (${portable?'file':'HTTP'})`,async({page})=>{
   const {server,errors}=await setup(page,{portable,width:portable?390:1440});
   // This routing check can run without the map library CDN.
   await page.route('https://unpkg.com/maplibre-gl@5.13.0/**',route=>route.abort());
@@ -653,22 +677,34 @@ for(const portable of [false,true])test(`imported app logos and Survey123 comman
   const routes=[
     ['panoptigon','apps/panoptigon/index.html','Launch Panoptigon'],
     ['umbramatic','apps/umbramatic/ShadowPlayer/index.html','Launch Umbramatic'],
-    ['transitron','apps/transitron/launcher-placeholder.html','Launch Transitron']
+    ['transitron',transitronURL,'Launch Transitron']
   ];
   async function checkReturn(target,route,cursor,active){
-    await expect.poll(()=>new URL(page.url()).pathname.endsWith('/'+route)).toBe(true);
-    const back=page.getByRole('link',{name:'Return to launcher'});
+    await expect.poll(()=>atApp(new URL(page.url()),route)).toBe(true);
+    if(target==='transitron')await page.getByRole('button',{name:'Enter dashboard'}).click();
+    const back=page.getByRole('link',{name:/^return to launcher$/i});
     await expect.poll(()=>back.evaluate(node=>{
       const fragment=new URL(node.href).hash;
       return fragment?JSON.parse(new URLSearchParams(fragment.slice(1)).get('suite')):null;
     })).toMatchObject({app:'launcher',returnFrom:target,cursor,active,interval:60,layerId:7});
     if(target==='panoptigon'){
+      await page.waitForFunction(()=>typeof document.getElementById('importBtn')?.onclick==='function');
       await page.getByRole('button',{name:'Import data'}).click();
       await expect(page.locator('#importModal')).toBeVisible();
       await page.getByRole('button',{name:'Done',exact:true}).click();
     }
     if(target==='umbramatic')await expect(page.locator('#openFolder')).toBeVisible();
-    if(target==='transitron')await expect(page.getByRole('heading',{name:'Transitron'})).toBeVisible();
+    if(target==='transitron'){
+      await expect(page.locator('.masthead .app-title')).toHaveText('Realtime Recorder');
+      await expect(page.locator('.masthead [data-suite-return]')).toHaveCount(0);
+      const nav=page.getByRole('navigation',{name:'Report navigation'});
+      await expect(nav.getByRole('button')).toHaveText(['Overview','Vehicles','Trip Updates','Service Alerts','Recorder']);
+      await expect(nav.getByRole('button',{name:'Trip Updates'})).toHaveCSS('border-radius','4px');
+      const recorder=nav.getByRole('button',{name:'Recorder'});
+      await recorder.click();
+      await expect(recorder).toHaveCSS('background-color','rgb(25, 44, 39)');
+      await expect(recorder.locator('.recording-led')).toBeVisible();
+    }
     const queriesBeforeReturn=server.queries.length;
     await back.click();
     await expect.poll(()=>page.evaluate(()=>{
@@ -694,12 +730,12 @@ for(const portable of [false,true])test(`imported app logos and Survey123 comman
   expect(errors).toEqual([]);
 });
 
-for(const portable of [false,true])test(`Survey123 keeps routing while imported apps are open (${portable?'file':'HTTP'})`,async({page})=>{
+for(const portable of [false,true])withTransitron(`Survey123 keeps routing while imported apps are open (${portable?'file':'HTTP'})`,async({page})=>{
   const {server,errors}=await setup(page,{portable});
   await page.route('https://unpkg.com/maplibre-gl@5.13.0/**',route=>route.abort());
   await waitForLauncherPolling(page);
   const send=(id,special_commands)=>server.records.push(cue(id,{special_commands}));
-  const app=route=>page.waitForURL(url=>url.pathname.endsWith('/'+route));
+  const app=route=>page.waitForURL(url=>atApp(url,route));
   const checkpoint=()=>page.evaluate(()=>JSON.parse(new URLSearchParams(location.hash.slice(1)).get('suite')));
   const panoptigon='apps/panoptigon/index.html';
 
@@ -715,7 +751,7 @@ for(const portable of [false,true])test(`Survey123 keeps routing while imported 
   send(13,'Launch Umbramatic');
   await app('apps/umbramatic/ShadowPlayer/index.html');
   send(14,'Launch Transitron');
-  await app('apps/transitron/launcher-placeholder.html');
+  await app(transitronURL);
   send(15,'Return to Launcher');
   await waitForLauncherPolling(page,15);
 

@@ -1,12 +1,12 @@
 <!DOCTYPE html><html lang="en-AU"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f1f6f5"><title>Adelaide Metro · Realtime Dashboard</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/frame.css"><link rel="stylesheet" href="css/reveal.css?v=enter-single-border"><link rel="stylesheet" href="css/network.css"><link rel="stylesheet" href="css/recording.css?v=library-joystick"></head>
+<link rel="stylesheet" href="css/frame.css"><link rel="stylesheet" href="css/reveal.css?v=map-panel"><link rel="stylesheet" href="css/network.css"><link rel="stylesheet" href="css/recording.css?v=recorder-library-clock"></head>
 <body data-theme="light" ><div class="app-viewport"><div class="frame" id="stage"><header class="masthead" aria-label="Adelaide Metro application header">
 <div class="brand-row"><div class="brand-lockup">
 <a class="brand-logo" href="index.html" aria-label="Adelaide Metro home"><img src="assets/adelaide-metro-logo.svg" alt="Adelaide Metro" width="203" height="120"></a>
 <div class="brand-copy"><div class="micro-label">ADELAIDE / SOUTH AUSTRALIA</div>
-<div class="app-title">Realtime <span>Report</span></div></div></div>
+<div class="app-title">Realtime <span>Recorder</span></div></div></div>
 <div class="hero-vehicles" id="heroVehicles" role="group" aria-label="Filter the map using the vehicle artwork">
 <button class="vehicle-sprite" type="button" data-filter="Bus" aria-pressed="false"><img src="assets/bus-pixel.png" alt="Adelaide Metro bus" draggable="false"></button>
 <button class="vehicle-sprite" type="button" data-filter="Train" aria-pressed="false"><img src="assets/train-pixel.png" alt="Adelaide Metro train" draggable="false"></button>
@@ -15,20 +15,9 @@
 </div>
 </header>
 <main class="content-grid" aria-label="Realtime transport information">
-<div class="content-chrome map-chrome">
-<section class="map-pane" aria-label="Vehicle map" >
+<section class="content-chrome map-chrome" aria-label="Vehicle map">
+      <div class="map-pane">
         <div id="map" aria-label="Map of transit vehicles"></div>
-        <div class="map-control-stack map-control-fallback" id="mapControlFallback" role="group" aria-label="Map controls">
-          <button class="map-control-button" id="homeButton" type="button" aria-label="Home" data-tooltip="Home"><span aria-hidden="true">⌂</span></button>
-          <button class="map-control-button" id="fitMapButton" type="button" aria-label="Fit map" data-tooltip="Fit the selection or all visible geometry" disabled><span class="map-fit-icon" aria-hidden="true"></span></button>
-          <button class="map-control-button" id="clearSelectionButton" type="button" aria-label="Clear selection" data-tooltip="Clear selection" disabled><span aria-hidden="true">×</span></button>
-          <button class="map-control-button" type="button" aria-label="Vehicle layers" data-tooltip="Vehicle layers" aria-expanded="false" aria-controls="vehicleLayersMenu"><img src="assets/green-bus.svg" width="30" height="30" alt=""></button>
-          <button class="map-control-button" type="button" aria-label="Network layers" data-tooltip="Network layers" aria-expanded="false" aria-controls="networkLayersMenu"><span class="map-network-icon" aria-hidden="true"></span></button>
-          <button class="map-control-button" id="basemapButton" type="button" aria-label="Basemap" data-tooltip="Basemap" aria-expanded="false" aria-controls="basemapMenu"><span class="map-basemap-icon" aria-hidden="true"></span></button>
-<button class="map-control-button" id="mapLabelsButton" type="button" aria-label="Map labels" data-tooltip="Show or hide vehicle route numbers" aria-pressed="false"><span class="map-label-icon" aria-hidden="true"></span></button>
-          <button class="map-control-button map-view-mode-button" id="mapViewButton" type="button" aria-label="3D view" data-tooltip="Switch between overhead and 3D perspective" aria-pressed="false" disabled><span aria-hidden="true">3D</span></button>
-          <button class="map-control-button" id="refreshButton" type="button" aria-label="Refresh latest feeds" data-tooltip="Refresh latest feeds"><span aria-hidden="true">↻</span></button>
-        </div>
         <section class="map-popover vehicle-layers" id="vehicleLayersMenu" aria-labelledby="vehicleLayersTitle" tabindex="-1" hidden>
           <h2 id="vehicleLayersTitle">Vehicle layers</h2>
           <label><input type="checkbox" checked data-vehicle-toggle="Bus"> Bus</label>
@@ -52,19 +41,39 @@
           <p class="basemap-message" id="basemapStatus" role="status" aria-live="polite"></p>
         </section>
         <p id="refreshStatus" class="screenreader-status map-refresh-status" role="status" aria-live="polite">Ready. Showing archived sample data until a refresh succeeds.</p>
-      </section></div>
+      </div>
+      <div class="map-control-panel" role="group" aria-label="Map controls">
+        <div id="mapNavigation" class="map-navigation">
+          <button type="button" aria-label="Zoom in" disabled><span aria-hidden="true">+</span></button>
+          <button type="button" aria-label="Zoom out" disabled><span aria-hidden="true">−</span></button>
+          <button type="button" aria-label="Reset bearing to north" disabled><span aria-hidden="true">▲</span></button>
+        </div>
+        <button class="map-control-button" id="homeButton" type="button" aria-label="Home" data-tooltip="Home"><span aria-hidden="true">⌂</span></button>
+        <button class="map-control-button" id="fitMapButton" type="button" aria-label="Fit map" data-tooltip="Fit the selection or all visible geometry" disabled><span class="map-fit-icon" aria-hidden="true"></span></button>
+        <button class="map-control-button" id="clearSelectionButton" type="button" aria-label="Clear selection" data-tooltip="Clear selection" disabled><span aria-hidden="true">×</span></button>
+        <button class="map-control-button" type="button" aria-label="Vehicle layers" data-tooltip="Vehicle layers" aria-expanded="false" aria-controls="vehicleLayersMenu"><img src="assets/green-bus.svg" width="30" height="30" alt=""></button>
+        <button class="map-control-button" type="button" aria-label="Network layers" data-tooltip="Network layers" aria-expanded="false" aria-controls="networkLayersMenu"><span class="map-network-icon" aria-hidden="true"></span></button>
+        <button class="map-control-button" id="basemapButton" type="button" aria-label="Basemap" data-tooltip="Basemap" aria-expanded="false" aria-controls="basemapMenu"><span class="map-basemap-icon" aria-hidden="true"></span></button>
+        <button class="map-control-button" id="mapLabelsButton" type="button" aria-label="Map labels" data-tooltip="Show or hide vehicle route numbers" aria-pressed="false"><span class="map-label-icon" aria-hidden="true"></span></button>
+        <button class="map-control-button map-view-mode-button" id="mapViewButton" type="button" aria-label="3D view" data-tooltip="Switch between overhead and 3D perspective" aria-pressed="false" disabled><span aria-hidden="true">3D</span></button>
+        <button class="map-control-button" id="refreshButton" type="button" aria-label="Refresh latest feeds" data-tooltip="Refresh latest feeds"><span aria-hidden="true">↻</span></button>
+      </div>
+</section>
 
 <aside class="content-chrome report-chrome" aria-label="Realtime report panels">
   <nav class="art-navigation report-navigation" aria-label="Report navigation">
-    <button class="nav-hit active" type="button" data-tab="overview" aria-current="page">Overview</button>
+    <button class="nav-hit" type="button" data-tab="overview" aria-current="false">Overview</button>
     <button class="nav-hit" type="button" data-tab="vehicles" aria-current="false">Vehicles</button>
     <button class="nav-hit" type="button" data-tab="trips" aria-current="false">Trip Updates</button>
     <button class="nav-hit" type="button" data-tab="alerts" aria-current="false">Service Alerts</button>
     <button class="nav-hit" type="button" data-tab="debug" aria-current="false" hidden>Debug Log</button>
-    <button class="nav-hit" type="button" data-tab="recordings" aria-current="false"><span class="recording-led" aria-hidden="true"></span>Recorder</button>
+    <button class="nav-hit active" type="button" data-tab="recordings" aria-current="page"><span class="recording-led" aria-hidden="true"></span>Recorder</button>
+    <a class="suite-return" href="/suite/index.html" data-suite-return="transitron" aria-label="Return to Launcher">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg><span>Launcher</span>
+    </a>
   </nav>
   <div class="report-pane">
-        <section class="tab-panel active" id="tab-overview" aria-label="Overview">
+        <section class="tab-panel" id="tab-overview" aria-label="Overview">
           <h1>Network at a glance</h1>
           <p id="sourceDescription" class="sub">Snapshot from 6 August 2026. Use Refresh latest feeds on the map for current data.</p>
           <div class="metric-grid">
@@ -107,7 +116,7 @@
           <div id="alertList" class="alert-list"></div>
         </section>
 
-        <section class="tab-panel" id="tab-recordings" aria-label="Recorder">
+        <section class="tab-panel active" id="tab-recordings" aria-label="Recorder">
           <div class="recorder-faceplate" id="recorderDeck" data-power="on" data-transport="idle" data-recording="false">
             <header class="recorder-header">
               <button class="recorder-power" type="button" data-control="power" aria-pressed="true">
@@ -128,7 +137,20 @@
                 <div class="recorder-screen">
                   <div class="recorder-readout">
                     <span class="recorder-mode" data-control="mode" role="status">Ready</span>
-                    <output data-control="elapsed" aria-live="off">00:00:00</output>
+                    <span class="recorder-clock">
+                      <span>Time</span><output data-control="clock" aria-label="Adelaide time" aria-live="off">--:--:--</output>
+                    </span>
+                    <output class="recorder-elapsed" data-control="elapsed" aria-live="off">00:00:00</output>
+                  </div>
+                  <div class="recorder-meters">
+                    <div class="recorder-meter">
+                      <span id="recorderSpeedReadout">Playback speed</span>
+                      <output data-control="speed-display" aria-labelledby="recorderSpeedReadout" aria-live="off">1×</output>
+                    </div>
+                    <div class="recorder-meter">
+                      <span id="recorderIntervalReadout">Recording interval</span>
+                      <output id="recorderIntervalValue" data-control="interval-display" aria-labelledby="recorderIntervalReadout">30s</output>
+                    </div>
                   </div>
                   <div class="recorder-screen-details" role="region" aria-label="Recorder status details" tabindex="0">
                     <p class="recorder-program" data-control="program">Live feed</p>
@@ -144,89 +166,71 @@
                     <p class="recorder-detail" data-control="library-info"></p>
                   </div>
                 </div>
-                <div class="recorder-joystick" role="group" aria-label="Recording library joystick">
-                  <span class="recorder-joystick-label" aria-hidden="true">Library</span>
-                  <div class="recorder-joystick-keys">
-                    <button type="button" data-control="library-up" aria-label="Previous recording" aria-controls="recordingLibrary" disabled></button>
-                    <button type="button" data-control="library-play" aria-label="Play selected recording" aria-controls="recordingLibrary" disabled></button>
-                    <button type="button" data-control="library-down" aria-label="Next recording" aria-controls="recordingLibrary" disabled></button>
+                <div class="recorder-library-controls">
+                  <span class="recorder-library-title" aria-hidden="true">Library</span>
+                  <div class="recorder-library-tools" role="group" aria-label="Recording library tools">
+                    <button type="button" data-control="import" aria-label="Load recording" data-tooltip="Load a recording from a file">Load</button>
+                    <button type="button" data-control="export" aria-label="Save recording" data-tooltip="Save the selected recording as a compressed file">Save</button>
+                    <button class="recording-delete" type="button" data-control="delete-recording" aria-label="Delete selected recording" data-tooltip="Delete the selected recording from this library" disabled>Delete</button>
+                    <input type="file" accept=".json,.gz,application/json,application/gzip" data-control="file" hidden>
+                  </div>
+                  <div class="recorder-joystick" role="group" aria-label="Recording library joystick">
+                    <div class="recorder-joystick-keys">
+                      <button type="button" data-control="library-up" aria-label="Previous recording" aria-controls="recordingLibrary" disabled></button>
+                      <button type="button" data-control="library-play" aria-label="Play selected recording" aria-controls="recordingLibrary" disabled></button>
+                      <button type="button" data-control="library-down" aria-label="Next recording" aria-controls="recordingLibrary" disabled></button>
+                    </div>
                   </div>
                 </div>
               </div>
               <div class="recorder-transport" role="group" aria-label="Transport">
-                <button type="button" data-control="rewind"><span class="recorder-symbol" aria-hidden="true"></span><span>Rewind</span></button>
+                <button type="button" data-control="rewind" aria-describedby="recorderScanHelp" data-tooltip="Previous frame · hold to scan at 4×"><span class="recorder-symbol" aria-hidden="true"></span><span>Rewind</span></button>
                 <button type="button" data-control="play"><span class="recorder-symbol" aria-hidden="true"></span><span>Play</span></button>
-                <button type="button" data-control="fast-forward"><span class="recorder-symbol" aria-hidden="true"></span><span>Fast-forward</span></button>
+                <button type="button" data-control="fast-forward" aria-describedby="recorderScanHelp" data-tooltip="Next frame · hold to scan at 4×"><span class="recorder-symbol" aria-hidden="true"></span><span>Fast-forward</span></button>
                 <button type="button" data-control="stop"><span class="recorder-symbol" aria-hidden="true"></span><span>Stop</span></button>
                 <button type="button" data-control="pause"><span class="recorder-symbol" aria-hidden="true"></span><span>Pause</span></button>
                 <button type="button" data-control="record"><span class="recorder-symbol" aria-hidden="true"></span><span>Record</span></button>
               </div>
+              <span id="recorderScanHelp" class="screenreader-status">Press briefly to step one frame. Hold to scan at four times recorded speed.</span>
               <div class="recorder-player">
                 <label class="recorder-timeline">Playback position
                   <input type="range" min="0" max="0" step="1" value="0" data-control="timeline">
                 </label>
-                <div class="recorder-utilities" role="group" aria-label="Frame controls">
-                  <button type="button" data-control="restart">Restart</button>
-                  <button type="button" data-control="previous">Previous frame</button>
-                  <button type="button" data-control="next">Next frame</button>
-                </div>
+                <button class="recorder-skip-gaps" type="button" data-control="skip-gaps" disabled><span class="recorder-gap-led" aria-hidden="true"></span>Skip Gaps</button>
               </div>
               <div class="recorder-settings">
-                <label>Recording source
-                  <select data-control="source">
-                    <option value="browser">Browser</option>
-                    <option value="background">Background</option>
-                  </select>
-                </label>
-                <label>Recording interval (seconds)
-                  <input type="number" min="1" step="1" required data-control="interval">
-                </label>
-                <label>Playback speed
-                  <select data-control="speed">
-                    <optgroup label="Slow motion">
-                      <option value="0.125">0.125×</option>
-                      <option value="0.25">0.25×</option>
-                      <option value="0.5">0.5×</option>
-                      <option value="0.75">0.75×</option>
-                    </optgroup>
-                    <option value="1" selected>1×</option>
-                    <optgroup label="Faster">
-                      <option value="1.25">1.25×</option>
-                      <option value="1.5">1.5×</option>
-                      <option value="2">2×</option>
-                      <option value="3">3×</option>
-                      <option value="4">4×</option>
-                      <option value="6">6×</option>
-                      <option value="8">8×</option>
-                    </optgroup>
-                    <optgroup label="Time lapse">
-                      <option value="12">12×</option>
-                      <option value="16">16×</option>
-                      <option value="24">24×</option>
-                      <option value="32">32×</option>
-                      <option value="60">60×</option>
-                      <option value="120">120×</option>
-                    </optgroup>
-                  </select>
-                </label>
-              </div>
-              <div class="recorder-utilities" role="group" aria-label="Recording library tools">
-                <button type="button" data-control="import">Import recording</button>
-                <button type="button" data-control="export">Export JSON</button>
-                <input type="file" accept=".json,application/json" data-control="file" hidden>
-                <button class="recording-delete" type="button" data-control="delete-browser">Delete all browser recordings</button>
-              </div>
-              <details class="recorder-setup" data-control="setup">
-                <summary>Feed settings</summary>
-                <label for="refreshBaseUrl">Realtime feed base URL</label>
-                <input id="refreshBaseUrl" value="https://gtfs.adelaidemetro.com.au/v1/realtime" spellcheck="false">
-                <label for="customProxyUrl">Optional custom CORS proxy URL</label>
-                <input id="customProxyUrl" placeholder="https://your-proxy.example/{url}" spellcheck="false">
-                <div class="recorder-utilities">
-                  <button id="restoreSnapshotButton" type="button">Restore bundled sample</button>
-                  <button id="loadOriginalSnapshotButton" type="button">Load full original snapshot</button>
+                <div class="recorder-speed">
+                  <label class="recorder-setting-label" for="recorderSpeedDial">Playback speed</label>
+                  <div class="recorder-dial">
+                    <div data-control="speed-stops" aria-hidden="true"></div>
+                    <span class="recorder-dial-knob" aria-hidden="true"></span>
+                    <input type="range" id="recorderSpeedDial" data-control="speed" min="0" max="6" step="1" value="0" aria-valuetext="1×">
+                  </div>
                 </div>
-              </details>
+                <div class="recorder-interval" role="group" aria-label="Recording interval">
+                  <span class="recorder-setting-label" aria-hidden="true">Recording interval</span>
+                  <div class="recorder-stepper">
+                    <button type="button" data-control="interval-up" aria-label="Increase recording interval" aria-controls="recorderIntervalValue"></button>
+                    <button type="button" data-control="interval-down" aria-label="Decrease recording interval" aria-controls="recorderIntervalValue"></button>
+                  </div>
+                </div>
+                <fieldset class="recorder-source" data-control="source">
+                  <legend class="recorder-setting-label">Recording source</legend>
+                  <div class="recorder-rocker">
+                    <label><input type="radio" name="recording-source" value="browser" checked><span>Browser</span></label>
+                    <label><input type="radio" name="recording-source" value="background"><span>Background</span></label>
+                  </div>
+                </fieldset>
+                <label class="recorder-raw-option">
+                  <span>Keep original feed packets</span>
+                  <input type="checkbox" role="switch" data-control="keep-raw">
+                  <span class="recorder-raw-switch" aria-hidden="true">
+                    <span class="recorder-raw-off">Off</span>
+                    <span class="recorder-raw-track"></span>
+                    <span class="recorder-raw-on">On</span>
+                  </span>
+                </label>
+              </div>
             </fieldset>
           </div>
         </section>
@@ -243,7 +247,7 @@
 </div></div>
 <div id="appTooltip" class="app-tooltip" role="tooltip" hidden></div>
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js" async onload="window.MetroApp?.upgradeMap()"></script>
-<script src="js/snapshot.js" defer></script><script src="js/gtfs.js" defer></script><script src="js/ticker.js?v=20261120" defer></script><script src="js/vehicle-hit-masks.js" defer></script><script src="js/route-colours.js" defer></script><script src="js/network.js" defer></script><script src="js/recording.js?v=library-joystick" defer></script><script src="js/tooltips.js" defer></script><script src="js/app.js?v=tram-edge" defer></script><script src="js/intro.js?v=recorder-v2" defer></script>
+<script src="js/snapshot.js" defer></script><script src="js/gtfs.js" defer></script><script src="js/ticker.js?v=20261120" defer></script><script src="js/vehicle-hit-masks.js" defer></script><script src="js/route-colours.js" defer></script><script src="js/network.js" defer></script><script src="js/recording.js?v=recorder-library-clock" defer></script><script src="js/tooltips.js" defer></script><script src="js/app.js?v=recording-segments-dial" defer></script><script src="js/intro.js?v=diagonal-waves" defer></script>
 <dialog class="intro-screen" id="introScreen" aria-labelledby="introTitle">
   <div class="intro-wall" id="introWall" aria-hidden="true"></div>
   <div class="intro-content">
@@ -252,4 +256,7 @@
     <button class="intro-enter" id="introEnter" type="button" autofocus>Enter dashboard</button>
   </div>
 </dialog>
+<script src="/suite/apps/geoglyph/src/scripts/survey-results.js" defer></script>
+<script src="/suite/shared/suite-routing.js" defer></script>
+<script src="/suite/shared/app-return.js" defer></script>
 </body></html>

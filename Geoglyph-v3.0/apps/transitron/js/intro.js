@@ -25,26 +25,21 @@
       row: Number(icon.style.gridRowStart),
       column: Number(icon.style.gridColumnStart)
     }));
-    const rows = [...new Set(tiles.map(tile => tile.row))].sort((a, b) => a - b);
-    const columns = [...new Set(tiles.map(tile => tile.column))].sort((a, b) => a - b);
-    const diagonals = [...new Set(tiles.map(tile => tile.row + tile.column))].sort((a, b) => a - b);
-    const firstDiagonal = columns.length + rows.length;
-    const leftToRightStart = firstDiagonal + diagonals.length;
-    const bottomToTopStart = leftToRightStart + columns.length;
-    const strips = bottomToTopStart + rows.length + diagonals.length;
+    const ordered = values => [...new Set(values)].sort((a, b) => a - b);
+    const downRight = ordered(tiles.map(tile => tile.row + tile.column));
+    const upRight = ordered(tiles.map(tile => tile.column - tile.row));
+    const secondPairStart = 2 * downRight.length;
+    const strips = secondPairStart + 2 * upRight.length;
     const stagger = halfTurnDuration / Math.min(4, strips);
     const duration = strips * stagger;
     const schedule = tiles.map(({icon, row, column}) => {
-      const columnIndex = columns.indexOf(column);
-      const rowIndex = rows.indexOf(row);
-      const diagonal = diagonals.indexOf(row + column);
+      const downRightIndex = downRight.indexOf(row + column);
+      const upRightIndex = upRight.indexOf(column - row);
       const starts = [
-        columns.length - 1 - columnIndex,
-        columns.length + rowIndex,
-        firstDiagonal + diagonal,
-        leftToRightStart + columnIndex,
-        bottomToTopStart + rows.length - 1 - rowIndex,
-        strips - 1 - diagonal
+        downRightIndex,
+        secondPairStart - 1 - downRightIndex,
+        secondPairStart + upRightIndex,
+        strips - 1 - upRightIndex
       ].map(strip => strip * stagger);
       return {icon, starts, angle: 0};
     });

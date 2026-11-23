@@ -1,5 +1,6 @@
 const path = require('node:path');
 const {readFile} = require('node:fs/promises');
+const {gzipSync, gunzipSync} = require('node:zlib');
 const {test, expect} = require('@playwright/test');
 
 test.beforeEach(async ({context}) => {
@@ -9,12 +10,15 @@ test.beforeEach(async ({context}) => {
     if (url.pathname.startsWith('/api/') || url.pathname.endsWith('/startup-snapshot.json')) {
       return route.fulfill({status: 404});
     }
+    if (url.pathname.startsWith('/suite/')) {
+      return route.fulfill({path: path.join(__dirname, '../../..', url.pathname.slice('/suite/'.length))});
+    }
     const file = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
     await route.fulfill({path: path.join(__dirname, '..', file)});
   });
 });
 
-test('fills the wall around the logo and title and alternates the axes of all six waves', async ({page}) => {
+test('fills the wall around the logo and title and loops through four diagonal waves', async ({page}) => {
   const time = new Date('2026-11-18T00:00:00Z');
   await page.clock.install({time});
   await page.clock.pauseAt(new Date(time.getTime() + 1000));
@@ -98,13 +102,11 @@ test('fills the wall around the logo and title and alternates the axes of all si
     }));
     const ordered = values => [...new Set(values)].sort((a, b) => a - b);
     return {
-      columns: ordered(cells.map(cell => cell.column)),
-      rows: ordered(cells.map(cell => cell.row)),
-      diagonals: ordered(cells.map(cell => cell.row + cell.column))
+      downRight: ordered(cells.map(cell => cell.row + cell.column)),
+      upRight: ordered(cells.map(cell => cell.column - cell.row))
     };
   });
-  const {columns, rows, diagonals} = bands;
-  const lastColumn = wall.locator(`img[style*="grid-column-start: ${columns.at(-1)};"]`);
+  const {downRight, upRight} = bands;
   let elapsed = 0;
   async function sweepAt(strip, axis) {
     const target = strip * 130;
@@ -120,7 +122,7 @@ test('fills the wall around the logo and title and alternates the axes of all si
         if (filter !== 'none') uncoloured++;
         if (Math.abs(Math.abs(cosine) - 1) < 0.001) continue;
         const column = Number(image.style.gridColumnStart);
-        moving.add(dimension === 'diagonal' ? row + column : dimension === 'row' ? row : column);
+        moving.add(dimension === 'down-right' ? row + column : column - row);
       }
       return {moving: [...moving].sort((a, b) => a - b), uncoloured};
     }, axis);
@@ -128,28 +130,31 @@ test('fills the wall around the logo and title and alternates the axes of all si
     return motion.moving;
   }
 
-  expect(await sweepAt(.5, 'column')).toEqual(columns.slice(-1));
-  await expect(lastColumn.first()).toHaveCSS('filter', 'none');
-  await expect(wall.locator('img').first()).toHaveCSS('filter', 'none');
-  expect(await sweepAt(3.5, 'column')).toEqual(columns.slice(-4));
-  await sweepAt(4.5, 'column');
-  await expect(lastColumn.first()).toHaveCSS('filter', 'none');
-  const completed = await lastColumn.first()
-    .evaluate(image => new DOMMatrix(getComputedStyle(image).transform).m11);
+  expect(await sweepAt(.5, 'down-right')).toEqual(downRight.slice(0, 1));
+  expect(await sweepAt(3.5, 'down-right')).toEqual(downRight.slice(0, 4));
+  await sweepAt(4.5, 'down-right');
+  const completed = await wall.evaluate((element, firstBand) => {
+    const icon = Array.from(element.children).find(image =>
+      Number(image.style.gridRowStart) + Number(image.style.gridColumnStart) === firstBand);
+    return new DOMMatrix(getComputedStyle(icon).transform).m11;
+  }, downRight[0]);
   expect(completed).toBeCloseTo(-1);
-  expect(await sweepAt(columns.length + 3.5, 'row')).toEqual(rows.slice(0, 4));
-  expect(await sweepAt(columns.length + rows.length + 3.5, 'diagonal')).toEqual(diagonals.slice(0, 4));
-  const secondPass = columns.length + rows.length + diagonals.length;
-  expect(await sweepAt(secondPass + 3.5, 'column')).toEqual(columns.slice(0, 4));
-  expect(await sweepAt(secondPass + columns.length + 3.5, 'row')).toEqual(rows.slice(-4));
-  expect(await sweepAt(secondPass + columns.length + rows.length + 3.5, 'diagonal')).toEqual(diagonals.slice(-4));
-  expect(await sweepAt(2 * secondPass + 3.5, 'column')).toEqual(columns.slice(-4));
+  expect(await sweepAt(downRight.length + 3.5, 'down-right')).toEqual(downRight.slice(-4));
+  const secondPair = 2 * downRight.length;
+  expect(await sweepAt(secondPair + 3.5, 'up-right')).toEqual(upRight.slice(0, 4));
+  expect(await sweepAt(secondPair + upRight.length + 3.5, 'up-right')).toEqual(upRight.slice(-4));
+  expect(await sweepAt(secondPair + 2 * upRight.length + 3.5, 'down-right')).toEqual(downRight.slice(0, 4));
 
   await page.clock.fastForward(30_000);
   await page.keyboard.press('Escape');
   await expect(screen).toBeVisible();
   await enter.click();
   await expect(screen).toBeHidden();
+  const navigation = page.getByRole('navigation', {name: 'Report navigation'});
+  await expect(navigation.getByRole('button', {name: 'Recorder'})).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('heading', {name: 'Recorder', exact: true})).toBeVisible();
+  await expect(page.locator('#recorderDeck')).toHaveAttribute('data-recording', 'false');
+  await navigation.getByRole('button', {name: 'Overview'}).click();
 
   await page.clock.resume();
   await page.setViewportSize({width: 390, height: 844});
@@ -174,6 +179,7 @@ test('fills the wall around the logo and title and alternates the axes of all si
   await expect(enter).toHaveCSS('background-color', 'rgb(252, 177, 46)');
   await enter.press('Enter');
   await expect(screen).toBeHidden();
+  await expect(navigation.getByRole('button', {name: 'Overview'})).toHaveAttribute('aria-current', 'page');
 });
 
 test('centres the vehicle artwork and aligns all four frames on desktop and mobile', async ({page}) => {
@@ -298,8 +304,14 @@ test('imports a recording and switches between playback frames and the dashboard
   const basemap = controls.getByRole('button', {name: 'Basemap'});
   const refresh = controls.getByRole('button', {name: 'Refresh latest feeds'});
   const tooltip = page.getByRole('tooltip');
-  await expect(basemap).toHaveCSS('width', '58px');
-  await expect(basemap).toHaveCSS('height', '58px');
+  await expect(basemap).toHaveCSS('height', '49px');
+  await expect(controls.getByRole('button', {name: 'Zoom in'})).toBeDisabled();
+  const canvasBounds = await map.locator('.map-pane').boundingBox();
+  const controlBounds = await controls.boundingBox();
+  expect(controlBounds.y).toBeCloseTo(canvasBounds.y + canvasBounds.height, 1);
+  const controlRows = await controls.locator('button').evaluateAll(buttons =>
+    new Set(buttons.map(button => button.getBoundingClientRect().top)).size);
+  expect(controlRows).toBeGreaterThan(1);
   await basemap.hover();
   await expect(tooltip).toHaveText('Basemap');
   const buttonBox = await basemap.boundingBox();
@@ -309,7 +321,9 @@ test('imports a recording and switches between playback frames and the dashboard
   expect(tipBox.y).toBeGreaterThanOrEqual(8);
   expect(tipBox.x + tipBox.width).toBeLessThanOrEqual(382);
   expect(tipBox.y + tipBox.height).toBeLessThanOrEqual(836);
-  expect(pointerX - tipBox.x - tipBox.width).toBeGreaterThanOrEqual(63);
+  const pointerY = buttonBox.y + buttonBox.height / 2;
+  expect(Math.max(pointerX - tipBox.x - tipBox.width, tipBox.x - pointerX,
+    pointerY - tipBox.y - tipBox.height, tipBox.y - pointerY)).toBeGreaterThanOrEqual(63);
   await page.mouse.move(20, 20);
   await expect(tooltip).toBeHidden();
   await controls.getByRole('button', {name: 'Network layers'}).focus();
@@ -321,6 +335,8 @@ test('imports a recording and switches between playback frames and the dashboard
   await expect(tooltip).toBeHidden();
   await expect(basemap).not.toHaveAttribute('aria-describedby');
   await basemap.click();
+  const basemapBounds = await map.getByRole('region', {name: 'Choose basemap'}).boundingBox();
+  expect(basemapBounds.y + basemapBounds.height).toBeLessThan(controlBounds.y);
   await expect(map.getByRole('button', {name: 'Esri World Topography'})).toHaveAttribute('aria-pressed', 'true');
   await expect(map.getByRole('button', {name: 'Esri Nova'})).toHaveAttribute('aria-pressed', 'false');
   await expect(map.locator('#basemapStatus')).toContainText('Nova is unavailable');
@@ -342,9 +358,19 @@ test('imports a recording and switches between playback frames and the dashboard
   await expect(page.locator('.masthead')).toHaveCSS('border-bottom-width', '0px');
   await expect(page.locator('.bottom-rail')).toHaveCSS('border-top-width', '0px');
   await page.getByRole('button', {name: 'Recorder', exact: true}).click();
+  const source = page.getByRole('group', {name: 'Recording source'});
+  const record = page.getByRole('button', {name: 'Record', exact: true});
+  await expect(source.getByRole('radio', {name: 'Browser'})).toBeChecked();
+  await source.getByText('Background', {exact: true}).click();
+  await expect(source.getByRole('radio', {name: 'Background'})).toBeChecked();
+  await expect(record).toBeDisabled();
+  await expect(page.locator('[data-control="capture-status"]')).toContainText('Background recorder unavailable');
+  await source.getByText('Browser', {exact: true}).click();
+  await expect(record).toBeEnabled();
   const time = Date.UTC(2026, 10, 18);
   const recording = {
     version: 1, id: 'browser-fixture', mode: 'browser', startedAt: time, endedAt: time + 30_000,
+    intervalSeconds: 17,
     frames: [0, 1].map(index => ({
       time: time + index * 30_000,
       feeds: {
@@ -362,6 +388,8 @@ test('imports a recording and switches between playback frames and the dashboard
   const timeline = deck.getByRole('slider', {name: 'Playback position'});
   const library = deck.getByRole('listbox', {name: 'Recording library'});
   const power = deck.getByRole('button', {name: 'Power'});
+  const rewind = deck.getByRole('button', {name: 'Rewind', exact: true});
+  const forward = deck.getByRole('button', {name: 'Fast-forward', exact: true});
   const layout = () => deck.evaluate(element => {
     const top = element.getBoundingClientRect().top;
     return ['.recorder-screen', '.recorder-transport', '.recorder-player', '.recorder-settings'].map(selector => {
@@ -373,44 +401,90 @@ test('imports a recording and switches between playback frames and the dashboard
   await expect(deck.locator('[data-control="program"]')).toHaveText('recording.json');
   await expect(deck.locator('[data-control="frame-status"]')).toContainText('Unavailable: trip updates');
   await expect(deck.locator('[data-control="elapsed"]')).toHaveText('00:00:00 / 00:00:30');
+  await expect(deck.getByText('Feed settings', {exact: true})).toHaveCount(0);
+  await expect(deck.getByRole('button', {name: /^(Restart|Previous frame|Next frame)$/})).toHaveCount(0);
   const playbackLayout = await layout();
   await expect(refresh).toBeDisabled();
-  await page.getByRole('button', {name: 'Next frame'}).click();
+  await expect(rewind).toBeDisabled();
+  await forward.click();
   await expect(timeline).toHaveValue('30000');
-  await page.getByRole('button', {name: 'Previous frame'}).click();
+  await expect(forward).toBeDisabled();
+  await rewind.press('Enter');
   await expect(timeline).toHaveValue('0');
 
-  await deck.getByRole('button', {name: 'Fast-forward'}).click();
+  await forward.hover();
+  await page.mouse.down();
+  await page.clock.runFor(180);
+  await expect(mode).toHaveText('Pause');
+  await page.clock.runFor(820);
   await expect(mode).toHaveText('Fast-forward 4×');
-  await page.clock.runFor(7_700);
+  await page.mouse.up();
   await expect(mode).toHaveText('Pause');
   expect(await layout()).toEqual(playbackLayout);
-  await expect(timeline).toHaveValue('30000');
-  await deck.getByRole('button', {name: 'Rewind'}).click();
+  const scanPosition = Number(await timeline.inputValue());
+  expect(scanPosition).toBeGreaterThan(2_000);
+  expect(scanPosition).toBeLessThan(6_000);
+
+  await rewind.focus();
+  await page.keyboard.down('Space');
+  await page.clock.runFor(500);
   await expect(mode).toHaveText('Rewind 4×');
-  await page.clock.runFor(7_700);
+  await page.clock.runFor(2_000);
   await expect(mode).toHaveText('Pause');
   await expect(timeline).toHaveValue('0');
-  const speed = deck.getByRole('combobox', {name: 'Playback speed'});
-  await expect(speed).toHaveValue('1');
-  await speed.selectOption('0.25');
+  await page.keyboard.up('Space');
+  await expect(timeline).toHaveValue('0');
+
+  const speed = deck.getByRole('slider', {name: 'Playback speed'});
+  const speedDisplay = deck.locator('[data-control="speed-display"]');
+  const intervalDisplay = deck.locator('[data-control="interval-display"]');
+  await expect(speedDisplay).toHaveText('1×');
+  for (const rate of [12, 16, 24, 32, 60, 120]) {
+    await speed.press('ArrowRight');
+    await expect(speed).toHaveAttribute('aria-valuetext', rate + '×');
+    await expect(speedDisplay).toHaveText(rate + '×');
+  }
+  const dialPoint = async rate => {
+    const {x, y, width, height} = await deck.locator('.recorder-dial-stop')
+      .filter({hasText: new RegExp('^' + rate + '×$')}).boundingBox();
+    return [x + width / 2, y + height / 2];
+  };
+  await page.mouse.move(...await dialPoint(24));
+  await page.mouse.down();
+  await expect(speedDisplay).toHaveText('24×');
+  await page.mouse.move(...await dialPoint(60));
+  await page.mouse.up();
+  await expect(speedDisplay).toHaveText('60×');
+  const touch = await page.context().newCDPSession(page);
+  await touch.send('Emulation.setTouchEmulationEnabled', {enabled: true});
+  const [x, y] = await dialPoint(32);
+  await touch.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x, y}]});
+  await touch.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
+  await expect(speedDisplay).toHaveText('32×');
+  await touch.send('Emulation.setTouchEmulationEnabled', {enabled: false});
+  await touch.detach();
+  await speed.press('Home');
   await deck.getByRole('button', {name: 'Play', exact: true}).click();
-  await expect(deck).toHaveAttribute('data-transport', 'play');
-  await page.clock.runFor(1_100);
-  await deck.getByRole('button', {name: 'Pause', exact: true}).click();
-  await expect(mode).toHaveText('Pause');
-  const pausedAt = await timeline.inputValue();
-  expect(Number(pausedAt)).toBeGreaterThan(200);
-  expect(Number(pausedAt)).toBeLessThan(800);
-  await page.clock.runFor(1_500);
-  await expect(timeline).toHaveValue(pausedAt);
-  await speed.selectOption('120');
-  await deck.getByRole('button', {name: 'Play', exact: true}).click();
+  await expect(mode).toHaveText('Play');
+  await page.clock.runFor(500);
+  expect(Number(await timeline.inputValue())).toBeLessThan(1_200);
+  await speed.press('End');
   await page.clock.runFor(400);
   await expect(timeline).toHaveValue('30000');
   await expect(mode).toHaveText('Pause');
   expect(await layout()).toEqual(playbackLayout);
-  await speed.selectOption('1');
+  await speed.press('Home');
+  await rewind.focus();
+  await page.keyboard.down('Space');
+  await page.clock.runFor(850);
+  await expect(mode).toHaveText('Rewind 4×');
+  await power.focus();
+  await page.keyboard.up('Space');
+  await expect(mode).toHaveText('Pause');
+  const cancelledAt = await timeline.inputValue();
+  expect(Number(cancelledAt)).toBeLessThan(30_000);
+  await page.clock.runFor(700);
+  await expect(timeline).toHaveValue(cancelledAt);
 
   await power.click();
   await expect(power).toHaveAttribute('aria-pressed', 'false');
@@ -419,6 +493,8 @@ test('imports a recording and switches between playback frames and the dashboard
   await expect(deck.getByRole('button', {name: 'Record', exact: true})).toBeDisabled();
   await expect(refresh).toBeEnabled();
   await expect(timeline).toBeDisabled();
+  await expect(speedDisplay).toBeEmpty();
+  await expect(intervalDisplay).toBeEmpty();
   expect(await layout()).toEqual(playbackLayout);
   await power.click();
   await expect(library).toBeVisible();
@@ -437,8 +513,9 @@ test('imports a recording and switches between playback frames and the dashboard
   await expect(refresh).toBeEnabled();
   await expect(timeline).toHaveValue('0');
   expect(await layout()).toEqual(playbackLayout);
-  await page.route('https://gtfs.adelaidemetro.com.au/**', route => route.fulfill({
-    headers: {'access-control-allow-origin': '*'},
+  await page.route('https://gtfs.adelaidemetro.com.au/**', route => route.abort());
+  await page.route(url => url.hostname === 'localhost' && url.pathname.startsWith('/api/gtfs/'), route => route.fulfill({
+    contentType: 'application/x-protobuf',
     body: Buffer.from([0x0a, 0x03, 0x0a, 0x01, 0x32])
   }));
   await refresh.click();
@@ -480,15 +557,34 @@ test('uses the Recorder joystick and mouse to navigate the same library', async 
   await page.getByRole('button', {name: 'Recorder', exact: true}).click();
   const deck = page.locator('#recorderDeck');
   const library = deck.getByRole('listbox', {name: 'Recording library'});
+  const tools = deck.getByRole('group', {name: 'Recording library tools'});
   const joystick = deck.getByRole('group', {name: 'Recording library joystick'});
   const up = joystick.getByRole('button', {name: 'Previous recording'});
   const down = joystick.getByRole('button', {name: 'Next recording'});
   const centre = joystick.getByRole('button', {name: 'Play selected recording'});
   const power = deck.getByRole('button', {name: 'Power'});
   const mode = deck.locator('[data-control="mode"]');
+  const checkLibraryStack = async () => {
+    const buttons = [
+      tools.getByRole('button', {name: 'Load recording'}),
+      tools.getByRole('button', {name: 'Save recording'}),
+      tools.getByRole('button', {name: 'Delete selected recording'}),
+      up, centre, down
+    ];
+    const boxes = await Promise.all(buttons.map(button => button.boundingBox()));
+    const title = await deck.getByText('Library', {exact: true}).boundingBox();
+    let previousBottom = title.y + title.height;
+    for (const box of boxes) {
+      expect(box.x).toBeCloseTo(boxes[0].x, 2);
+      expect(box.width).toBe(44);
+      expect(box.height).toBe(44);
+      expect(box.y).toBeGreaterThanOrEqual(previousBottom);
+      previousBottom = box.y + box.height;
+    }
+  };
   const layout = () => deck.evaluate(element => {
     const deckTop = element.getBoundingClientRect().top;
-    return ['.recorder-screen', '.recorder-joystick', '.recorder-transport', '.recorder-settings'].map(selector => {
+    return ['.recorder-screen', '.recorder-library-controls', '.recorder-transport', '.recorder-settings'].map(selector => {
       const {x, y, width, height} = element.querySelector(selector).getBoundingClientRect();
       return [x, y - deckTop, width, height];
     });
@@ -497,6 +593,14 @@ test('uses the Recorder joystick and mouse to navigate the same library', async 
   await expect(library.locator('option')).toHaveText('No recordings');
   for (const key of [up, down, centre]) await expect(key).toBeDisabled();
   const desktopLayout = await layout();
+  await checkLibraryStack();
+  await expect(page.locator('.report-pane')).toHaveCSS('padding', '0px');
+  expect(await deck.evaluate(element => {
+    const {left, right} = element.getBoundingClientRect();
+    const pane = element.closest('.report-pane');
+    const contentLeft = pane.getBoundingClientRect().left + pane.clientLeft;
+    return left === contentLeft && Math.abs(right - (contentLeft + pane.clientWidth)) < 1;
+  })).toBe(true);
   catalogue = sessions;
   await page.clock.fastForward(5_100);
   await expect(library.locator('option')).toHaveCount(sessions.length);
@@ -552,6 +656,10 @@ test('uses the Recorder joystick and mouse to navigate the same library', async 
   await expect(centre).toBeEnabled();
   expect(await page.locator('body').evaluate(body => body.scrollWidth)).toBeLessThanOrEqual(390);
 
+  await page.setViewportSize({width: 320, height: 800});
+  await checkLibraryStack();
+  expect(await page.locator('body').evaluate(body => body.scrollWidth)).toBeLessThanOrEqual(320);
+
   await page.setViewportSize({width: 1440, height: 900});
   await centre.click();
   await expect(mode).toHaveText('Play');
@@ -561,7 +669,7 @@ test('uses the Recorder joystick and mouse to navigate the same library', async 
   expect(await layout()).toEqual(desktopLayout);
 });
 
-test('records at the chosen interval and clears browser captures without deleting background recordings', async ({page, context}) => {
+test('records at the chosen interval and deletes a selected browser capture', async ({page, context}) => {
   await page.clock.install({time: new Date('2026-03-21T22:30:00Z')});
   await page.emulateMedia({reducedMotion: 'reduce'});
   const backgroundMethods = new Set();
@@ -600,13 +708,33 @@ test('records at the chosen interval and clears browser captures without deletin
   const recordings = page.getByRole('button', {name: 'Recorder', exact: true});
   const lcd = page.locator('#lcdReadable');
   await recordings.click();
-  const interval = page.getByRole('spinbutton', {name: 'Recording interval (seconds)'});
-  const deleteButton = page.getByRole('button', {name: 'Delete all browser recordings'});
+  const interval = page.locator('[data-control="interval-display"]');
+  const increase = page.getByRole('button', {name: 'Increase recording interval'});
+  const decrease = page.getByRole('button', {name: 'Decrease recording interval'});
+  const deleteButton = page.getByRole('button', {name: 'Delete selected recording'});
+  const packetSwitch = page.getByRole('switch', {name: 'Keep original feed packets'});
+  await expect(packetSwitch).not.toBeChecked();
   await expect(deleteButton).toBeDisabled();
-  await expect(interval).toHaveValue('30');
-  await interval.fill('7');
+  await expect(interval).toHaveText('30s');
+  for (const seconds of [60, 120, 300, 600]) {
+    await increase.click();
+    await expect(interval).toHaveText(seconds + 's');
+  }
+  await expect(increase).toBeDisabled();
+  for (const seconds of [300, 120, 60, 30, 15, 10, 5, 2, 1]) {
+    await decrease.press('Enter');
+    await expect(interval).toHaveText(seconds + 's');
+  }
+  await expect(decrease).toBeDisabled();
+  for (const seconds of [2, 5, 10]) {
+    await increase.click();
+    await expect(interval).toHaveText(seconds + 's');
+  }
   await page.getByRole('button', {name: 'Record', exact: true}).click();
   await expect(page.locator('[data-control="capture-status"]')).toContainText('1 frame');
+  await expect(increase).toBeDisabled();
+  await expect(decrease).toBeDisabled();
+  await expect(packetSwitch).toBeDisabled();
   await expect(recordings).toHaveAttribute('data-recording', 'true');
   const led = recordings.locator('.recording-led');
   await expect(led).toHaveCSS('background-color', 'rgb(255, 64, 84)');
@@ -617,7 +745,7 @@ test('records at the chosen interval and clears browser captures without deletin
   await expect.poll(() => page.locator('.lcd-canvas').evaluate(canvas => canvas.getContext('2d').fillStyle)).toBe('#ff5f6a');
   await expect(lcd).toContainText('1 FRAME');
   await expect(lcd).toContainText('STARTED 22/03/2026 9:00am');
-  await expect(lcd).toContainText('EVERY 7 SEC');
+  await expect(lcd).toContainText('EVERY 10 SEC');
   await expect(page.locator('#sourceDescription')).toContainText('Live GTFS-Realtime');
   await expect(page.locator('#countVehicles')).toHaveText('0');
   await expect(deleteButton).toBeDisabled();
@@ -630,13 +758,13 @@ test('records at the chosen interval and clears browser captures without deletin
   await expect(deck.getByRole('button', {name: 'Stop', exact: true})).toBeDisabled();
   expect(await deck.locator('.recorder-light-record').evaluate(light =>
     getComputedStyle(light, '::before').backgroundColor)).toBe('rgb(255, 64, 84)');
-  await page.clock.fastForward(8_000);
+  await page.clock.fastForward(11_000);
   await expect(page.locator('[data-control="capture-status"]')).toContainText('2 frames');
   await power.click();
   await expect(deck.getByRole('button', {name: 'Stop', exact: true})).toBeEnabled();
   await expect(page.locator('#countVehicles')).toHaveText('1');
   await expect(lcd).toContainText('2 FRAMES');
-  await expect(lcd).toContainText(/LENGTH 00:00:0[89]/);
+  await expect(lcd).toContainText(/LENGTH 00:00:1[12]/);
   await page.locator('.fallback-pin').click();
   await expect(lcd).toContainText('BUS INFORMATION');
   await page.clock.fastForward(3_000);
@@ -653,25 +781,35 @@ test('records at the chosen interval and clears browser captures without deletin
   await expect(browserRecording).toContainText('2 frames');
   await picker.selectOption(await browserRecording.getAttribute('value'));
   const downloading = page.waitForEvent('download');
-  await page.getByRole('button', {name: 'Export JSON'}).click();
+  await page.getByRole('button', {name: 'Save recording'}).click();
   const download = await downloading;
-  const recording = JSON.parse(await readFile(await download.path(), 'utf8'));
-  expect(recording.intervalSeconds).toBe(7);
-  expect(recording.frames).toHaveLength(2);
+  expect(download.suggestedFilename()).toMatch(/\.ndjson\.gz$/);
+  const [recording, ...frames] = gunzipSync(await readFile(await download.path())).toString().trimEnd().split('\n').map(JSON.parse);
+  expect(recording.format).toBe('transitron-ndjson');
+  expect(recording.intervalSeconds).toBe(10);
+  expect(frames).toHaveLength(2);
+  expect(frames[0].feeds.vehicle_positions).not.toHaveProperty('raw');
   await page.getByRole('button', {name: 'Play', exact: true}).click();
   await expect(page.locator('[data-control="frame-status"]')).toContainText('Frame 1 of 2');
 
-  page.once('dialog', dialog => dialog.dismiss());
+  const browserName = await browserRecording.getAttribute('data-name');
+  page.once('dialog', dialog => {
+    expect(dialog.message()).toContain(browserName);
+    return dialog.dismiss();
+  });
   await deleteButton.click();
   await expect(browserRecording).toHaveCount(1);
   await expect(page.locator('[data-control="timeline"]')).toBeEnabled();
   page.once('dialog', dialog => dialog.accept());
   await deleteButton.click();
-  await expect(page.locator('[data-control="status"]')).toHaveText('Browser recordings deleted.');
+  await expect(page.locator('[data-control="status"]')).toHaveText('Recording deleted.');
   await expect(browserRecording).toHaveCount(0);
   await expect(picker.locator('option')).toHaveText(/Background/);
+  await expect(deleteButton).toBeDisabled();
   await expect(page.locator('[data-control="timeline"]')).toBeDisabled();
 
+  await packetSwitch.press('Space');
+  await expect(packetSwitch).toBeChecked();
   await page.getByRole('button', {name: 'Record', exact: true}).click();
   await expect(page.locator('[data-control="capture-status"]')).toContainText('1 frame');
   const otherTab = await context.newPage();
@@ -679,11 +817,13 @@ test('records at the chosen interval and clears browser captures without deletin
   await otherTab.goto('http://localhost/');
   await otherTab.getByRole('button', {name: 'Enter dashboard'}).click();
   await otherTab.getByRole('button', {name: 'Recorder', exact: true}).click();
+  const otherLibrary = otherTab.getByRole('listbox', {name: 'Recording library'});
+  await otherLibrary.selectOption(await otherLibrary.locator('option[value^="browser:"]').getAttribute('value'));
   otherTab.once('dialog', dialog => dialog.accept());
-  await otherTab.getByRole('button', {name: 'Delete all browser recordings'}).click();
-  await expect(otherTab.locator('[data-control="status"]')).toHaveText('Browser recordings deleted.');
+  await otherTab.getByRole('button', {name: 'Delete selected recording'}).click();
+  await expect(otherTab.locator('[data-control="status"]')).toHaveText('Recording deleted.');
   await otherTab.close();
-  await page.clock.fastForward(8_000);
+  await page.clock.fastForward(11_000);
   await expect(page.locator('[data-control="status"]')).toContainText('This browser recording was deleted.');
 
   const counts = await page.evaluate(() => new Promise((resolve, reject) => {
@@ -727,6 +867,11 @@ test('refreshes the live view from background recordings during playback', async
   });
   await page.route(url => url.hostname === 'localhost' && url.pathname === '/api/recordings', route => {
     if (route.request().method() === 'POST') {
+      expect(route.request().postDataJSON()).toEqual({
+        baseUrl: 'https://gtfs.adelaidemetro.com.au/v1/realtime',
+        intervalSeconds: 30,
+        keepRaw: false
+      });
       latestFrame = firstFrame;
       return route.fulfill({status: 201, json: {id}});
     }
@@ -747,7 +892,8 @@ test('refreshes the live view from background recordings during playback', async
   await page.getByRole('button', {name: 'Enter dashboard'}).click();
   const recordings = page.getByRole('button', {name: 'Recorder', exact: true});
   await recordings.click();
-  await page.getByRole('combobox', {name: 'Recording source'}).selectOption('background');
+  await page.getByRole('radio', {name: 'Browser'}).press('ArrowRight');
+  await expect(page.getByRole('radio', {name: 'Background'})).toBeChecked();
   await page.getByRole('button', {name: 'Record', exact: true}).click();
   await expect(recordings).toHaveAttribute('data-recording', 'true');
   await expect(page.locator('#lcdReadable')).toContainText('BACKGROUND RECORDING · 1 FRAME');
@@ -839,7 +985,7 @@ test('starts the larger ticker from the centre and supports dragging to rewind',
   expect((await tickerState()).scrollColumn).toBe(initial.scrollColumn);
 });
 
-test('map selection shows a ring and bearing arrow and announces stop and route information', async ({page}) => {
+test('map selection highlights vehicles, announces the network and follows playback', async ({page}) => {
   const novaUrl = 'https://cdn.arcgis.com/sharing/rest/content/items/1237385e55d9487489fe2a21766b43bb/resources/styles/root.json';
   const vectorService = 'https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer';
   const novaStyleReady = Promise.withResolvers();
@@ -883,15 +1029,25 @@ test('map selection shows a ring and bearing arrow and announces stop and route 
       onAdd() {
         const controls = document.createElement('div');
         controls.className = 'maplibregl-ctrl-group';
-        controls.style.cssText = 'position:absolute;top:10px;right:10px';
-        for (const label of ['Zoom in', 'Zoom out']) {
+        for (const [label, symbol] of [['Zoom in', '+'], ['Zoom out', '−'], ['Reset bearing to north', '▲']]) {
           const button = document.createElement('button');
           button.setAttribute('aria-label', label);
-          button.textContent = label === 'Zoom in' ? '+' : '−';
+          button.textContent = symbol;
           button.title = label;
           controls.append(button);
         }
         return controls;
+      }
+    }
+    class AttributionControlFixture {
+      onAdd() {
+        const details = document.createElement('details');
+        details.className = 'maplibregl-ctrl-attrib';
+        const summary = document.createElement('summary');
+        summary.textContent = 'ⓘ';
+        summary.setAttribute('aria-label', 'Toggle attribution');
+        details.append(summary, 'Esri test attribution');
+        return details;
       }
     }
     class BoundsFixture {
@@ -906,6 +1062,7 @@ test('map selection shows a ring and bearing arrow and announces stop and route 
         this.zoomLevel = 15.8;
         this.pitch = 0;
         this.homeMoves = 0;
+        this.cameraMoves = [];
       }
       setStyle(style) {
         this.style = style;
@@ -915,7 +1072,7 @@ test('map selection shows a ring and bearing arrow and announces stop and route 
         this.selection = this.getSource('vehicleSelection');
         this['style.load']?.();
       }
-      addControl(control, position) {
+      addControl(control, position = 'top-right') {
         const group = control.onAdd?.(this);
         if (group) {
           group.dataset.position = position;
@@ -925,9 +1082,14 @@ test('map selection shows a ring and bearing arrow and announces stop and route 
       on(event, handler) { this[event] = handler; }
       getCanvas() { return document.querySelector('#map'); }
       flyTo() {}
+      jumpTo(camera) {
+        this.cameraMoves.push(camera);
+        if (camera.zoom !== undefined) this.zoomLevel = camera.zoom;
+      }
       fitBounds(bounds, options) {
         if (typeof options.padding === 'number') this.homeMoves++;
         this.fitPoints = bounds.points;
+        this.fitPadding = options.padding;
       }
       easeTo({pitch}) { this.pitch = pitch; this.pitchend(); }
       getPitch() { return this.pitch; }
@@ -948,7 +1110,7 @@ test('map selection shows a ring and bearing arrow and announces stop and route 
       queryRenderedFeatures() { return [this.feature]; }
     }
     window.maplibregl = {Map: MapFixture, LngLatBounds: BoundsFixture,
-      NavigationControl: NavigationControlFixture, AttributionControl: class {}};
+      NavigationControl: NavigationControlFixture, AttributionControl: AttributionControlFixture};
     window.MetroApp.upgradeMap();
     return window.MetroApp.debugState();
   });
@@ -958,13 +1120,19 @@ test('map selection shows a ring and bearing arrow and announces stop and route 
     .toMatchObject({basemap: 'nova', loadedMap: true});
   await expect(page.locator('#debugLogWindow')).not.toHaveValue(/MapLibre initialization failed/);
   await page.evaluate(() => window.testMap['style.load']());
-  const mapNavigation = mapPane.locator('.maplibregl-ctrl-group[data-position="top-right"]');
+  const mapNavigation = mapPane.getByRole('group', {name: 'Map controls'});
+  await expect(mapNavigation.getByRole('button')).toHaveCount(12);
+  await expect(mapPane.locator('#map .map-native-navigation')).toHaveCount(0);
+  const attribution = mapPane.locator('.maplibregl-ctrl-attrib[data-position="top-left"]');
+  await expect(attribution).toBeVisible();
+  await attribution.locator('summary').click();
+  await expect(attribution).toHaveAttribute('open', '');
   const zoomIn = mapNavigation.getByRole('button', {name: 'Zoom in'});
   await expect(zoomIn).toHaveAttribute('data-tooltip', 'Zoom in');
   await expect(page.locator('[title]')).toHaveCount(0);
-  await expect(zoomIn).toHaveCSS('height', '58px');
-  await expect(zoomIn).toHaveCSS('width', '58px');
+  await expect(zoomIn).toHaveCSS('height', '49px');
   await expect(mapNavigation.getByRole('button', {name: 'Zoom out'})).toBeAttached();
+  await expect(mapNavigation.getByRole('button', {name: 'Reset bearing to north'})).toBeEnabled();
   const home = mapNavigation.getByRole('button', {name: 'Home'});
   await expect(home).toBeVisible();
   await expect(mapNavigation.getByRole('button', {name: 'Clear selection'})).toBeDisabled();
@@ -1041,6 +1209,8 @@ test('map selection shows a ring and bearing arrow and announces stop and route 
   const fitPoints = () => page.evaluate(() => window.testMap.fitPoints);
   await fit.click();
   expect(await fitPoints()).toEqual(expect.arrayContaining([...paths, stop]));
+  const padding = await page.evaluate(() => window.testMap.fitPadding);
+  expect(new Set(Object.values(padding)).size).toBe(1);
   expect((await fitPoints()).length).toBeGreaterThan(paths.length + 1);
   const clickFeature = feature => page.evaluate(async target => {
     window.testMap.feature = target;
@@ -1118,6 +1288,64 @@ test('map selection shows a ring and bearing arrow and announces stop and route 
   await clickFeature({layer: {id: 'vehicles-circle'}, properties: {...bus, VehicleID: 'test-tram', VehicleType: 'Tram', RouteID: 'GLNELG'}});
   await expect(announcement).toHaveText(/^Tram information: Route GLNELG/);
   await expect.poll(tickerColour).toBe('#ff6b72');
+
+  await test.step('tracks the selected vehicle through playback, skipped reports and rewinding', async () => {
+    const startedAt = Date.UTC(2026, 10, 18);
+    await page.clock.install({time: startedAt});
+    await page.clock.pauseAt(startedAt + 1000);
+
+    const positions = [[138.6, -34.9], [138.601, -34.901], null, [138.603, -34.902]];
+    const recording = {
+      version: 1, startedAt, intervalSeconds: 1,
+      frames: positions.map((position, index) => {
+        const time = startedAt + index * 1000;
+        const vehicles = [{...bus, VehicleID: 'another-bus', Longitude: 138.7 + index / 1000}];
+        if (position) vehicles.push({...bus, Longitude: position[0], Latitude: position[1]});
+        return {time, feeds: {
+          vehicle_positions: {time, raw: 'CgEw', rows: vehicles},
+          trip_updates: {time, raw: 'CgEw', rows: []},
+          service_alerts: {time, raw: 'CgEw', rows: []}
+        }};
+      })
+    };
+    const deck = page.locator('#recorderDeck');
+    const frameStatus = deck.locator('[data-control="frame-status"]');
+    const transport = name => deck.getByRole('button', {name, exact: true});
+    await deck.locator('[data-control="file"]').setInputFiles({
+      name: 'moving-buses.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(recording))
+    });
+    await expect(frameStatus).toContainText('Frame 1 of 4');
+    await page.evaluate(() => {
+      window.testMap.cameraMoves.length = 0;
+      window.testMap.zoomLevel = 11;
+    });
+    const cameraMoves = () => page.evaluate(() => window.testMap.cameraMoves);
+    await clickFeature({layer: {id: 'vehicles-circle'}, properties: bus});
+    expect(await cameraMoves()).toEqual([{center: positions[0], zoom: 15.8}]);
+
+    await transport('Play').click();
+    await page.clock.runFor(1150);
+    await transport('Pause').click();
+    await expect(frameStatus).toContainText('Frame 2 of 4');
+    expect((await cameraMoves()).at(-1)).toEqual({center: positions[1]});
+
+    await transport('Fast-forward').click();
+    await expect(frameStatus).toContainText('Frame 3 of 4');
+    expect(await cameraMoves()).toHaveLength(2);
+    await expect(clearSelection).toBeEnabled();
+    await transport('Fast-forward').click();
+    expect((await cameraMoves()).at(-1)).toEqual({center: positions[3]});
+    await transport('Rewind').click();
+    await transport('Rewind').click();
+    expect((await cameraMoves()).at(-1)).toEqual({center: positions[1]});
+
+    await clearSelection.click();
+    await transport('Fast-forward').click();
+    await transport('Fast-forward').click();
+    expect(await cameraMoves()).toHaveLength(4);
+    await transport('Stop').click();
+    await expect(clearSelection).toBeDisabled();
+  });
 });
 
 test('loads the saved snapshot when the dashboard opens', async ({page}) => {
@@ -1150,4 +1378,172 @@ test('loads the saved snapshot when the dashboard opens', async ({page}) => {
   await expect(alertRoutes.first()).toHaveCSS('--route-accent', '#243E8C');
   await expect(alertRoutes.nth(1)).toHaveCSS('--route-accent', '#633293');
   await expect(alertRoutes.last()).toHaveCSS('--route-accent', '#F99D1E');
+});
+
+const captureFixture = time => ({time, feeds: {
+  vehicle_positions: {time, rows: []}, trip_updates: {time, rows: []}, service_alerts: {time, rows: []}
+}});
+
+test('loads and saves captures, follows the playhead clock, and deletes a single import', async ({page}) => {
+  const startedAt = Date.UTC(2026, 10, 20);
+  await page.clock.install({time: new Date(startedAt + 12 * 3_600_000)});
+  await page.setViewportSize({width: 390, height: 844});
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  await page.goto('http://localhost/');
+  await page.getByRole('button', {name: 'Enter dashboard'}).click();
+  await page.getByRole('button', {name: 'Recorder', exact: true}).click();
+  const deck = page.locator('#recorderDeck');
+  const timeline = deck.getByRole('slider', {name: 'Playback position'});
+  const skip = deck.getByRole('button', {name: 'Skip Gaps'});
+  const led = skip.locator('.recorder-gap-led');
+  const status = deck.locator('[data-control="frame-status"]');
+  const library = deck.getByRole('listbox', {name: 'Recording library'});
+  const clock = deck.locator('[data-control="clock"]');
+  const liveTime = /^22:30:\d{2}$/;
+  await expect(clock).toHaveText(liveTime);
+  const initialTime = await clock.textContent();
+  await page.clock.fastForward(1_100);
+  await expect(clock).not.toHaveText(initialTime);
+  const manifest = {version: 2, format: 'transitron-ndjson', startedAt, intervalSeconds: 30, frameCount: 3};
+  const frames = [0, 1_860_000, 1_890_000].map(offset => captureFixture(startedAt + offset));
+  const compressed = gzipSync([manifest, ...frames].map(item => JSON.stringify(item) + '\n').join(''));
+  await expect(skip).toBeDisabled();
+  const choosing = page.waitForEvent('filechooser');
+  await deck.getByRole('button', {name: 'Load recording'}).click();
+  await (await choosing).setFiles({
+    name: 'gap.ndjson.gz', mimeType: 'application/gzip', buffer: compressed
+  });
+  await expect(library.locator('option')).toHaveText('gap.ndjson.gz · Import · 3 frames');
+  await expect(status).toContainText('Frame 1 of 3');
+  await expect(skip).toBeDisabled();
+  await expect(led).toHaveCSS('background-color', 'rgb(53, 67, 62)');
+
+  const enterGap = () => timeline.evaluate(slider => {
+    slider.value = '60000';
+    slider.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+  await enterGap();
+  await expect(status).toContainText('Gap in capture');
+  await expect(skip).toBeEnabled();
+  await expect(clock).toHaveText(liveTime);
+  await expect(led).toHaveCSS('background-color', 'rgb(134, 217, 176)');
+  await skip.press('Enter');
+  await expect(timeline).toHaveValue('1860000');
+  await expect(status).toContainText('Frame 2 of 3');
+  await expect(deck).toHaveAttribute('data-transport', 'paused');
+  await expect(skip).toBeDisabled();
+  await expect(led).toHaveCSS('background-color', 'rgb(53, 67, 62)');
+
+  for (const [button, before, after] of [
+    ['Play', 'play', 'play'], ['Fast-forward', 'fast-forward', 'fast-forward'], ['Rewind', 'rewind', 'paused']
+  ]) {
+    await enterGap();
+    await expect(skip).toBeEnabled();
+    const transport = deck.getByRole('button', {name: button, exact: true});
+    if (before === 'play') await transport.click();
+    else {
+      await transport.focus();
+      await page.keyboard.down(' ');
+      await page.clock.runFor(450);
+    }
+    await expect(deck).toHaveAttribute('data-transport', before);
+    if (before === 'play') await expect(clock).toHaveText(/^10:31:\d{2}$/);
+    if (before === 'play') await skip.click();
+    else {
+      // Keep the scan key held while the second control is activated.
+      await skip.evaluate(control => control.click());
+      await page.keyboard.up(' ');
+    }
+    await expect(status).toContainText('Frame 2 of 3');
+    await expect(deck).toHaveAttribute('data-transport', after);
+    await expect(clock).toHaveText(after === 'paused' ? liveTime : /^11:01:\d{2}$/);
+    await expect(skip).toBeDisabled();
+  }
+
+  const saving = page.waitForEvent('download');
+  await deck.getByRole('button', {name: 'Save recording'}).click();
+  const download = await saving;
+  const [exported, ...roundTrip] = gunzipSync(await readFile(await download.path())).toString().trimEnd().split('\n').map(JSON.parse);
+  expect(exported.frameCount).toBe(3);
+  expect(roundTrip).toEqual(frames);
+
+  await page.locator('[data-control="file"]').setInputFiles({
+    name: 'broken.ndjson.gz', mimeType: 'application/gzip', buffer: compressed.subarray(0, -8)
+  });
+  await expect(deck.locator('[data-control="status"]')).not.toBeEmpty();
+  await expect(library.locator('option')).toHaveText('gap.ndjson.gz · Import · 3 frames');
+
+  const file = deck.locator('[data-control="file"]');
+  const deleteButton = deck.getByRole('button', {name: 'Delete selected recording'});
+  const gapRecording = library.getByRole('option', {name: /^gap\.ndjson\.gz/});
+  const gapId = await gapRecording.getAttribute('value');
+  await file.setInputFiles({name: 'keep.ndjson.gz', mimeType: 'application/gzip', buffer: compressed});
+  const keepRecording = library.getByRole('option', {name: /^keep\.ndjson\.gz/});
+  await expect(keepRecording).toHaveCount(1);
+  const keepId = await keepRecording.getAttribute('value');
+  await library.selectOption(gapId);
+  page.once('dialog', dialog => dialog.accept());
+  await deleteButton.click();
+  await expect(gapRecording).toHaveCount(0);
+  await expect(library).toHaveValue(keepId);
+  await expect(timeline).toBeEnabled();
+
+  await file.setInputFiles({name: 'legacy.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({
+    version: 1, startedAt, intervalSeconds: 30, frames
+  }))});
+  const legacy = library.getByRole('option', {name: /^legacy\.json/});
+  await expect(legacy).toHaveCount(1);
+  await expect(library).toHaveValue(await legacy.getAttribute('value'));
+  page.once('dialog', dialog => dialog.accept());
+  await deleteButton.click();
+  await expect(legacy).toHaveCount(0);
+  await expect(library).toHaveValue(keepId);
+  await expect(timeline).toBeDisabled();
+  await expect(clock).toHaveText(liveTime);
+
+  await page.reload();
+  await page.getByRole('button', {name: 'Enter dashboard'}).click();
+  await page.getByRole('button', {name: 'Recorder', exact: true}).click();
+  await expect(library.locator('option')).toHaveText('keep.ndjson.gz · Import · 3 frames');
+  await deck.getByRole('button', {name: 'Play', exact: true}).click();
+  await expect(clock).toHaveText(/^10:30:\d{2}$/);
+  await deck.getByRole('button', {name: 'Stop', exact: true}).click();
+  await expect(clock).toHaveText(liveTime);
+});
+
+test('pages a background recording and skips into the next archive segment', async ({page}) => {
+  const startedAt = Date.UTC(2026, 10, 20);
+  const times = Array.from({length: 33}, (_, index) => startedAt + (index < 16 ? index * 30_000 : 1_860_000 + (index - 16) * 30_000));
+  const session = {id: 'fixture', version: 2, mode: 'background', startedAt, endedAt: times.at(-1), intervalSeconds: 30, frameCount: times.length};
+  const offsets = [];
+  await page.route(url => url.pathname === '/api/recordings', route => route.fulfill({
+    json: {activeId: null, pagedFrames: true, sessions: [session]}
+  }));
+  await page.route('**/api/recordings/fixture/meta', route => route.fulfill({json: {...session, times}}));
+  await page.route('**/api/recordings/fixture/frames?*', route => {
+    const offset = Number(new URL(route.request().url()).searchParams.get('offset'));
+    offsets.push(offset);
+    return route.fulfill({json: {offset, frames: times.slice(offset, offset + 16).map(captureFixture)}});
+  });
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  await page.goto('http://localhost/');
+  await page.getByRole('button', {name: 'Enter dashboard'}).click();
+  await page.getByRole('button', {name: 'Recorder', exact: true}).click();
+  const deck = page.locator('#recorderDeck');
+  const timeline = deck.getByRole('slider', {name: 'Playback position'});
+  const skip = deck.getByRole('button', {name: 'Skip Gaps'});
+  await deck.getByRole('button', {name: 'Play', exact: true}).click();
+  await expect(deck.locator('[data-control="frame-status"]')).toContainText('Frame 1 of 33');
+  expect(offsets).toEqual([0]);
+  await timeline.evaluate(slider => {
+    slider.value = '510000';
+    slider.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+  await expect(deck.locator('[data-control="frame-status"]')).toContainText('Frame 16 of 33');
+  await expect(skip).toBeEnabled();
+  await skip.click();
+  await expect(timeline).toHaveValue('1860000');
+  await expect(deck.locator('[data-control="frame-status"]')).toContainText('Frame 17 of 33');
+  await expect(skip).toBeDisabled();
+  expect(offsets).toEqual([0, 16]);
 });

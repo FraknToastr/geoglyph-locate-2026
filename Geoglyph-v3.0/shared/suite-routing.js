@@ -7,7 +7,7 @@
   'use strict';
   const apps=Object.freeze({
     geoglyph:Object.freeze({label:'Geoglyph',command:'Launch Geoglyph',path:'apps/geoglyph/index.html'}),
-    transitron:Object.freeze({label:'Transitron',command:'Launch Transitron',path:'apps/transitron/launcher-placeholder.html'}),
+    transitron:Object.freeze({label:'Transitron',command:'Launch Transitron',path:'http://127.0.0.1:8090/'}),
     panoptigon:Object.freeze({label:'Panoptigon',command:'Launch Panoptigon',path:'apps/panoptigon/index.html'}),
     umbramatic:Object.freeze({label:'Umbramatic',command:'Launch Umbramatic',path:'apps/umbramatic/ShadowPlayer/index.html'}),
     'assassins-leaves':Object.freeze({label:'Assassin’s Leaves',command:"Launch Assassin's Leaves",path:null})
@@ -60,7 +60,8 @@
     const handoff=validateHandoff({...state,version:1,source:serviceUrl,app:target},serviceUrl);
     const route=target==='launcher'?'index.html':apps[target].path;
     const url=new URL(route,base);
-    if(url.protocol!==base.protocol||url.host!==base.host||!url.pathname.startsWith(new URL('./',base).pathname))throw Error('Invalid launcher destination');
+    // The fixed Transitron URL owns the live feeds and its browser recordings.
+    if(target!=='transitron'&&(url.protocol!==base.protocol||url.host!==base.host||!url.pathname.startsWith(new URL('./',base).pathname)))throw Error('Invalid launcher destination');
     url.hash=new URLSearchParams({suite:JSON.stringify(handoff)}).toString();return url.href;
   }
   function suiteRoot(href){

@@ -312,7 +312,7 @@ export async function selectView(id,{moveMap=true}={}) {
   if(matchMedia('(max-width: 900px)').matches)showSidebar(false);
   $('panoTitle').textContent=safeLabel(location.label);
   $('panoPlace').textContent=id;
-  $('emptyMessage').textContent=location.photo?'Panorama':'No photo';
+  $('emptyMessage').textContent=location.photo?'Equirectangular Panoroma':'No photo';
   $('panoEmpty').classList.toggle('hidden',!!location.photo);
   $('panoHeader').classList.toggle('hidden',!location.photo);
   $('panoFooter').classList.toggle('hidden',!location.photo);
@@ -420,7 +420,7 @@ export async function importPack(role,files,access=null,options={}){
     feedback(feedbackId,role==='photos'?'Ready':'Loaded');
     if(state.selected&&!state.locations.has(state.selected)){
       ++state.selectionSerial;state.selected=null;state.direction=null;state.viewer.clear();
-      $('panoEmpty').classList.remove('hidden');$('panoHeader').classList.add('hidden');$('panoFooter').classList.add('hidden');$('emptyMessage').textContent='Panorama';
+      $('panoEmpty').classList.remove('hidden');$('panoHeader').classList.add('hidden');$('panoFooter').classList.add('hidden');$('emptyMessage').textContent='Equirectangular Panoroma';
       updateMapSources();updateAlignment();
     }else if(state.selected){
       $('panoTitle').textContent=state.locations.get(state.selected).label;
@@ -478,7 +478,7 @@ export async function restoreWorkspace(workspace,resolved){
   if(settings.base==='metro'&&!state.metroKey)notify('Workspace loaded with Aerial. Enter your MetroMap key to use MetroMap.',false);
   if(base!==state.base)useBasemap(base);
   if(settings.map)state.map.jumpTo(settings.map);
-  $('panoEmpty').classList.remove('hidden');$('panoHeader').classList.add('hidden');$('panoFooter').classList.add('hidden');$('emptyMessage').textContent='Panorama';
+  $('panoEmpty').classList.remove('hidden');$('panoHeader').classList.add('hidden');$('panoFooter').classList.add('hidden');$('emptyMessage').textContent='Equirectangular Panoroma';
   if(settings.selected&&state.locations.has(settings.selected))await selectView(settings.selected,{moveMap:false});
   if(settings.panorama&&state.viewer.active){Object.assign(state.viewer,settings.panorama);state.viewer.render();}
   if(registry.values().some(pack=>pack.unavailable))notify('Some workspace packs are unavailable. Reopen the workspace to reconnect them.',false);
