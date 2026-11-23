@@ -12,6 +12,8 @@ For local live-feed testing, launch the Python server from the workspace root:
 
 Open `http://127.0.0.1:8090` and select **Refresh latest feeds** in the map controls. The Python server relays all three Adelaide Metro realtime feeds to the page on the same origin, so live refresh and browser recording work even when the upstream does not permit direct browser requests. No Python packages are required. Use `./start_server.sh --port 8091` to choose another port.
 
+To start the server and open Transitron in the default browser, run `python3 open_transitron.py`. Use `python3 open_transitron.py --no-browser` when the server should stay in the terminal without opening a browser. The default port is `8090`; pass `--port` to choose another port.
+
 Run `rtk npm run save:snapshot` to replace the startup snapshot with current feeds. This uses Node and curl and saves the three decoded feeds in `GTFS data/startup-snapshot.json`. The dashboard shows the capture time when it loads the file and falls back to the bundled sample when the file is absent.
 
 ### Background recording
