@@ -22,7 +22,9 @@
     const attributes = raw?.attributes || raw || {};
     const name = Object.keys(attributes).find(name => name.toLowerCase() === 'special_commands');
     const value = key(attributes[name]);
-    return value === 'begin geoglyph' ? 'begin' : value === 'reset' ? 'reset' : undefined;
+    if(value==='begin geoglyph')return 'begin';
+    if(value==='reset geoglyph')return 'reset';
+    if(value==='return to launcher')return 'return';
   }
 
   // Resolve one submission without changing either the feature or current state.

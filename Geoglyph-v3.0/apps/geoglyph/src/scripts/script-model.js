@@ -5,7 +5,7 @@ export const actionTypes = Object.freeze({
   size:['Size','maximize'], depth:['Depth','layers'], tilt:['Tilt','rotate-3d'], bearing:['Bearing','compass'],
   mirror:['Mirror','flip'], fit:['Fit','maximize'], morph:['Font morph','blend'],
   title:['Title overlay','heading'], wait:['Wait','clock'], camera:['Camera flight','camera'],
-  location:['Location','map-pin']
+  location:['Location','map-pin'], screenShift:['Horizontal screen shift (%)','camera']
 });
 const object = value => value && typeof value === 'object' && !Array.isArray(value);
 const fail = message => { throw Error(message); };
@@ -35,6 +35,7 @@ export function validateAction(action) {
     case 'depth':result=number(value,'Depth',.1,100000);break;
     case 'tilt':result=number(value,'Tilt',0,90);break;
     case 'bearing':result=number(value,'Bearing',-360,360);break;
+    case 'screenShift':result=number(value,'Horizontal screen shift',-25,25);break;
     case 'mirror':case 'fit':result=typeof value==='boolean'?value:fail('Choose on or off');break;
     case 'wait':result=number(value,'Wait',0,3600);break;
     case 'title':result=string(value,'Title',2000);break;
@@ -58,6 +59,15 @@ export function validateAction(action) {
       if(value.targetMessage!==undefined){
         result.targetMessage=string(value.targetMessage,'Target message',2000);
         if(!result.targetMessage.trim())fail('Enter a visible target message or omit it to keep the same text');
+      }
+      if(value.titleAfter!==undefined){
+        if(typeof value.titleAfter!=='boolean')fail('Choose when to show the title');
+        if(value.titleAfter&&result.targetMessage===undefined)fail('A title after the morph requires a target message');
+        result.titleAfter=value.titleAfter;
+      }
+      if(value.titleHighlight!==undefined){
+        result.titleHighlight=string(value.titleHighlight,'Caption highlight',100).trim();
+        if(!result.titleHighlight||result.targetMessage===undefined)fail('A caption highlight requires text and a morph target message');
       }
       break;
   }

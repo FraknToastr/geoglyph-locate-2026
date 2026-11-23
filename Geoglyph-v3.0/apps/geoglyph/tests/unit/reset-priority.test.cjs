@@ -5,18 +5,19 @@ test('bounded Reset lookup finds a normalized command beyond the content queue',
   const requests=[];
   const client=create({serviceUrl:'https://example.invalid/FeatureServer',fetch:async(_url,options)=>{
     const params=new URLSearchParams(options.body);requests.push(params);
-    return {ok:true,status:200,json:async()=>({features:[{attributes:{objectid:1001,special_commands:'not reset'}},{attributes:{objectid:1000,special_commands:' ReSeT '}}],exceededTransferLimit:false})};
+    return {ok:true,status:200,json:async()=>({features:[{attributes:{objectid:1002,special_commands:'Reset'}},{attributes:{objectid:1001,special_commands:'not reset geoglyph'}},{attributes:{objectid:1000,special_commands:' ReSeT Geoglyph '}}],exceededTransferLimit:false})};
   }});
-  assert.equal((await client.latestResetCue(layer,100)).objectId,1000);
+  assert.equal((await client.latestInterruptCue(layer,100)).objectId,1000);
   assert.equal(requests.length,1);assert.equal(requests[0].get('resultRecordCount'),'25');
-  assert.match(requests[0].get('where'),/^objectid>100 AND UPPER\(special_commands\) LIKE/);
+  assert.match(requests[0].get('where'),/^objectid>100 AND \(UPPER\(special_commands\) LIKE/);
+  assert.match(requests[0].get('where'),/RETURN TO LAUNCHER/);
 });
 test('false-positive command matches are bounded to four descending pages',async()=>{
   let calls=0;
   const client=create({serviceUrl:'https://example.invalid/FeatureServer',fetch:async()=>({ok:true,status:200,json:async()=>({features:Array.from({length:25},(_,i)=>({attributes:{objectid:1000-calls*25-i,special_commands:'not reset'}})),exceededTransferLimit:!!++calls})})});
-  assert.equal(await client.latestResetCue(layer,0),null);assert.equal(calls,4);
+  assert.equal(await client.latestInterruptCue(layer,0),null);assert.equal(calls,4);
 });
 test('a source without a command field sends no additional query',async()=>{
   const client=create({serviceUrl:'https://example.invalid/FeatureServer',fetch:async()=>{throw Error('Unexpected request');}});
-  assert.equal(await client.latestResetCue({...layer,cueFields:{}},0),null);
+  assert.equal(await client.latestInterruptCue({...layer,cueFields:{}},0),null);
 });

@@ -10,6 +10,7 @@ const morph=()=>window.GeoGlyphFontMorph;
 const fontService=()=>window.GeoGlyphFontService;
 const openingEmoji={resourceKey:'conference:Segoe UI Emoji',name:'Segoe UI Emoji'};
 const openingFlights=new WeakMap();
+const screenShiftCenters=new WeakMap();
 let draft=validateScript(introduction),selected=0,storageError='',titleNode=null,ownsOrbit=false,ownsMorph=false,morphPreparing=false,installed=false;
 let rehearsalRun=null,fontCycle=null;
 const clone=value=>JSON.parse(JSON.stringify(value));
@@ -69,6 +70,9 @@ async function cycleFinalFont({duration,hold},owner){
     while(current()){
       const source=fonts[index];
       if(s.selectedFontId!==source.id)return;
+      // Hold on the committed font's framing before fitting the next pair.
+      await api.fitScriptMorph(current);
+      checked(current);
       const next=(index+1)%fonts.length,target=fonts[next];
       const held=holdFont(hold*1000,signal);
       // Stage the next shapes and frame them while the completed font holds.
@@ -85,11 +89,13 @@ async function cycleFinalFont({duration,hold},owner){
         continue;
       }
       if(prepared.status==='rejected')throw prepared.reason;
+      await held;
+      checked(current);
       run.preparingMorph=true;
       const ready=await morph().prepare(target.id,{targetMessage:message,prepared:prepared.value});
       checked(current);
       if(!ready)throw Error(morph().stats().error||'Morph could not be prepared');
-      await Promise.all([held,api.fitScriptMorph(current)]);
+      await api.fitScriptMorph(current);
       checked(current);
       await morph().playToEnd({duration,signal});
       run.preparingMorph=false;
@@ -192,14 +198,27 @@ async function prepareRehearsal(script,{signal,isCurrent}) {
   }
   return morphs;
 }
-function showTitle(text,{caption=false,font}={}){
+function showTitle(text,{caption=false,openingTitle=false,font}={}){
   removeTitle();if(!text)return;
   titleNode=document.createElement('div');titleNode.id='geoglyphConferenceTitle';titleNode.className='geoglyph-conference-title';
   if(caption)titleNode.classList.add('geoglyph-rehearsal-caption');
+  if(openingTitle)titleNode.classList.add('geoglyph-opening-title');
   titleNode.setAttribute('role','status');titleNode.textContent=text;
   const face=font||[...engine().state.fontRecords.values()].find(r=>r.fontResourceKey==='conference:Gill Sans');
   if(face?.cssFamily)titleNode.style.fontFamily=`${JSON.stringify(face.cssFamily)}, system-ui, sans-serif`;
   document.getElementById('geoglyphMapWorkspace').append(titleNode);
+}
+function highlightTitle(word,colour){
+  if(!titleNode||!word)return;
+  const text=titleNode.textContent,index=text.indexOf(word);
+  if(index===-1)return;
+  const line=document.createElement('span');
+  const highlight=document.createElement('span');
+  highlight.className='geoglyph-caption-highlight';
+  highlight.style.color=colour;
+  highlight.textContent=word;
+  line.append(text.slice(0,index),highlight,text.slice(index+word.length));
+  titleNode.replaceChildren(line);
 }
 async function flyToOpening(api,isCurrent) {
   await api.flyToConferenceOpening(isCurrent);
@@ -216,7 +235,7 @@ async function applyRow(row,{isCurrent,signal,owner,prepared}) {
     ownsOrbit=false;
     return;
   }
-  const hasArt=Boolean(row.message)||row.actions.some(a=>!['title','wait','camera'].includes(a.type));
+  const hasArt=Boolean(row.message)||row.actions.some(a=>!['title','wait','camera','screenShift'].includes(a.type));
   const font=actions.font?resolveFont(actions.font):s.fontRecords.get(s.selectedFontId);
   const source=actions.morph?resolveFont(actions.morph.from):font;
   const target=actions.morph?resolveFont(actions.morph.to):null;
@@ -224,11 +243,13 @@ async function applyRow(row,{isCurrent,signal,owner,prepared}) {
   const animation=actions.animation;
   const animate=Boolean(animation&&animation!=='none');
   const location=actions.location;
-  const fit=actions.fit??Boolean(location);
+  const starting3DMorphOrbit=Boolean(actions.morph&&actions.mode==='3d'&&animate);
+  const fit=actions.fit??Boolean(location||starting3DMorphOrbit);
   const instantFit=location?.instant===true;
   const {maxZoom,cameraBearing}=location??{};
   const title=actions.title??location?.caption;
-  const caption=Boolean(title&&hasArt&&(location?.caption!==undefined||prepared!==undefined||actions.font||actions.morph));
+  const delayTitle=actions.morph?.titleAfter===true&&title!==undefined;
+  const caption=Boolean(title&&(rehearsalRun!==null||hasArt&&(location?.caption!==undefined||prepared!==undefined||actions.font||actions.morph)));
   if(animation&&animation!=='none'&&!enabled)throw Error('Orbit, Turn and Face require 3D. Add a 3D action.');
   if(actions.morph&&actions.font&&source.id!==font.id)throw Error('Font and morph source must be the same font');
   const message=row.message||s.message;
@@ -269,8 +290,9 @@ async function applyRow(row,{isCurrent,signal,owner,prepared}) {
       height:s.baseHeightMeters,relativeSize:s.relativeSize,depth:s.extrusionDepthMeters,fill:s.fill,outline:s.outline,tilt:s.extrusionTilt,bearing:s.bearing,
       ...(location?{anchor:{...s.anchor},anchorPinned:s.anchorPinned}:{})};
     if(actions.morph||actions.font||row.message&&message!==s.message)morph()?.clear({restore:false});
-    if(location?.caption!==undefined)removeTitle();
-    const mode=owner==='conference'?'arcgis':s.mode,options={isCurrent,mode,preserveOrbit:Boolean(location)&&!instantFit,instantFit,maxZoom,cameraBearing};
+    if(location?.caption!==undefined||delayTitle||title==='')removeTitle();
+    const preserveOrbit=!instantFit&&(Boolean(location)||enabled&&window.GeoGlyph3D.stats().animation.orbiting);
+    const mode=owner==='conference'?'arcgis':s.mode,options={isCurrent,mode,preserveOrbit,instantFit,maxZoom,cameraBearing};
     const alreadyDisplayed=targetMessage!==undefined&&!row.message&&s.selectedFontId===source.id&&
       s.displayedFontId===source.id&&row.actions.every(action=>['morph','title','fit'].includes(action.type));
     const result=alreadyDisplayed?null:await api.applyScriptCue(patch,options);checked(isCurrent);
@@ -288,7 +310,7 @@ async function applyRow(row,{isCurrent,signal,owner,prepared}) {
         ownsOrbit=true;await api.waitForCamera(isCurrent);checked(isCurrent);
       }
       if(actions.morph){
-        if(title!==undefined){
+        if(title!==undefined&&!delayTitle){
           if(caption){await fontService().ensureFace(target,{isCurrent});checked(isCurrent);}
           showTitle(title,{caption,font:caption?target:undefined});titleShown=true;
         }
@@ -297,12 +319,27 @@ async function applyRow(row,{isCurrent,signal,owner,prepared}) {
           await morph().playToEnd({duration:actions.morph.duration,signal});
           checked(isCurrent);
           ownsMorph=false;
+          if(delayTitle){
+            showTitle(title,{caption,font:caption?target:undefined});
+            titleShown=true;
+          }
+          highlightTitle(actions.morph.titleHighlight,s.fill);
         }else morph().play();
       }
     }catch(error){
       if(actions.morph&&isCurrent()){morph().clear({restore:false});await api.applyScriptCue(previous,options);}
       throw error;
     }finally{morphPreparing=false;}
+  }
+  if(actions.screenShift!==undefined){
+    const map=s.map;
+    const center=screenShiftCenters.get(signal)??map.getCenter();
+    if(actions.screenShift===0)screenShiftCenters.delete(signal);
+    else screenShiftCenters.set(signal,center);
+    const offset=map.getContainer().clientWidth*actions.screenShift/100;
+    map.easeTo({center,offset:[offset,0],duration:player.state().skip?0:450});
+    await api.waitForCamera(isCurrent);
+    checked(isCurrent);
   }
   if(title===''&&!titleShown)removeTitle();
   if(actions.camera){
@@ -322,7 +359,7 @@ async function applyRow(row,{isCurrent,signal,owner,prepared}) {
       await flyToOpening(api,isCurrent);
     }
   }
-  checked(isCurrent);if(title&&!titleShown)showTitle(title,{caption,font:caption?source:undefined});
+  checked(isCurrent);if(title&&!titleShown)showTitle(title,{caption,openingTitle:rehearsalRun!==null&&!hasArt,font:caption&&hasArt?source:undefined});
   if(actions.camera==='opening-and-fly'){
     const flight=flyToOpening(api,isCurrent);
     openingFlights.set(signal,flight);

@@ -183,25 +183,26 @@
       return cues[0] || null;
     }
 
-    async function latestResetCue(layer, afterId, { signal } = {}) {
+    async function latestInterruptCue(layer, afterId, { signal } = {}) {
       const field = layer.cueFields?.special_commands;
       if (!field) return null;
       if (!/^[a-z_][a-z\d_]*$/i.test(field) || !Number.isSafeInteger(afterId) || afterId < 0)
         throw new ResultsError('Expected a valid command field and submission cursor.', 'schema');
       let before = null;
-      // A bounded control query lets Reset interrupt a full data queue. LIKE is
+      // A bounded control query lets presentation commands interrupt a full data queue. LIKE is
       // supported by the hosted service; validate exact JS trim/case semantics
       // below rather than treating substring matches as commands.
       for (let page = 0; page < 4; page++) {
         const { json, cues } = await queryCues(layer, {
-          where:`${layer.objectIdField}>${afterId}${before === null ? '' : ` AND ${layer.objectIdField}<${before}`} AND UPPER(${field}) LIKE '%RESET%'`,
+          where:`${layer.objectIdField}>${afterId}${before === null ? '' : ` AND ${layer.objectIdField}<${before}`} AND (UPPER(${field}) LIKE '%RESET GEOGLYPH%' OR UPPER(${field}) LIKE '%RETURN TO LAUNCHER%')`,
           orderByFields:`${layer.objectIdField} DESC`, resultRecordCount:'25', resultOffset:'0'
         }, signal);
         if (cues.length > 25) throw new ResultsError('The results service exceeded the requested command batch size.');
         for (const cue of cues) {
           if (cue.objectId <= afterId || (before !== null && cue.objectId >= before)) throw new ResultsError('Invalid command query ordering.');
           before = cue.objectId;
-          if (String(attribute(cue.attributes, field) ?? '').trim().toLowerCase() === 'reset') return cue;
+          const command=String(attribute(cue.attributes, field) ?? '').trim().toLowerCase();
+          if(command==='reset geoglyph'||command==='return to launcher')return cue;
         }
         if (!cues.length || json.exceededTransferLimit === false || (json.exceededTransferLimit !== true && cues.length < 25)) return null;
       }
@@ -233,7 +234,7 @@
       return cues;
     }
 
-    return Object.freeze({ discover, latest, latestCue, afterCues, latestResetCue });
+    return Object.freeze({ discover, latest, latestCue, afterCues, latestInterruptCue });
   }
 
   return Object.freeze({ config, create, ResultsError });

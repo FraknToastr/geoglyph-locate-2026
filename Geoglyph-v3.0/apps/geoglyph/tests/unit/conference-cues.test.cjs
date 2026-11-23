@@ -6,7 +6,7 @@ const path = require('node:path');
 const { resolve, fonts } = require('../../src/scripts/conference-cues.js');
 
 test('special commands take precedence over all content and controls including emojis', () => {
-  for (const [value, command] of [[' Begin Geoglyph ', 'begin'], ['RESET', 'reset']]) {
+  for (const [value, command] of [[' Begin Geoglyph ', 'begin'], ['RESET GEOGLYPH', 'reset'], ['Return to Launcher', 'return']]) {
     const result = resolve({ objectId:42, attributes:{ SPECIAL_COMMANDS:value, emojis:'👋',
       geoglyph_speaks:'Ignored', animation:'Face', random_font:'Yes', fit:'Fit' } });
     assert.deepEqual(result, { command, objectId:42, warnings:[] });
@@ -30,7 +30,8 @@ test('Begin Geoglyph accepts exact case-insensitive domain values and the remove
     assert.equal(result.command,undefined);assert.equal(result.message,'Existing message');
     assert.match(result.warnings[0],/Unknown special_commands/);
   }
-  assert.equal(cues.command({attributes:{SPECIAL_COMMANDS:' ReSeT '}}),'reset');
+  assert.equal(cues.command({attributes:{SPECIAL_COMMANDS:' ReSeT Geoglyph '}}),'reset');
+  assert.equal(cues.command({special_commands:'Reset'}),undefined);
 });
 const textContext = { content: { kind: 'text', message: 'Previous' }, lastTextFont: 'Forte', currentFont: 'Forte', extrusionEnabled: true };
 const feature = (attributes, geometry) => ({ attributes, geometry });
@@ -139,7 +140,7 @@ test('location controls preserve explicit content and Begin/Reset precedence', (
     assert.equal(result.message,value);assert.equal(result.hasNewContent,true);assert.deepEqual(result.anchor,{lng:point.x,lat:point.y});
     if(field==='emojis'){assert.equal(result.font,'Segoe UI Emoji');assert.equal(result.nativeColor,true);assert.equal(result.extrusionEnabled,false);}
   }
-  for(const [value,command]of [['Begin Geoglyph','begin'],['Reset','reset']])assert.deepEqual(resolve(feature({...attributes,special_commands:value},point)),{command,objectId:undefined,warnings:[]});
+  for(const [value,command]of [['Begin Geoglyph','begin'],['Reset Geoglyph','reset'],['Return to Launcher','return']])assert.deepEqual(resolve(feature({...attributes,special_commands:value},point)),{command,objectId:undefined,warnings:[]});
 });
 
 test('only recognised controls can suppress the exact sleeping placeholder in the legacy field', () => {
@@ -164,7 +165,7 @@ test('placeholder handling preserves explicit content, ordinary legacy text and 
   }
   const legacy=resolve({...control,whats_on_your_mind:'New legacy message'},textContext);
   assert.equal(legacy.message,'New legacy message');assert.equal(legacy.hasNewContent,true);assert.equal(legacy.fill,'#FFE747');
-  for(const [value,command]of [['Begin Geoglyph','begin'],['Reset','reset']])assert.deepEqual(resolve({...control,special_commands:value}),{command,objectId:undefined,warnings:[]});
+  for(const [value,command]of [['Begin Geoglyph','begin'],['Reset Geoglyph','reset'],['Return to Launcher','return']])assert.deepEqual(resolve({...control,special_commands:value}),{command,objectId:undefined,warnings:[]});
   const existingEmoji=resolve(control,{content:{kind:'emoji',message:'🤗'}});
   assert.equal(existingEmoji.message,'🤗');assert.equal(existingEmoji.nativeColor,true);assert.equal(existingEmoji.extrusionEnabled,false);
 });

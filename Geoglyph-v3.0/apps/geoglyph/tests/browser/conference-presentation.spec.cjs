@@ -45,7 +45,7 @@ async function open(page, { records = [], portable = false, localModular = false
     let records = [...server.records];
     const newer = /objectid\s*>\s*(\d+)/i.exec(params.get('where') || '');
     if (newer) records = records.filter(row => row.attributes.objectid > Number(newer[1]));
-    if (/UPPER\(/i.test(params.get('where') || '')) records = records.filter(row => String(row.attributes.special_commands || '').toUpperCase().includes('RESET'));
+    if (/UPPER\(/i.test(params.get('where') || '')) records = records.filter(row => /RESET GEOGLYPH|RETURN TO LAUNCHER/i.test(row.attributes.special_commands || ''));
     const ascending = !/DESC/i.test(params.get('orderByFields') || '');
     records.sort((a, b) => (a.attributes.objectid - b.attributes.objectid) * (ascending ? 1 : -1));
     const offset = Number(params.get('resultOffset') || 0);
@@ -261,7 +261,7 @@ test(`Begin scripted introduction renders Medium 3D Turn and retains final text 
   expect(repeated.animation.orbiting).toBe(true);expect(repeated.animation.frames).toBeGreaterThan(moved.animation.frames);
   expect(repeated.history.filter(item=>item.objectId===185&&item.phase==='fit')).toHaveLength(0);
   expect(await page.evaluate(()=>GeoGlyphConference.state.error)).toBe('');
-  await submit(page,server,cue(186,{special_commands:'Reset',whats_on_your_mind:'😴',choose_a_colour_colour:'Yellow'}));
+  await submit(page,server,cue(186,{special_commands:'Reset Geoglyph',whats_on_your_mind:'😴',choose_a_colour_colour:'Yellow'}));
   const reset=await snapshot(page);
   expect(reset.content).toEqual({kind:'emoji',message:'😴'});
   expect(reset.font).toBe(await page.evaluate(()=>GeoGlyphConference.state.fontIds['Segoe UI Emoji']));
@@ -402,7 +402,7 @@ test('Reset interrupts a flight, drops preceding queued messages and prevents a 
   server.records.push(cue(1, { special_commands:'Begin Geoglyph' }));
   await poll(page);
   await page.waitForFunction(() => GeoGlyphConference.state.history.some(item => item.phase === 'flight'));
-  server.records.push(cue(2, { geoglyph_speaks:'DISCARD' }), cue(3, { special_commands:'Reset', emojis:'👋' }, [140,-36]));
+  server.records.push(cue(2, { geoglyph_speaks:'DISCARD' }), cue(3, { special_commands:'Reset Geoglyph', emojis:'👋' }, [140,-36]));
   await poll(page);
   await applied(page, 3);
   await expectAustralia(page);
@@ -428,7 +428,7 @@ test('Reset does not wait for a superseded font model to load', async ({ page })
   server.records.push(cue(2, { geoglyph_speaks:'DELAYED' }));
   await poll(page);
   await page.waitForFunction(() => window.conferenceModelEntered);
-  server.records.push(cue(3, { special_commands:'Reset' }));
+  server.records.push(cue(3, { special_commands:'Reset Geoglyph' }));
   await poll(page);
   await page.waitForFunction(() => GeoGlyphConference.state.lastAppliedId === 3, null, { timeout:5000 });
   await page.evaluate(() => window.releaseConferenceModel());
@@ -460,7 +460,7 @@ for (const animation of ['Orbit','Turn','Face']) test(`Reset restores the openin
     _size_size:'Large', choose_a_font_font:'Forte', choose_a_colour_colour:'Pink' }, [140,-36])] });
   await applied(page, 1);
   expect((await snapshot(page)).animation.orbiting).toBe(true);
-  await submit(page, server, cue(2, { special_commands:'RESET', fit:'Fit' }));
+  await submit(page, server, cue(2, { special_commands:'RESET Geoglyph', fit:'Fit' }));
   await expectAustralia(page);
   const state = await snapshot(page);
   expect(state.content.message).toBe('😴');
@@ -541,7 +541,7 @@ test('HTTP font acquisition failures identify the bundled font instead of only F
 });
 
 test('portable startup holds Australia and ignores historical commands and content', async ({ page }) => {
-  const server = await open(page, { portable:true, overview:true, records:[cue(1, { special_commands:'Begin Geoglyph' }), cue(2, { special_commands:'Reset', emojis:'👋' }, [138.6, -34.9])] });
+  const server = await open(page, { portable:true, overview:true, records:[cue(1, { special_commands:'Begin Geoglyph' }), cue(2, { special_commands:'Reset Geoglyph', emojis:'👋' }, [138.6, -34.9])] });
   const before = await snapshot(page);
   expect(before.content).toEqual({ kind: 'emoji', message: '😴' });
   expect(before.nativeColor).toBe(true);
@@ -1011,7 +1011,7 @@ test('Tier 2: a paused cue queue bounds admission without skipping its cursor', 
   expect(server.queries.length).toBe(queries+1);
   expect(server.queries.at(-1).get('where')).toContain('UPPER(');
   expect(await page.evaluate(()=>GeoGlyphConference.state.queue.map(row=>row.objectId))).toEqual(Array.from({length:100},(_,i)=>i+1));
-  server.records.push(cue(126,{special_commands:' ReSeT '}));await poll(page);
+  server.records.push(cue(126,{special_commands:' ReSeT Geoglyph '}));await poll(page);
   await page.waitForFunction(()=>!GeoGlyphMapEngine.state.arcgisPollBusy);
   expect(await page.evaluate(()=>GeoGlyphConference.state.queue.map(row=>row.objectId))).toEqual([126]);
   expect(await page.evaluate(()=>GeoGlyphConference.state.lastQueuedId)).toBe(126);

@@ -1,78 +1,85 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-lighting="day">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="light dark">
   <title>Shadow / Time — Adelaide Shadow Player</title>
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.13.0/dist/maplibre-gl.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="controls.css">
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <span class="brand-icon" aria-hidden="true"><span class="brand-eclipse"></span></span>
-        <div class="brand-text"><small>URBAN OPERATING SYSTEM</small><strong>SHADOW<span class="slash">/</span>TIME</strong></div>
-        <span class="version">v1.0.2</span>
-      </div>
-      <div class="sidebar-body">
-        <section class="panel-section">
-          <div class="section-label"><span>01</span> CAPTURE LIBRARY</div>
-          <div class="upload-card">
-            <div class="file-icon" aria-hidden="true">▧</div>
-            <strong>Open shadow export</strong>
-            <p>Choose the folder produced by the ArcGIS Pro web export tool. JPEG, PNG and WebP are supported.</p>
-            <button class="primary-button" id="openFolder" type="button">Open export folder <span aria-hidden="true">↗</span></button>
-            <button class="quiet-button" id="demoButton" type="button">Explore a synthetic demo →</button>
+    <main class="main-view" data-basemap="none">
+      <aside id="controlsPanel" class="sidebar ambient amb-surface amb-chamfer-2 amb-elevation-3" aria-label="Umbramatic controls">
+        <div class="brand">
+          <span class="shadow-orb" aria-hidden="true"></span>
+          <div class="brand-text"><small>A ChatGPT Experiment</small><strong>Umbramatic</strong></div>
+          <span class="version">v1.0.2</span>
+        </div>
+        <div class="sidebar-body">
+          <section class="panel-section">
+            <div class="section-label"><span>01</span> CAPTURE LIBRARY</div>
+            <button class="secondary-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="openFolder" type="button" data-tooltip="Choose a folder containing a Shadow Player export.">Open export folder <span aria-hidden="true">↗</span></button>
             <input id="folderInput" type="file" webkitdirectory directory multiple hidden aria-label="Select an exported shadow folder">
-          </div>
-          <div id="datasetInfo" class="dataset-info" hidden>
-            <div class="dataset-tag">DATASET LOADED <span class="signal-dot"></span></div>
-            <strong id="datasetTitle">—</strong>
-            <div class="stat-row"><span>Frames</span><b id="frameCount">—</b></div>
-            <div class="stat-row"><span>Image format</span><b id="formatLabel">—</b></div>
-            <div class="stat-row"><span>Native resolution</span><b id="resolutionLabel">—</b></div>
-          </div>
-        </section>
-        <section class="panel-section">
-          <div class="section-label"><span>02</span> DATE FILTER</div>
-          <div class="date-top"><label for="dateInput">Choose a calendar date</label><button id="clearDate" class="text-action" type="button">Show all</button></div>
-          <input type="date" id="dateInput" aria-label="Filter animation to date">
-          <div class="date-chips" id="dateChips"><span class="muted-help">Load an export to browse dates.</span></div>
-        </section>
-        <section class="panel-section">
-          <div class="section-label"><span>03</span> VISUAL SETTINGS</div>
-          <div class="control-label">Basemap</div>
-          <div class="segment-grid" role="group" aria-label="Map background">
-            <button class="seg active" data-basemap="dark" type="button">Dark</button>
-            <button class="seg" data-basemap="street" type="button">Street</button>
-            <button class="seg" data-basemap="aerial" type="button">Aerial</button>
-            <button class="seg" data-basemap="none" type="button">Blank</button>
-          </div>
-          <div class="value-label"><label for="opacity">Shadow layer opacity</label><output id="opacityValue" for="opacity">100%</output></div>
-          <input class="range" id="opacity" type="range" min="0" max="100" value="100" step="5">
-          <div class="control-label" style="margin-top:17px">Playback behaviour</div>
-          <div class="segment-grid small-grid" role="group" aria-label="Playback mode">
-            <button class="seg active" data-loop="loop" type="button">Loop</button>
-            <button class="seg" data-loop="bounce" type="button">Ping-pong</button>
-            <button class="seg" data-loop="once" type="button">Once</button>
-          </div>
-          <div class="small-note">World files preserve spatial referencing for GIS. The player reads WGS84 corners from the exported JSON manifest.</div>
-        </section>
-      </div>
-      <div class="sidebar-footer"><span class="connection-dot"></span> Local-file capable <span class="separator">·</span> MapLibre GL JS</div>
-    </aside>
+            <div id="datasetInfo" class="dataset-info" hidden>
+              <div class="dataset-tag">DATASET LOADED <span class="signal-dot"></span></div>
+              <strong id="datasetTitle">—</strong>
+              <div class="stat-row"><span>Frames</span><b id="frameCount">—</b></div>
+              <div class="stat-row"><span>Image format</span><b id="formatLabel">—</b></div>
+              <div class="stat-row"><span>Native resolution</span><b id="resolutionLabel">—</b></div>
+            </div>
+          </section>
+          <section class="panel-section">
+            <div class="section-label"><span>02</span> DATE FILTER</div>
+            <div class="date-top"><label for="dateInput">Choose a calendar date</label><button id="clearDate" class="text-action ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" type="button" data-tooltip="Show captures from all dates.">Show all</button></div>
+            <input class="ambient amb-groove umbramatic-control" type="date" id="dateInput" aria-label="Filter animation to date" data-tooltip="Filter the timeline to one calendar date.">
+            <div class="date-chips ambient-button-group" id="dateChips"><span class="muted-help">Load an export to browse dates.</span></div>
+          </section>
+          <section class="panel-section">
+            <div class="section-label"><span>03</span> VISUAL SETTINGS</div>
+            <div class="lighting-controls ambient amb-groove">
+              <div class="control-label" id="lightingLabel">Lighting</div>
+              <div class="segment-grid ambient-button-group" role="group" aria-labelledby="lightingLabel">
+                <button class="seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control active" data-lighting-preset="day" aria-pressed="true" type="button" data-tooltip="Use soft daylight.">Day</button>
+                <button class="seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-lighting-preset="night" aria-pressed="false" type="button" data-tooltip="Use low, cool light.">Night</button>
+                <button class="seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-lighting-preset="sci-fi" aria-pressed="false" type="button" data-tooltip="Use cyan lighting.">Sci-Fi</button>
+                <button class="seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-lighting-preset="fun" aria-pressed="false" type="button" data-tooltip="Use saturated red lighting.">Fun</button>
+              </div>
+              <button class="light-follow ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="lightFollow" type="button" aria-pressed="true" data-tooltip="Move the mouse to direct the light. Turn off for manual control.">Follow pointer</button>
+              <div class="light-axes" role="group" aria-label="Light direction">
+                <label for="lightX">Left / right</label>
+                <input class="range ambient amb-groove umbramatic-control" id="lightX" type="range" min="-100" max="100" value="-70" data-tooltip="Set horizontal lighting in manual mode." disabled>
+                <label for="lightY">Up / down</label>
+                <input class="range ambient amb-groove umbramatic-control" id="lightY" type="range" min="-100" max="100" value="-70" data-tooltip="Set vertical lighting in manual mode." disabled>
+              </div>
+            </div>
+            <div class="control-label">Basemap</div>
+            <div class="segment-grid ambient-button-group" role="group" aria-label="Map background">
+              <button class="seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-basemap="dark" type="button" aria-pressed="false" data-tooltip="Show the ArcGIS Nova basemap.">Dark</button>
+              <button class="seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-basemap="light" type="button" aria-pressed="false" data-tooltip="Show Esri Light Gray Canvas.">Light</button>
+              <button class="seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-basemap="aerial" type="button" aria-pressed="false" data-tooltip="Show satellite imagery.">Aerial</button>
+              <button class="active seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-basemap="none" type="button" aria-pressed="true" data-tooltip="Show shadows on a plain background.">Blank</button>
+            </div>
+            <div class="value-label"><label for="opacity">Shadow layer opacity</label><output id="opacityValue" for="opacity">100%</output></div>
+            <input class="range ambient amb-groove umbramatic-control" id="opacity" type="range" min="0" max="100" value="100" step="5" data-tooltip="Adjust how transparent the shadow images are.">
+            <div class="control-label" style="margin-top:17px">Playback behaviour</div>
+            <div class="segment-grid small-grid ambient-button-group" role="group" aria-label="Playback mode">
+              <button class="active seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-loop="loop" type="button" aria-pressed="true" data-tooltip="Repeat playback from the start.">Loop</button>
+              <button class="seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-loop="bounce" type="button" aria-pressed="false" data-tooltip="Reverse playback at each end.">Ping-pong</button>
+              <button class="seg ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-loop="once" type="button" aria-pressed="false" data-tooltip="Stop playback at the last capture.">Once</button>
+            </div>
+          </section>
+        </div>
+      </aside>
 
-    <main class="main-view">
       <div id="map" aria-label="Interactive map showing georeferenced shadow frames"></div>
       <div class="map-vignette" aria-hidden="true"></div>
       <div class="map-topbar">
-        <div class="dataset-chip"><span class="live-square"></span><span id="mapTitle">ADELAIDE SHADOW ANALYSIS</span></div>
-        <div class="top-actions">
-          <button class="icon-button" id="fitBounds" title="Fit all shadows on screen" aria-label="Fit image bounds">⌖</button>
-          <button class="icon-button" id="togglePanel" title="Toggle controls" aria-label="Toggle controls">☷</button>
-          <a class="icon-button suite-return" id="suiteReturnLauncher" href="../../../index.html" data-suite-return="umbramatic" aria-label="Return to launcher" title="Return to launcher">
+        <div class="top-actions ambient-button-group">
+          <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="fitBounds" aria-label="Fit image bounds" data-tooltip="Fit all shadows on screen (F).">⌖</button>
+          <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="togglePanel" aria-label="Toggle controls" aria-controls="controlsPanel" aria-expanded="true" data-tooltip="Show or hide the controls sidebar.">☷</button>
+          <a class="icon-button suite-return ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="suiteReturnLauncher" href="../../../index.html" data-suite-return="umbramatic" aria-label="Return to launcher" data-tooltip="Return to the launcher.">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 12H4m6-6-6 6 6 6"/></svg><span>Return to launcher</span>
           </a>
         </div>
@@ -88,32 +95,33 @@
         </div>
       </div>
       <div id="emptyState" class="empty-state">
-        <div class="empty-orb" aria-hidden="true"></div>
+        <div class="shadow-orb" aria-hidden="true"></div>
         <span class="eyebrow">TEMPORAL GEOSPATIAL PLAYER</span>
         <h1>See the city<br><em>in another light.</em></h1>
         <p>Load georeferenced LiDAR shadow snapshots and explore how shade moves across streets, buildings and public spaces.</p>
-        <button id="emptyOpen" class="secondary-button" type="button">Open export folder <span>↗</span></button>
+        <button id="emptyOpen" class="secondary-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" type="button" data-tooltip="Choose a folder containing a Shadow Player export.">Open export folder <span aria-hidden="true">↗</span></button>
       </div>
       <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-      <section class="timeline-card" aria-label="Animation controls">
+      <section class="timeline-card ambient amb-surface amb-chamfer-2 amb-elevation-3" aria-label="Animation controls">
         <div class="timeline-top">
-          <div class="transport">
-            <button id="stepBack" aria-label="Previous capture" class="transport-small" title="Previous capture (←)">⏮</button>
-            <button id="playPause" aria-label="Play" class="play-button" title="Play or pause (Space)">▶</button>
-            <button id="stepForward" aria-label="Next capture" class="transport-small" title="Next capture (→)">⏭</button>
+          <div class="transport ambient-button-group">
+            <button id="stepBack" aria-label="Previous capture" class="transport-small ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-tooltip="Previous capture (←)">⏮</button>
+            <button id="playPause" aria-label="Play" class="play-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-tooltip="Play or pause (Space)"><span id="playPauseGlyph" aria-hidden="true">▶</span></button>
+            <button id="stepForward" aria-label="Next capture" class="transport-small ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-tooltip="Next capture (→)">⏭</button>
           </div>
           <div class="timeline-caption"><div class="timeline-caption-head" id="timelineCaption">READY TO ANIMATE</div><div class="timeline-caption-sub" id="timelineSubtitle">Open a capture export to start</div></div>
           <div class="speed-control" role="group" aria-label="Playback speed">
-            <span>SPEED</span><div class="speed-options" id="speedOptions">
-              <button data-speed="0.25" type="button">.25×</button><button data-speed="0.5" type="button">.5×</button><button data-speed="1" type="button" class="active">1×</button><button data-speed="2" type="button">2×</button><button data-speed="4" type="button">4×</button><button data-speed="8" type="button">8×</button>
+            <span>SPEED</span><div class="speed-options ambient-button-group" id="speedOptions">
+              <button class="ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-speed="0.25" type="button" aria-pressed="false">.25×</button><button class="ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-speed="0.5" type="button" aria-pressed="false">.5×</button><button data-speed="1" type="button" class="active ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" aria-pressed="true">1×</button><button class="ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-speed="2" type="button" aria-pressed="false">2×</button><button class="ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-speed="4" type="button" aria-pressed="false">4×</button><button class="ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" data-speed="8" type="button" aria-pressed="false">8×</button>
             </div>
           </div>
         </div>
-        <div class="scrub-row"><span id="firstLabel">START</span><input id="scrubber" class="range timeline-range" type="range" min="0" max="0" step="1" value="0" aria-label="Capture position"><span id="lastLabel">END</span></div>
+        <div class="scrub-row"><span id="firstLabel">START</span><input class="ambient amb-groove umbramatic-control range timeline-range" id="scrubber" type="range" min="0" max="0" step="1" value="0" aria-label="Capture position" data-tooltip="Jump to a capture in the timeline."><span id="lastLabel">END</span></div>
         <div class="timeline-foot"><span id="frameHint">0 captures</span><span>SPACE TO PLAY <i>·</i> ← → TO STEP <i>·</i> F TO FIT</span></div>
       </section>
     </main>
   </div>
+  <div id="controlTooltip" class="control-tooltip" role="tooltip" hidden></div>
   <script src="https://unpkg.com/maplibre-gl@5.13.0/dist/maplibre-gl.js"></script>
   <script src="app.js"></script>
   <script src="../../geoglyph/src/scripts/survey-results.js" defer></script>

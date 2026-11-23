@@ -3,56 +3,54 @@
   "title": "Locate 2026 opening rehearsal",
   "fontCycle": {"duration":2,"hold":2},
   "rows": [
-    {"id":"conference-day","message":"","duration":2,"actions":[{"type":"camera","value":"opening-and-fly"},{"type":"title","value":"Conference Day."}]},
-    {"id":"conference-day-2","message":"","duration":2,"actions":[{"type":"title","value":"Conference Day.."}]},
-    {"id":"conference-day-3","message":"","duration":2,"actions":[{"type":"title","value":"Conference Day..."}]},
-    {"id":"conference-day-4","message":"","duration":2,"actions":[{"type":"title","value":"Conference Day...."}]},
-    {"id":"conference-day-5","message":"","duration":2,"actions":[{"type":"title","value":"Conference Day....."}]},
+    {"id":"conference-day","message":"","duration":10,"actions":[{"type":"camera","value":"opening-and-fly"},{"type":"title","value":"Conference day..."}]},
     {"id":"approach","message":"","duration":0,"actions":[{"type":"title","value":""},{"type":"camera","value":"wait-for-opening-flight"}]},
     {"id":"yawn","message":"🥱","duration":3,"actions":[{"type":"font","value":{"name":"Segoe UI Emoji","resourceKey":"conference:Segoe UI Emoji"}},{"type":"mode","value":"2d"}]},
     {"id":"awake","message":"😶","duration":3,"actions":[]},
-    {"id":"smirk","message":"😏","duration":3,"actions":[]},
-    {"id":"smirk-mirror","message":"😏","duration":3,"actions":[{"type":"mirror","value":true}]},
-    {"id":"sunglasses","message":"😎","duration":3,"actions":[{"type":"mirror","value":false}]},
-    {"id":"hello","message":"Hello!","duration":3,"actions":[{"type":"font","value":{"name":"Gill Sans Ultra Bold Condensed","resourceKey":"conference:Gill Sans"}},{"type":"colour","value":{"fill":"#FF8500","outline":"#FFFFFF"}},{"type":"mode","value":"2d"},{"type":"fit","value":true}]},
-    {"id":"seoul","message":"안녕하세요","duration":4,"actions":[{"type":"font","value":{"name":"Gugi","resourceKey":"conference:Gugi"}},{"type":"location","value":{"lat":37.57273,"lng":126.97684,"caption":"Hello in Korean · Seoul, South Korea","instant":true}},{"type":"size","value":{"height":72,"depth":9}},{"type":"mode","value":"3d"}]},
-    {"id":"tbilisi","message":"გამარჯობა","duration":4,"actions":[{"type":"font","value":{"name":"Noto Sans Georgian Bold","resourceKey":"conference:Noto Sans Georgian"}},{"type":"location","value":{"lat":41.6932,"lng":44.8094,"caption":"Hello in Georgian · Tbilisi, Georgia","instant":true}},{"type":"size","value":{"height":95,"depth":13}},{"type":"colour","value":{"fill":"#FF45B8","outline":"#FFFFFF"}}]},
-    {"id":"yerevan","message":"Բարև","duration":4,"actions":[{"type":"font","value":{"name":"Noto Serif Armenian Bold","resourceKey":"conference:Noto Serif Armenian"}},{"type":"location","value":{"lat":40.17745,"lng":44.51263,"caption":"Hello in Armenian · Yerevan, Armenia","instant":true}},{"type":"size","value":{"height":75,"depth":7}},{"type":"mode","value":"2d"}]},
-    {"id":"kyiv","message":"Привіт","duration":5,"actions":[{"type":"font","value":{"name":"Montserrat Alternates Bold","resourceKey":"conference:Montserrat Alternates"}},{"type":"location","value":{"lat":50.45013,"lng":30.5234,"caption":"Hello in Ukrainian · Kyiv, Ukraine","instant":true}},{"type":"size","value":{"height":180,"depth":18}},{"type":"colour","value":{"fill":"#28EFFF","outline":"#FFFFFF"}}]},
-    {"id":"sounion","message":"Γεια σας","duration":5,"actions":[{"type":"font","value":{"name":"Fira Sans ExtraBold","resourceKey":"conference:Fira Sans"}},{"type":"location","value":{"lat":37.6497,"lng":24.0287,"caption":"Hello in Greek · Cape Sounion, Greece","instant":true,"cameraBearing":345}},{"type":"size","value":{"height":120,"depth":12}},{"type":"mode","value":"3d"}]},
-    {"id":"marrakesh","message":"ⴰⵣⵓⵍ","duration":7,"actions":[{"type":"font","value":{"name":"Noto Sans Tifinagh","resourceKey":"conference:Noto Sans Tifinagh"}},{"type":"location","value":{"lat":31.62585,"lng":-7.9891,"caption":"Hello in Tamazight · Marrakesh, Morocco","instant":true}},{"type":"size","value":{"height":1500,"depth":150}},{"type":"colour","value":{"fill":"#FFE747","outline":"#FFFFFF"}}]},
-    {"id":"my-name","message":"I'm Geoglyph","duration":3,"actions":[{"type":"font","value":{"name":"Righteous","resourceKey":"conference:Righteous"}},{"type":"location","value":{"lng":144.95604,"lat":-37.82402,"caption":"","instant":true}},{"type":"size","value":{"height":300,"depth":30}},{"type":"mode","value":"2d"}]},
+    {"id":"smirk","message":"😏","duration":3,"actions":[{"type":"screenShift","value":7}]},
+    {"id":"smirk-mirror","message":"😏","duration":3,"actions":[{"type":"mirror","value":true},{"type":"screenShift","value":-7}]},
+    {"id":"sunglasses","message":"😎","duration":3,"actions":[{"type":"mirror","value":false},{"type":"screenShift","value":0}]},
+    {"id":"hello","message":"Hello!","duration":1,"actions":[{"type":"font","value":{"name":"Gill Sans Ultra Bold Condensed","resourceKey":"conference:Gill Sans"}},{"type":"colour","value":{"fill":"#FF8500","outline":"#FFFFFF"}},{"type":"mode","value":"2d"},{"type":"fit","value":true}]},
+    {"id":"korean","message":"","duration":1,"actions":[{"type":"morph","value":{"from":{"name":"Gill Sans Ultra Bold Condensed","resourceKey":"conference:Gill Sans"},"to":{"name":"Gugi","resourceKey":"conference:Gugi"},"targetMessage":"안녕하세요","duration":2,"titleHighlight":"Korean","titleAfter":true}},{"type":"fit","value":true},{"type":"title","value":"Hello in Korean, Georgian, Armenian, Ukrainian, Greek, Tamazight"}]},
+    {"id":"georgian","message":"","duration":1,"actions":[{"type":"morph","value":{"from":{"name":"Gugi","resourceKey":"conference:Gugi"},"to":{"name":"Noto Sans Georgian Bold","resourceKey":"conference:Noto Sans Georgian"},"targetMessage":"გამარჯობა","duration":2,"titleHighlight":"Georgian"}},{"type":"fit","value":true}]},
+    {"id":"armenian","message":"","duration":1,"actions":[{"type":"morph","value":{"from":{"name":"Noto Sans Georgian Bold","resourceKey":"conference:Noto Sans Georgian"},"to":{"name":"Noto Serif Armenian Bold","resourceKey":"conference:Noto Serif Armenian"},"targetMessage":"Բարև","duration":2,"titleHighlight":"Armenian"}},{"type":"fit","value":true}]},
+    {"id":"ukrainian","message":"","duration":1,"actions":[{"type":"morph","value":{"from":{"name":"Noto Serif Armenian Bold","resourceKey":"conference:Noto Serif Armenian"},"to":{"name":"Montserrat Alternates Bold","resourceKey":"conference:Montserrat Alternates"},"targetMessage":"Привіт","duration":2,"titleHighlight":"Ukrainian"}},{"type":"fit","value":true}]},
+    {"id":"greek","message":"","duration":1,"actions":[{"type":"morph","value":{"from":{"name":"Montserrat Alternates Bold","resourceKey":"conference:Montserrat Alternates"},"to":{"name":"Fira Sans ExtraBold","resourceKey":"conference:Fira Sans"},"targetMessage":"Γεια σας","duration":2,"titleHighlight":"Greek"}},{"type":"fit","value":true}]},
+    {"id":"tamazight","message":"","duration":2,"actions":[{"type":"morph","value":{"from":{"name":"Fira Sans ExtraBold","resourceKey":"conference:Fira Sans"},"to":{"name":"Noto Sans Tifinagh","resourceKey":"conference:Noto Sans Tifinagh"},"targetMessage":"ⴰⵣⵓⵍ","duration":2,"titleHighlight":"Tamazight"}},{"type":"fit","value":true}]},
+    {"id":"my-name","message":"I'm Geoglyph","duration":3,"actions":[{"type":"font","value":{"name":"Righteous","resourceKey":"conference:Righteous"}},{"type":"colour","value":{"fill":"#39FF78","outline":"#FFFFFF"}},{"type":"fit","value":true},{"type":"title","value":""}]},
     {"id":"call-me","message":"Call me Geo","duration":3,"actions":[{"type":"font","value":{"name":"Bangers","resourceKey":"conference:Bangers"}},{"type":"colour","value":{"fill":"#FF45B8","outline":"#FFFFFF"}},{"type":"fit","value":true}]},
-    {"id":"made-by","message":"I was made by ChatGPT","duration":3,"actions":[{"type":"font","value":{"name":"Archivo Black","resourceKey":"conference:Archivo Black"}},{"type":"colour","value":{"fill":"#FFE747","outline":"#FFFFFF"}},{"type":"fit","value":true}]},
-    {"id":"dialects","message":"I speak all\n2D and 3D dialects","duration":5,"actions":[{"type":"font","value":{"name":"Anton","resourceKey":"conference:Anton"}},{"type":"colour","value":{"fill":"#28EFFF","outline":"#FFFFFF"}},{"type":"mode","value":"3d"},{"type":"fit","value":true}]},
-    {"id":"interesting","message":"But here is something\namazing about me","duration":3,"actions":[{"type":"font","value":{"name":"Graduate","resourceKey":"conference:Graduate"}},{"type":"colour","value":{"fill":"#FF45B8","outline":"#FFFFFF"}},{"type":"mode","value":"2d"},{"type":"fit","value":true}]},
-    {"id":"change-fonts","message":"I don't just change fonts","duration":3,"actions":[{"type":"font","value":{"name":"Changa One","resourceKey":"conference:Changa One"}},{"type":"colour","value":{"fill":"#FFE747","outline":"#FFFFFF"}},{"type":"fit","value":true}]},
-    {"id":"morph-between","message":"I morph between them","duration":3,"actions":[{"type":"font","value":{"name":"Passion One","resourceKey":"conference:Passion One"}},{"type":"colour","value":{"fill":"#BFFF18","outline":"#FFFFFF"}},{"type":"fit","value":true}]},
-    {"id":"watch","message":"Watch closely","duration":3,"actions":[{"type":"font","value":{"name":"Alfa Slab One","resourceKey":"conference:Alfa Slab One"}},{"type":"colour","value":{"fill":"#CE82FF","outline":"#FFFFFF"}},{"type":"location","value":{"lng":144.96896,"lat":-37.81785}},{"type":"fit","value":true}]},
-    {"id":"simple","message":"The amazing\nGeoglyph","duration":3,"actions":[{"type":"font","value":{"name":"Staatliches","resourceKey":"conference:Staatliches"}},{"type":"colour","value":{"fill":"#28EFFF","outline":"#FFFFFF"}},{"type":"title","value":"I can start with something simple"},{"type":"fit","value":true}]},
+    {"id":"made-by","message":"I was made by\nChatGPT","duration":3,"actions":[{"type":"font","value":{"name":"Archivo Black","resourceKey":"conference:Archivo Black"}},{"type":"colour","value":{"fill":"#39FF78","outline":"#FFFFFF"}},{"type":"fit","value":true}]},
+    {"id":"dialects","message":"I speak all\n2D and 3D fonts","duration":5,"actions":[{"type":"font","value":{"name":"Anton","resourceKey":"conference:Anton"}},{"type":"colour","value":{"fill":"#28EFFF","outline":"#FFFFFF"}},{"type":"mode","value":"2d"},{"type":"fit","value":true}]},
+    {"id":"same-words","message":"I am style and\ntime fontified","duration":4,"actions":[{"type":"font","value":{"name":"Alfa Slab One","resourceKey":"conference:Alfa Slab One"}},{"type":"colour","value":{"fill":"#CE82FF","outline":"#FFFFFF"}},{"type":"fit","value":true},{"type":"mode","value":"2d"}]},
+    {"id":"simple","message":"The Amazing\nGeoglyph","duration":3,"actions":[{"type":"font","value":{"name":"Staatliches","resourceKey":"conference:Staatliches"}},{"type":"mode","value":"3d"},{"type":"title","value":"Simple Geo"},{"type":"animation","value":"yaw"}]},
     {
       "id":"elegant","message":"","duration":3,
-      "actions":[{"type":"title","value":"Then become something elegant"},{"type":"morph","value":{"from":{"name":"Staatliches","resourceKey":"conference:Staatliches"},"to":{"name":"Berkshire Swash","resourceKey":"conference:Berkshire Swash"},"targetMessage":"The amazing\nGeoglyph","duration":2}},{"type":"fit","value":true}]
+      "actions":[{"type":"title","value":"Elegant Geo"},{"type":"morph","value":{"from":{"name":"Staatliches","resourceKey":"conference:Staatliches"},"to":{"name":"Berkshire Swash","resourceKey":"conference:Berkshire Swash"},"targetMessage":"The Amazing\nGeoglyph","duration":2}},{"type":"fit","value":true}]
     },
     {
       "id":"ancient","message":"","duration":3,
-      "actions":[{"type":"title","value":"Or something ancient"},{"type":"morph","value":{"from":{"name":"Berkshire Swash","resourceKey":"conference:Berkshire Swash"},"to":{"name":"Cinzel Decorative","resourceKey":"conference:Cinzel Decorative"},"targetMessage":"The amazing\nGeoglyph","duration":2}},{"type":"fit","value":true}]
+      "actions":[{"type":"title","value":"Ancient Geo"},{"type":"morph","value":{"from":{"name":"Berkshire Swash","resourceKey":"conference:Berkshire Swash"},"to":{"name":"Cinzel Decorative","resourceKey":"conference:Cinzel Decorative"},"targetMessage":"The Amazing\nGeoglyph","duration":2}},{"type":"fit","value":true}]
     },
     {
       "id":"future","message":"","duration":3,
-      "actions":[{"type":"title","value":"Or something from the future"},{"type":"morph","value":{"from":{"name":"Cinzel Decorative","resourceKey":"conference:Cinzel Decorative"},"to":{"name":"Audiowide","resourceKey":"conference:Audiowide"},"targetMessage":"The amazing\nGeoglyph","duration":2}},{"type":"fit","value":true}]
+      "actions":[{"type":"title","value":"Future Geo"},{"type":"morph","value":{"from":{"name":"Cinzel Decorative","resourceKey":"conference:Cinzel Decorative"},"to":{"name":"Audiowide","resourceKey":"conference:Audiowide"},"targetMessage":"The Amazing\nGeoglyph","duration":2}},{"type":"fit","value":true}]
     },
     {
       "id":"speak-languages","message":"","duration":5,
-      "actions":[{"type":"location","value":{"lng":144.97152,"lat":-37.8046,"caption":""}},{"type":"mode","value":"3d"},{"type":"animation","value":"yaw"},{"type":"morph","value":{"from":{"name":"Audiowide","resourceKey":"conference:Audiowide"},"to":{"name":"Bree Serif","resourceKey":"conference:Bree Serif"},"targetMessage":"I don't just speak languages","duration":2}}]
+      "actions":[{"type":"title","value":""},{"type":"colour","value":{"fill":"#FF45B8"}},{"type":"fit","value":true},{"type":"morph","value":{"from":{"name":"Audiowide","resourceKey":"conference:Audiowide"},"to":{"name":"Bree Serif","resourceKey":"conference:Bree Serif"},"targetMessage":"I don't just speak languages","duration":2}}]
     },
     {
       "id":"become-them","message":"","duration":3,
-      "actions":[{"type":"location","value":{"lng":144.95163,"lat":-37.82461}},{"type":"morph","value":{"from":{"name":"Bree Serif","resourceKey":"conference:Bree Serif"},"to":{"name":"Bungee","resourceKey":"conference:Bungee"},"targetMessage":"I become them","duration":2}},{"type":"fit","value":true}]
+      "actions":[{"type":"morph","value":{"from":{"name":"Bree Serif","resourceKey":"conference:Bree Serif"},"to":{"name":"Bungee","resourceKey":"conference:Bungee"},"targetMessage":"I become them","duration":2}},{"type":"fit","value":true},{"type":"colour","value":{"fill":"#FF45B8"}}]
     },
+    {"id":"cloning-powers","message":"ChatGPT gave me\ncloning powers too","duration":3,"actions":[{"type":"font","value":{"name":"Lilita One","resourceKey":"conference:Lilita One"}},{"type":"mode","value":"2d"},{"type":"fit","value":true},{"type":"colour","value":{"fill":"#FF8500"}}]},
+    {"id":"clone-geojson","message":"I can clone 2D Geo's\nto GeoJSON","duration":4,"actions":[{"type":"font","value":{"name":"Passion One","resourceKey":"conference:Passion One"}},{"type":"mode","value":"2d"},{"type":"fit","value":true},{"type":"colour","value":{"fill":"#28EFFF"}}]},
+    {"id":"clone-obj","message":"and 3D Geo's\nto OBJ.","duration":4,"actions":[{"type":"font","value":{"name":"Bungee","resourceKey":"conference:Bungee"}},{"type":"mode","value":"3d"},{"type":"fit","value":true},{"type":"animation","value":"yaw"}]},
+    {"id":"more-features","message":"I have lots\nmore features","duration":3,"actions":[{"type":"fit","value":true}]},
+    {"id":"josh","message":"","duration":3,"actions":[{"type":"morph","value":{"from":{"name":"Bungee","resourceKey":"conference:Bungee"},"to":{"name":"Bungee","resourceKey":"conference:Bungee"},"targetMessage":"but Josh has more\nstuff to show you","duration":2}},{"type":"fit","value":true}]},
     {
       "id":"thanks","message":"","duration":0,
-      "actions":[{"type":"morph","value":{"from":{"name":"Bungee","resourceKey":"conference:Bungee"},"to":{"name":"Bungee","resourceKey":"conference:Bungee"},"targetMessage":"Thanks for watching","duration":2}},{"type":"fit","value":true}]
+      "actions":[{"type":"morph","value":{"from":{"name":"Bungee","resourceKey":"conference:Bungee"},"to":{"name":"Bungee","resourceKey":"conference:Bungee"},"targetMessage":"Thanks for watching","duration":2}},{"type":"location","value":{"lat":-25.61011,"lng":134.35481}},{"type":"colour","value":{"fill":"#FF45B8"}},{"type":"size","value":{"height":300000,"depth":40000}}]
     }
   ]
 }

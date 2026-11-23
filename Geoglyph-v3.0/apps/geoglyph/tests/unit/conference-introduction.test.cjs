@@ -78,7 +78,7 @@ test('Stop and Resume delegate pause state to the conference-owned script only',
 });
 test('Reset preempts the shared script and redraws the opening without applying queued older text',async()=>{
   const h=harness(),layer={url:'fixture',pageSize:25};await h.api.poll(layer);await h.begin();
-  h.client.afterCues=async()=>[{objectId:2,attributes:{geoglyph_speaks:'old'}},{objectId:3,attributes:{special_commands:'reset'}}];
+  h.client.afterCues=async()=>[{objectId:2,attributes:{geoglyph_speaks:'old'}},{objectId:3,attributes:{special_commands:'Reset Geoglyph'}}];
   await h.api.poll(layer);await flush();assert.ok(h.stops>0);assert.equal(h.api.state.lastAppliedId,3);assert.equal(h.api.state.phase,'overview');
   assert.ok(h.calls.includes('opening'));assert.ok(!h.calls.includes('old'));assert.equal(h.api.state.applying,false);
 });

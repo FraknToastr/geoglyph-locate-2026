@@ -66,7 +66,9 @@ html[data-theme="light"] :is(.map-script-panel,.script-dialog) { --surface-input
 }
 .geoglyph-conference-title.geoglyph-rehearsal-caption {
   align-items: start;
-  font-size: clamp(23px, 4.25vw, 60px);
   padding-top: clamp(18px, 4vh, 48px);
   text-wrap: balance;
+}
+.geoglyph-rehearsal-caption:not(.geoglyph-opening-title) {
+  font-size: clamp(23px, 4.25vw, 60px);
 }

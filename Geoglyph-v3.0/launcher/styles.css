@@ -73,9 +73,25 @@
 
  #alien-car{aspect-ratio:3/2;overflow:visible}
  #alien-car image{pointer-events:none;user-select:none}
- #next-ufo-formation{outline:none;pointer-events:none}
- #next-ufo-formation path{fill:transparent;stroke:transparent;stroke-width:3;pointer-events:fill;cursor:pointer}
- #next-ufo-formation[aria-disabled=true] path{cursor:default}
+ #open-remote-qr{pointer-events:none}
+ #open-remote-qr path{fill:transparent;pointer-events:fill;cursor:pointer}
+ #open-remote-qr:focus-visible path{stroke:#bdfcff;stroke-width:2;vector-effect:non-scaling-stroke}
+
+ #remote-qr-dialog{
+   width:min(calc(100vw - 24px),calc(100dvh - 72px),940px);
+   max-width:none;
+   margin:auto;
+   padding:clamp(6px,1.5vw,14px);
+   border:1px solid rgba(120,245,255,.55);
+   border-radius:12px;
+   background:#031021;
+   color:#bdfcff;
+ }
+ #remote-qr-dialog::backdrop{background:rgba(1,2,10,.85)}
+ #remote-qr-dialog header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+ #remote-qr-dialog h2{margin:0;font:700 clamp(12px,2.2vw,18px)/1.2 monospace}
+ #remote-qr-dialog button{width:44px;height:44px;font:700 24px/1 monospace;cursor:pointer}
+ #remote-qr-dialog img{display:block;width:100%;height:auto;background:#fff}
 
   #audio-ui{
     display:flex;

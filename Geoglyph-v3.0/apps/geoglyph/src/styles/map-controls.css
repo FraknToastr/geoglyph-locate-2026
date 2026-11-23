@@ -30,9 +30,25 @@
 #geoglyphMapEditor #mapControlsHeader [data-collapse-all] { flex:0 0 29px;width:29px;min-width:29px;height:29px;padding:0;border:1px solid var(--control-border); }
 .geoglyph-map-editor.is-collapsed #mapControlsHeader { display:none; }
 .map-mini-conference-actions { display:none; }
-#geoglyphMapEditor.is-collapsed .map-mini-conference-actions { display:flex;flex:1;gap:4px; }
+.geoglyph-map-workspace:has(> .geoglyph-map-editor.is-collapsed .map-mini-conference-actions) {
+  --map-mini-title-height:calc(2 * 30px + 4px);
+}
+#geoglyphMapEditor.is-collapsed .map-editor-head { grid-template-columns:minmax(0,1fr); }
+#geoglyphMapEditor.is-collapsed .map-editor-title-row:has(.map-mini-conference-actions) {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:repeat(2,30px);
+  gap:4px;
+}
+#geoglyphMapEditor.is-collapsed .map-mini-conference-actions {
+  display:grid;
+  grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+  gap:4px;
+}
 #geoglyphMapEditor.is-collapsed .map-editor-title-row:has(.map-mini-conference-actions) .map-editor-titleblock { display:none; }
-#geoglyphMapEditor .map-mini-conference-actions button { flex:auto;height:29px;padding-inline:4px;white-space:nowrap; }
+#geoglyphMapEditor .map-mini-conference-actions button { height:29px;padding-inline:4px;white-space:nowrap; }
+#geoglyphMapEditor.is-collapsed .map-editor-title-row:has(.map-mini-conference-actions) .map-collapsed-actions { flex:1; }
+#geoglyphMapEditor.is-collapsed .map-editor-title-row:has(.map-mini-conference-actions) :is(#mapCollapsedJpgBtn,#mapCollapsedPngBtn) { flex:1; }
 .map-icon-button { display:inline-flex;align-items:center;justify-content:center;gap:5px; }
 .map-icon-button > svg, .map-script-panel svg, .script-dialog svg { width:16px;height:16px;flex:0 0 16px;pointer-events:none; }
 .map-section-head .module-collapse-mark svg { width:11px;height:11px; }
@@ -305,6 +321,7 @@ html[data-theme="light"] :is(#geoglyphMapEditor, #mapMetroMapDialog, #mapScriptD
 #geoglyphMapEditor :is(.map-action-row, .map-font-actions, .map-morph-buttons, .controls-bulk) > button:last-child { border-right: 0; }
 #geoglyphMapEditor .controls-bulk { display: flex; width: 100%; }
 #geoglyphMapEditor .map-motion-action.is-running::after { border-color: var(--green-hi); background: var(--green-hi); }
+#geoglyphMapEditor.is-collapsed .map-motion-action { font-size:10px;letter-spacing:0; }
 @container (max-width: 280px) {
   #mapControlSidebar .map-motion-action { font-size:9px;letter-spacing:0; }
   #geoglyphMapEditor .arcgis-poll-actions>.map-icon-button { flex-direction:column;gap:3px;padding:5px 1px;font-size:9px; }

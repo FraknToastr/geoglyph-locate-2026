@@ -1,0 +1,248 @@
+{
+  "version": 15.9,
+  "savedAt": "2026-10-21T11:23:04.656Z",
+  "theme": "dark",
+  "favourites": [
+    127774
+  ],
+  "gridView": "grid",
+  "selectedFontId": "preset-segoe-ui-emoji-1",
+  "selectedCode": 128125,
+  "characterSet": "emoji",
+  "gridPreviewSize": 12,
+  "colourView": "gradient",
+  "colourTarget": "qrBg",
+  "colourTargets": {
+    "qrBg": {
+      "solid": "#FFFFFF",
+      "mode": "gradient",
+      "gradient": {
+        "colors": [
+          "#8FD4CF",
+          "#31A765",
+          "#0D6A55",
+          "#071413"
+        ],
+        "stops": [
+          0,
+          33,
+          67,
+          100
+        ],
+        "direction": "radial"
+      }
+    },
+    "qrFg": {
+      "solid": "#003416",
+      "mode": "solid",
+      "gradient": {
+        "colors": [
+          "#31A765",
+          "#76AEFE",
+          "#D2A6FF",
+          "#F47D22"
+        ],
+        "stops": [
+          0,
+          33,
+          67,
+          100
+        ],
+        "direction": "horizontal"
+      }
+    },
+    "symbolBg": {
+      "solid": "#3F0080",
+      "mode": "solid",
+      "gradient": {
+        "colors": [
+          "#8FD4CF",
+          "#31A765",
+          "#0D6A55",
+          "#071413"
+        ],
+        "stops": [
+          0,
+          33,
+          67,
+          100
+        ],
+        "direction": "horizontal"
+      }
+    },
+    "symbolEdge": {
+      "solid": "#0D0D0B",
+      "mode": "solid",
+      "gradient": {
+        "colors": [
+          "#31A765",
+          "#76AEFE",
+          "#D2A6FF",
+          "#F47D22"
+        ],
+        "stops": [
+          0,
+          33,
+          67,
+          100
+        ],
+        "direction": "horizontal"
+      }
+    },
+    "symbol": {
+      "solid": "#0D0D0B",
+      "mode": "solid",
+      "gradient": {
+        "colors": [
+          "#31A765",
+          "#76AEFE",
+          "#D2A6FF",
+          "#F47D22"
+        ],
+        "stops": [
+          0,
+          33,
+          67,
+          100
+        ],
+        "direction": "horizontal"
+      }
+    }
+  },
+  "preview": "combined",
+  "qrMode": "circle",
+  "qrLevel": "H",
+  "quietZone": 1,
+  "qrContent": "https://arcg.is/1jGXTW1",
+  "fileName": "geoglyph-qr",
+  "exportSize": 1024,
+  "logoMode": "symbol",
+  "externalLogoDataUrl": "",
+  "logoName": "Font symbol",
+  "logoCrop": true,
+  "logoCropBufferPercent": 5,
+  "logoCropCorner": "sharp",
+  "logoCropEdgeColor": "#000000",
+  "logoCropEdgeWidth": 0,
+  "magicEyeDataUrl": "",
+  "magicEyeName": "magic_eye_qr_large.png",
+  "logoSize": 28,
+  "safeSize": 0,
+  "symbolShape": "hexagon",
+  "symbolBorder": true,
+  "symbolCanvasTransparent": false,
+  "borderWidth": 12,
+  "symbolScale": 150,
+  "bgScale": 95,
+  "bgOffset": {
+    "x": 0,
+    "y": 0
+  },
+  "symbolOffset": {
+    "x": 0,
+    "y": 30
+  },
+  "palettes": {
+    "symbol": {
+      "fg": "#0D0D0B",
+      "bg": "#FFFFFF",
+      "gradient": {
+        "colors": [
+          "#31A765",
+          "#76AEFE",
+          "#D2A6FF",
+          "#F47D22"
+        ],
+        "stops": [
+          0,
+          33,
+          67,
+          100
+        ],
+        "direction": "horizontal",
+        "target": "off"
+      }
+    },
+    "qr": {
+      "fg": "#000000",
+      "bg": "#FFFFFF",
+      "gradient": {
+        "colors": [
+          "#31A765",
+          "#76AEFE",
+          "#D2A6FF",
+          "#F47D22"
+        ],
+        "stops": [
+          0,
+          33,
+          67,
+          100
+        ],
+        "direction": "horizontal",
+        "target": "off"
+      }
+    },
+    "image": {
+      "fg": "#FFFFFF",
+      "bg": "#0E1417",
+      "gradient": {
+        "colors": [
+          "#31A765",
+          "#76AEFE",
+          "#D2A6FF",
+          "#F47D22"
+        ],
+        "stops": [
+          0,
+          33,
+          67,
+          100
+        ],
+        "direction": "horizontal",
+        "target": "off"
+      }
+    }
+  },
+  "map": {
+    "version": 3,
+    "mode": "message",
+    "message": "ADELAIDE",
+    "baseHeightMeters": 5000,
+    "relativeSize": 100,
+    "bearing": 0,
+    "tracking": 0,
+    "lineHeight": 1.15,
+    "fill": "#429EFF",
+    "outline": "#FFFFFF",
+    "outlineWidth": 2,
+    "opacity": 0.82,
+    "quality": 10,
+    "selectedCode": 65,
+    "basemap": "aerial",
+    "renderStyle": "styled",
+    "anchorPinned": true,
+    "anchor": {
+      "lng": 138.59689104142194,
+      "lat": -34.911461983209946
+    },
+    "extrusionEnabled": true,
+    "extrusionDepthMeters": 6000,
+    "extrusionTilt": 90,
+    "extrusionSolid": true,
+    "orientationMode": "billboard",
+    "orbitPeriodSeconds": 30,
+    "font": {
+      "name": "Segoe UI Symbol",
+      "family": "Segoe UI Symbol",
+      "postscriptName": "",
+      "style": "",
+      "source": "preset"
+    }
+  },
+  "qreverse": {
+    "stub": "geoglyph-batch",
+    "lastDesignPreview": "combined",
+    "rows": []
+  }
+}

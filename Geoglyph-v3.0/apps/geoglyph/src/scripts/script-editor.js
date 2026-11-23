@@ -276,7 +276,9 @@ export function installScriptEditor(){
           const targetMessage=$('scriptMorphMessage').value;
           const from=service.fontIdentity(s.fontRecords.get($('scriptMorphFrom').value));
           const to=service.fontIdentity(s.fontRecords.get($('scriptMorphTo').value));
-          return {from,to,duration:Number($('scriptValue').value),...(targetMessage.trim()?{targetMessage}:{})};
+          return {from,to,duration:Number($('scriptValue').value),
+            ...(targetMessage.trim()?{targetMessage,...(value?.titleAfter?{titleAfter:true}:{}),
+              ...(value?.titleHighlight?{titleHighlight:value.titleHighlight}:{})}:{})};
         };
       }else if(type==='size'){
         body=field('Height (m)',input('scriptValue',value?.height??s.baseHeightMeters,1,300000))+field('Depth (m)',input('scriptDepth',value?.depth??s.extrusionDepthMeters??30,.1,100000));
@@ -301,7 +303,7 @@ export function installScriptEditor(){
       }else if(type==='title'){
         body=field('Overlay text (empty removes title)',`<textarea id="scriptValue" rows="3" maxlength="2000">${esc(value||'')}</textarea>`);readValue=()=>$('scriptValue').value;
       }else{
-        const range={depth:[.1,100000,s.extrusionDepthMeters??30],tilt:[0,90,s.extrusionTilt],bearing:[-360,360,s.bearing],wait:[0,3600,5]}[type];
+    const range={depth:[.1,100000,s.extrusionDepthMeters??30],tilt:[0,90,s.extrusionTilt],bearing:[-360,360,s.bearing],wait:[0,3600,5],screenShift:[-25,25,0]}[type];
         body=field(type==='wait'?'Additional wait (s)':actionTypes[type][0],input('scriptValue',value??range[2],range[0],range[1]));readValue=()=>Number($('scriptValue').value);
       }
       shell(actionTypes[type][0],body,footer(existing));

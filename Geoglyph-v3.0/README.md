@@ -6,7 +6,7 @@ Open **[index.html](index.html)** to use the new launcher, including directly fr
 \\wsl.localhost\Ubuntu\home\n0rt\headroom-projects\Geoglyph-v2.0\Geoglyph-v3.0\index.html
 ```
 
-This version contains an independent copy of the current Geoglyph application. The existing Geoglyph v2 working files and the Explorer Suite v2 workspace were preserved. The launcher uses the supplied **ChatGPT Experiments** title artwork at the upper left and **Geoglyph** image button at the upper right, preserving their proportions. The globe, background, orbiting craft, formation control and SID jukebox remain available.
+This version contains an independent copy of the current Geoglyph application. The existing Geoglyph v2 working files and the Explorer Suite v2 workspace were preserved. The launcher uses the supplied **ChatGPT Experiments** title artwork at the upper left and **Geoglyph** image button at the upper right, preserving their proportions. The globe, background, orbiting craft and SID jukebox remain available. Select the alien in the flying car to open the Geoglyph remote control QR code.
 
 ## Open and return
 
@@ -40,10 +40,11 @@ Use these stored values in the existing `special_commands` field:
 | --- | --- | --- |
 | `Launch Geoglyph` | Opens Geoglyph mode with the mini-CP | Acknowledges without reloading or resetting artwork/layout |
 | `Begin Geoglyph` | Opens the map-only presentation and runs the rehearsal once after preparation | Enters the map-only presentation and runs the rehearsal |
-| `Reset` | Retains the existing launcher behavior | Interrupts the introduction and restores the opening |
-| `Launch Panoptigon` | Opens the Views & Vistas panorama explorer | Return to the launcher to receive more commands |
-| `Launch Umbramatic` | Opens the ShadowPlayer | Return to the launcher to receive more commands |
-| `Launch Transitron` | Opens the Transitron placeholder | Return to the launcher to receive more commands |
+| `Reset Geoglyph` | Leaves the launcher open | Interrupts the presentation and restores Geoglyph's opening |
+| `Return to Launcher` | Leaves the launcher open | Returns from the open app and resumes polling from this command |
+| `Launch Panoptigon` | Opens the Views & Vistas panorama explorer | Switches directly from another imported app to Panoptigon |
+| `Launch Umbramatic` | Opens the ShadowPlayer | Switches directly from another imported app to Umbramatic |
+| `Launch Transitron` | Opens the Transitron placeholder | Switches directly from another imported app to the Transitron placeholder |
 
 Capitalization and surrounding whitespace are ignored. The former `Begin` value is no longer a conference-start command. This implementation reads the existing public results view; it does not edit or publish the Survey123 form.
 
@@ -52,7 +53,7 @@ Capitalization and surrounding whitespace are ignored. The former `Begin` value 
 - A new launch command opens Geoglyph without starting its script. When polling was active, Geoglyph continues from that submission and receives subsequent Begin Geoglyph, Reset and message records, including records submitted during navigation.
 - Fetch while stopped can open the app but leaves its polling stopped. A duplicate launch command inside Geoglyph is acknowledged without reloading or changing its artwork.
 - **Return to launcher** resumes polling and keeps the incoming interval, selected results layer and processed submission cursor. Opening Geoglyph directly starts with its polling stopped.
-- The Panoptigon, Umbramatic and Transitron logos lead to the same pages as their Survey123 commands. Their **Return to launcher** links restore the incoming polling state, interval, results layer and cursor. The Transitron page is a placeholder for the local server link. `Launch Assassin's Leaves` displays an unlinked-app notice.
+- Panoptigon, Umbramatic and the Transitron placeholder continue active Survey123 polling while open. They accept `Begin Geoglyph`, linked launch commands and `Return to Launcher`. Duplicate launches of the current app leave it open. Their **Return to launcher** links use the latest polling checkpoint. `Launch Assassin's Leaves` displays an unlinked-app notice.
 
 Panoptigon imports your photos and models from disk. Its source is pinned to [commit `7dab21d`](https://github.com/FraknToastr/adelaide-views-vistas-panorama-explorer/tree/7dab21dadf56f42c4a1db2e2c90696d4e1c168f3). The sample-export test expects a separately supplied `samples/Park_10.zip`. Umbramatic includes the original `SampleExport` folder. Use **Open export folder** in ShadowPlayer to load it. MapLibre and the online basemaps require network access. The Transitron dashboard and its GTFS data are in `apps/transitron/` for independent server use.
 

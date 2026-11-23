@@ -84,10 +84,10 @@
         if(params.has('suite')){params.delete('suite');url.hash=params.toString();try{host.history.replaceState(host.history.state,'',url.href);}catch{/* file browsers may restrict history changes */}}
         return {value,error};
       },
-      async navigate(target,{launchReason='manual',beginId}={}){
+      async navigate(target,{launchReason='manual',beginId,returnFrom}={}){
         if(navigating)return false;
         if(!options)throw Error('Launcher navigation is not ready');
-        const url=destination(options.root||suiteRoot(host.location.href),target,{...options.checkpoint(),launchReason,beginId},host.GeoGlyphSurveyResults.config.serviceUrl);
+        const url=destination(options.root||suiteRoot(host.location.href),target,{...options.checkpoint(),launchReason,beginId,returnFrom},host.GeoGlyphSurveyResults.config.serviceUrl);
         navigating=true;
         try{await options.release?.();host.location.assign(url);return true;}catch(error){navigating=false;throw error;}
       },
@@ -95,7 +95,7 @@
     });
   }
   // A finite, single-owner poller for the launcher. Geoglyph retains its renderer's existing queue.
-  function createPoller({client,onState=()=>{},onLayers=()=>{},onLaunch=()=>{},onNotice=()=>{},handoff=null}){
+  function createPoller({client,onState=()=>{},onLayers=()=>{},onLaunch=()=>{},onNotice=()=>{},handoff=null,currentApp='launcher'}){
     const state={active:handoff?.active||false,busy:false,interval:handoff?.interval||1,layerId:handoff?.layerId??null,cursor:handoff?.cursor??null,status:'Polling stopped. Choose Start or Fetch.',kind:'info'};
     let layers=null,timer=0,controller=null,generation=0,disposed=false;
     const publish=()=>onState({...state});
@@ -116,10 +116,15 @@
           for(const row of rows){
             if(!Number.isSafeInteger(row.objectId)||row.objectId<=state.cursor)throw Error('Invalid submission ordering');
             state.cursor=row.objectId;
+            if(currentApp!=='launcher'&&commandValue(row)==='return to launcher'){
+              state.status='Returning to Launcher…';publish();
+              await onLaunch('launcher',{});return true;
+            }
             const begin=beginCommand(row);
             const command=begin?{target:'geoglyph'}:launchCommand(row);
             if(!command)continue;
             if(!command.target){state.kind='warn';state.status='Unknown launch target: '+command.label;continue;}
+            if(command.target===currentApp)continue;
             if(!apps[command.target].path){
               state.kind='warn';state.status=unlinkedMessage(command.target);
               onNotice(state.status);

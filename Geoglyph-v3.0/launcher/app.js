@@ -2,6 +2,21 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),reduced=matchMedia('(prefers-reduced-motion: reduce)');
+const remoteQrTrigger=$('open-remote-qr'),remoteQrDialog=$('remote-qr-dialog');
+remoteQrTrigger.addEventListener('click',event=>{
+ event.preventDefault();
+ window.UOSTooltips?.hide();
+ if(!remoteQrDialog.open)remoteQrDialog.showModal();
+});
+remoteQrTrigger.addEventListener('keydown',event=>{
+ if(event.key!==' ')return;
+ event.preventDefault();
+ if(!event.repeat)remoteQrTrigger.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+});
+remoteQrDialog.addEventListener('click',event=>{
+ if(event.target===remoteQrDialog)remoteQrDialog.close();
+});
+remoteQrDialog.addEventListener('close',()=>remoteQrTrigger.focus());
 const defaults={autoRotate:!reduced.matches,speed:.5,theta:.18,scale:1.25,mapSamples:32000,mapBrightness:6,diffuse:1.2,glow:1,satellites:true,craftType:'ufos'};
 const settings={...defaults},wrap=$('wrap');let canvas=$('globe'),satellitesCanvas=$('satellites'),glContext=null;
 const viewportFactor=Number(getComputedStyle(wrap).getPropertyValue('--globe-viewport'))||1.6;
@@ -9,25 +24,7 @@ const effectiveScale=()=>settings.scale/viewportFactor;
 const backingWidth=()=>Math.max(1,Math.min(Math.round(size*quality),Math.floor(Math.sqrt(2000000)/dpr)));
 let motionPreference=reduced.matches;
 let globe=null,satellites=null,frame=0,last=0,clock=0,spinAngle=0,spaceLast=-Infinity,phi=.35,drag=null,disposed=false,globeDirty=true,geometryDirty=true,resizeTimer=0,failed=false;
-const formations=window.UOSSatellites.createFormationController(),formationButton=$('next-ufo-formation');
-let formationButtonState='';
-function formationUnavailable(){
- if(settings.craftType!=='ufos')return 'Choose UFOs in Launcher controls to change formation';
- if(!settings.satellites)return 'Show orbiting craft in Launcher controls to change formation';
- if(failed||!satellites||disposed)return 'UFO animation is unavailable';
- if(reduced.matches)return 'Formation changes are paused by reduced motion';
- if(!settings.autoRotate)return 'Resume globe rotation to change formation';
- if(drag)return 'Release the globe to change formation';
- if(formations.snapshot().transitioning)return 'UFOs are changing formation';
- return '';
-}
-function syncFormationButton(){
- const reason=formationUnavailable(),state=formations.snapshot(),description=reason||`Next UFO formation: ${state.next==='coverage'?'globe coverage':'equatorial ring'}`;
- if(description===formationButtonState)return;
- formationButtonState=description;formationButton.setAttribute('aria-disabled',String(!!reason));formationButton.dataset.tooltip=description;window.UOSTooltips?.hide();
-}
-formationButton.addEventListener('click',()=>{if(formationUnavailable())return;formations.next();syncFormationButton();window.UOSTooltips?.hide();schedule()});
-formationButton.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(!event.repeat)formationButton.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+const formations=window.UOSSatellites.createFormationController();
 let metrics={frames:0,globeFrames:0,backgroundFrames:0,contexts:0,lost:0,raf:[],cost:[],resolution:[0,0],state:'initialising'};
 let size=0,dpr=1,quality=1,adapted=false;
 const viewUpdate={phi,theta:settings.theta},satelliteUpdate={phi,theta:settings.theta,scale:effectiveScale(),phase:0};
@@ -68,7 +65,6 @@ function tick(now){
   if(!reduced.matches||spaceLast===-Infinity){if(clock-spaceLast>=1/30){window.UOSBackground?.draw(clock*1000);spaceLast=clock;metrics.backgroundFrames++}}
   if(settings.autoRotate&&!drag){const step=settings.speed*dt;phi+=step;spinAngle+=step;if(spinAngle>=Math.PI*2){spinAngle-=Math.PI*2;phi-=Math.PI*2}globeDirty=true}
   const formationState=formations.advance(dt,{active:!!(globe&&satellites&&settings.satellites&&settings.craftType==='ufos'&&settings.autoRotate&&!drag&&!reduced.matches),speed:settings.speed});
-  syncFormationButton();
   applySize();
   if(globe&&globeDirty){viewUpdate.phi=phi;viewUpdate.theta=settings.theta;globe.update(viewUpdate);globeDirty=false;metrics.globeFrames++}
   if(globe&&satellites&&settings.satellites){satelliteUpdate.phi=phi-spinAngle;satelliteUpdate.theta=settings.theta;satelliteUpdate.scale=effectiveScale();satelliteUpdate.phase=spinAngle;satelliteUpdate.formationState=formationState;satellites.draw(satelliteUpdate)}
@@ -78,9 +74,9 @@ function tick(now){
   if(!reduced.matches||settings.autoRotate||globeDirty)schedule();else last=0;
 }
 function bindCanvas(){
-canvas.addEventListener('pointerdown',event=>{drag={x:event.clientX,phi};canvas.setPointerCapture(event.pointerId);syncFormationButton()});
+ canvas.addEventListener('pointerdown',event=>{drag={x:event.clientX,phi};canvas.setPointerCapture(event.pointerId)});
 canvas.addEventListener('pointermove',event=>{if(!drag)return;phi=drag.phi+(event.clientX-drag.x)/180;globeDirty=true;schedule()});
-for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>{drag=null;syncFormationButton()});
+ for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>{drag=null});
 canvas.addEventListener('keydown',event=>{if(event.key==='ArrowLeft')phi-=.12;else if(event.key==='ArrowRight')phi+=.12;else if(event.key==='ArrowUp')settings.theta=Math.min(1.2,settings.theta+.06);else if(event.key==='ArrowDown')settings.theta=Math.max(-1.2,settings.theta-.06);else if(event.key==='Home'){phi=.35;spinAngle=0;settings.theta=.18}else return;event.preventDefault();globeDirty=true;syncControls();schedule()});
 canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();if(disposed||event.target!==canvas)return;metrics.lost++;globe?.destroy();globe=null;unwrapCanvas();satellites?.clear();failed=true;status('Globe paused after graphics context loss. Geoglyph remains ready to open.')});
 canvas.addEventListener('webglcontextrestored',event=>{if(event.target===canvas&&!disposed&&!globe)create()});

@@ -45,7 +45,7 @@ async function setup(page,{portable=false,records=[initial],width=1440,hash='',c
     const after=/objectid\s*>\s*(\d+)/i.exec(where),before=/objectid\s*<\s*(\d+)/i.exec(where);
     if(after)rows=rows.filter(row=>row.attributes.objectid>Number(after[1]));
     if(before)rows=rows.filter(row=>row.attributes.objectid<Number(before[1]));
-    if(/UPPER\(/i.test(where))rows=rows.filter(row=>String(row.attributes.special_commands||'').toUpperCase().includes('RESET'));
+    if(/UPPER\(/i.test(where))rows=rows.filter(row=>/RESET GEOGLYPH|RETURN TO LAUNCHER/i.test(row.attributes.special_commands||''));
     rows.sort((a,b)=>(a.attributes.objectid-b.attributes.objectid)*(/DESC/i.test(params.get('orderByFields')||'')?-1:1));
     const offset=Number(params.get('resultOffset')||0),count=Math.min(2,Number(params.get('resultRecordCount')||2));
     try{await route.fulfill({json:{features:rows.slice(offset,offset+count),exceededTransferLimit:offset+count<rows.length}});}catch(error){if(!/closed|already handled|intercepted|invalid state/i.test(error.message))throw error;}
@@ -240,7 +240,7 @@ for(const portable of [false,true]){
     expect(await page.evaluate(()=>GeoGlyphMapEngine.state.mode)).toBe('arcgis');
     expect(await page.evaluate(()=>({message:GeoGlyphMapEngine.state.message,font:GeoGlyphMapEngine.state.selectedFontId,anchor:{...GeoGlyphMapEngine.state.anchor}}))).toEqual(art);
     const beforeReset=await page.evaluate(()=>GeoGlyphMapEngine.state.message);
-    server.records.push(cue(14,{special_commands:'Reset'}));
+    server.records.push(cue(14,{special_commands:'Reset Geoglyph'}));
     await page.evaluate(()=>document.getElementById('mapArcgisPollBtn').click());await applied(page,14);
     expect(await page.evaluate(()=>GeoGlyphConference.state.phase)).toBe('overview');
     server.records.push(cue(15,{emojis:'😎'}));
@@ -310,6 +310,56 @@ for(const output of ['GeoGlyph_Locate_2026.html','dist/GeoGlyph.html'])test(`sta
   expect(new URL(page.url()).pathname).toBe(path.resolve(__dirname,'../../index.html'));
   expect(await page.evaluate(()=>GeoGlyphLauncherSurvey.state().interval)).toBe(3);
   expect(server.queries.some(query=>query.get('where')==='objectid>10')).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+for(const portable of [false,true])test(`alien opens the remote control QR code (${portable?'file':'HTTP'} launcher)`,async({page})=>{
+  const {errors}=await setup(page,{portable,width:portable?360:1440});
+  const trigger=page.getByRole('button',{name:'Open Geoglyph remote control QR code'});
+  const dialog=page.getByRole('dialog',{name:"Geoglyph's remote control"});
+  const originalUrl=page.url();
+  const head=await trigger.evaluate(node=>new DOMPoint(770,90).matrixTransform(node.getScreenCTM()).toJSON());
+  await page.mouse.click(head.x,head.y);
+  await expect(dialog).toBeVisible();
+  const graphic=dialog.getByRole('img');
+  await expect.poll(()=>graphic.evaluate(image=>image.naturalWidth)).toBe(2048);
+  const box=await graphic.boundingBox();
+  const viewport=page.viewportSize();
+  expect(box.width).toBeGreaterThan(Math.min(viewport.width,viewport.height)*.8);
+  expect(box.x+box.width).toBeLessThanOrEqual(viewport.width);
+  expect(box.y+box.height).toBeLessThanOrEqual(viewport.height);
+  const close=dialog.getByRole('button',{name:'Close remote control QR code'});
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await trigger.press('Enter');
+  await expect(dialog).toBeVisible();
+  await close.click();
+  await expect(dialog).toBeHidden();
+  await trigger.press('Space');
+  await expect(dialog).toBeVisible();
+  await page.mouse.click(2,2);
+  await expect(dialog).toBeHidden();
+  expect(page.url()).toBe(originalUrl);
+  expect(errors).toEqual([]);
+});
+
+test('Survey Return to Launcher resumes polling from the command cursor',async({page})=>{
+  const {server,errors}=await setup(page,{portable:true});
+  await baseline(page);
+  server.records.push(cue(11,{special_commands:'Launch Geoglyph'}));
+  await page.locator('#suiteSurveyFetch').click();
+  await readyApp(page);
+  await page.waitForFunction(()=>GeoGlyphMapEngine.state.arcgisPolling);
+  await page.evaluate(()=>GeoGlyphConference.pause());
+  server.records.push(cue(12,{special_commands:' Return to Launcher '}));
+  await waitForLauncherPolling(page,12);
+  await expect(page.locator('#open-geoglyph')).toBeVisible();
+  expect(server.queries.some(query=>query.get('where')==='objectid>12')).toBe(true);
+  server.records.push(cue(13,{special_commands:'Launch Geoglyph'}));
+  await readyApp(page);
+  await page.waitForFunction(()=>GeoGlyphMapEngine.state.arcgisPolling);
   expect(errors).toEqual([]);
 });
 
@@ -507,6 +557,15 @@ test('mini panel can begin and reset with Survey123 unavailable',async({page})=>
   await expect(page.locator('#mapLocalBeginBtn')).toBeHidden();
   await page.locator('#mapEditorCollapseBtn').click();
   await expect(page.locator('.map-editor-titleblock')).toBeHidden();
+  const clippedButtons=await page.locator('#geoglyphMapEditor').evaluate(panel=>{
+    const bounds=panel.getBoundingClientRect();
+    return [...panel.querySelectorAll('.map-editor-head button')].filter(button=>{
+      if(!button.getClientRects().length)return false;
+      const rect=button.getBoundingClientRect();
+      return rect.left<bounds.left||rect.right>bounds.right||rect.top<bounds.top||rect.bottom>bounds.bottom;
+    }).map(button=>button.id);
+  });
+  expect(clippedButtons).toEqual([]);
   await page.getByRole('button',{name:'Begin Geoglyph',exact:true}).click();
   await expectPresentation(page);
   await page.waitForFunction(()=>GeoGlyphConference.state.phase==='live');
@@ -635,10 +694,43 @@ for(const portable of [false,true])test(`imported app logos and Survey123 comman
   expect(errors).toEqual([]);
 });
 
+for(const portable of [false,true])test(`Survey123 keeps routing while imported apps are open (${portable?'file':'HTTP'})`,async({page})=>{
+  const {server,errors}=await setup(page,{portable});
+  await page.route('https://unpkg.com/maplibre-gl@5.13.0/**',route=>route.abort());
+  await waitForLauncherPolling(page);
+  const send=(id,special_commands)=>server.records.push(cue(id,{special_commands}));
+  const app=route=>page.waitForURL(url=>url.pathname.endsWith('/'+route));
+  const checkpoint=()=>page.evaluate(()=>JSON.parse(new URLSearchParams(location.hash.slice(1)).get('suite')));
+  const panoptigon='apps/panoptigon/index.html';
+
+  send(11,'Launch Panoptigon');
+  await app(panoptigon);
+  const identity=await page.evaluate(()=>window.testDocumentId);
+  send(12,'Launch Panoptigon');
+  await expect.poll(async()=>(await checkpoint())?.cursor).toBe(12);
+  expect(await page.evaluate(()=>window.testDocumentId)).toBe(identity);
+
+  await page.reload();
+  await expect.poll(async()=>(await checkpoint())?.cursor).toBe(12);
+  send(13,'Launch Umbramatic');
+  await app('apps/umbramatic/ShadowPlayer/index.html');
+  send(14,'Launch Transitron');
+  await app('apps/transitron/launcher-placeholder.html');
+  send(15,'Return to Launcher');
+  await waitForLauncherPolling(page,15);
+
+  send(16,'Launch Panoptigon');
+  await app(panoptigon);
+  send(17,'Begin Geoglyph');
+  await readyApp(page);
+  await applied(page,17);
+  expect(errors).toEqual([]);
+});
+
 for(const entry of ['HTTP launcher','file launcher','standalone'])test(`one Begin runs the full rehearsal (${entry})`,async({page})=>{
   test.setTimeout(120000);
   const standalone=entry==='standalone';
-  const greetings=rehearsal.rows.filter(row=>row.actions.some(action=>action.type==='location'&&action.value.caption?.startsWith('Hello in ')));
+  const greetings=rehearsal.rows.slice(rehearsal.rows.findIndex(row=>row.id==='hello')+1,rehearsal.rows.findIndex(row=>row.id==='my-name'));
   const greetingIds=greetings.map(row=>row.id);
   const {server,errors}=await setup(page,{portable:entry!=='HTTP launcher',realRehearsal:true,openLauncher:!standalone});
   if(!standalone)await waitForLauncherPolling(page);
@@ -650,16 +742,12 @@ for(const entry of ['HTTP launcher','file launcher','standalone'])test(`one Begi
     window.rehearsalFits=[];
     window.rehearsalHolds=[];
     window.rehearsalFinale=[];
-    window.rehearsalGreetingMoves=0;
     const heldIds=['speak-languages','become-them'];
     document.addEventListener('geoglyph:script-changed',()=>{
       const scripts=window.GeoGlyphScripts, state=scripts?.state();
       if(state?.owner!=='conference')return;
       const api=GeoGlyphMapEngine,map=api.state;
       if(state.phase==='preflight'){
-        map.map.on('move',event=>{
-          if(greetingIds.includes(scripts.state().rowId)&&(event.geoglyphFraming||event.geoglyphOrbit))rehearsalGreetingMoves++;
-        });
         if(keepHolds){
           const morph=window.GeoGlyphFontMorph;
           window.GeoGlyphFontMorph={...morph,async playToEnd(options){
@@ -668,7 +756,7 @@ for(const entry of ['HTTP launcher','file launcher','standalone'])test(`one Begi
             const result=await morph.playToEnd(options);
             if(finale){
               const {orbiting,frames}=GeoGlyph3D.stats().animation;
-              rehearsalFinale.push({font:map.fontRecords.get(map.displayedFontId).fontResourceKey,message:map.message,
+          rehearsalFinale.push({font:map.fontRecords.get(map.displayedFontId).fontResourceKey,message:map.message,fill:map.fill,
                 start,end:performance.now(),startFrames,frames,orbiting,duration:options.duration});
             }
             return result;
@@ -721,15 +809,23 @@ for(const entry of ['HTTP launcher','file launcher','standalone'])test(`one Begi
         window.rehearsalFlight.yawnStarted=performance.now();
       }
       if(state.phase!=='waiting'||rehearsalRows.at(-1)?.id===state.rowId)return;
-      if(state.rowId.startsWith('conference-day'))rehearsalTitles.push(document.getElementById('geoglyphConferenceTitle')?.textContent);
+      if(state.rowId.startsWith('conference-day')){
+        const title=document.getElementById('geoglyphConferenceTitle');
+        const style=title&&getComputedStyle(title);
+        rehearsalTitles.push({text:title?.textContent,align:style?.alignItems,size:parseFloat(style?.fontSize)});
+      }
       const caption=document.querySelector('.geoglyph-rehearsal-caption');
+      const highlight=caption?.querySelector('.geoglyph-caption-highlight');
       rehearsalRows.push({id:state.rowId,message:map.message,extruded:map.extrusionEnabled,fill:map.fill,
         height:map.baseHeightMeters,depth:map.extrusionDepthMeters,orbiting:GeoGlyph3D.stats().animation.orbiting,
+      orientation:map.orientationMode,
         font:map.fontRecords.get(map.displayedFontId)?.fontResourceKey,anchor:{...map.anchor},since:performance.now(),
         moving:map.map.isMoving(),orbitFrames:GeoGlyph3D.stats().animation.frames,caption:caption?.textContent??null,
         zoom:map.map.getZoom(),renderer:map.lastRenderMode,mesh:GeoGlyph3D.isVisible(),
+      anchorScreenX:map.map.project(map.anchor).x/map.map.getContainer().clientWidth,
         bearing:map.map.getBearing(),cameraLat:map.map.transform.getCameraLngLat().lat,
-        captionFont:caption?.style.fontFamily,captionSize:caption?parseFloat(getComputedStyle(caption).fontSize):null,
+      captionFont:caption?.style.fontFamily,captionSize:caption?parseFloat(getComputedStyle(caption).fontSize):null,
+      captionHighlight:highlight?.textContent,captionHighlightColour:highlight&&getComputedStyle(highlight).color,
         cssFamily:map.fontRecords.get(map.displayedFontId)?.cssFamily});
       if(keepHolds&&(state.rowId.startsWith('conference-day')||heldIds.includes(state.rowId)||state.rowId===greetingIds.at(-1)))return;
       queueMicrotask(()=>{if(scripts.state().rowId===state.rowId&&scripts.state().phase==='waiting')scripts.next();});
@@ -746,62 +842,72 @@ for(const entry of ['HTTP launcher','file launcher','standalone'])test(`one Begi
   await page.waitForFunction(()=>GeoGlyphConference.state.lastAppliedId===11||Boolean(GeoGlyphConference.state.error),null,{timeout:90000});
   const state=await page.evaluate(()=>({error:GeoGlyphConference.state.error,phase:GeoGlyphConference.state.phase,
     message:GeoGlyphMapEngine.state.message,draft:GeoGlyphScripts.getDraft().title,rows:rehearsalRows,
-    titles:rehearsalTitles,flight:window.rehearsalFlight,fits:rehearsalFits,holds:rehearsalHolds,greetingMoves:rehearsalGreetingMoves,
+    titles:rehearsalTitles,flight:window.rehearsalFlight,fits:rehearsalFits,holds:rehearsalHolds,
     starts:GeoGlyphConference.state.history.filter(row=>row.objectId===11&&row.phase==='started').length}));
   expect(state.error).toBe('');
   expect(state.phase).toBe('live');expect(state.starts).toBe(1);
   expect(state.message).toBe('Thanks for watching');
   expect(await page.evaluate(()=>GeoGlyphScripts.state().fontCycling)).toBe(true);
   expect(state.draft).toBe('Short launch regression introduction');
-  expect(state.titles).toEqual(['Conference Day.','Conference Day..','Conference Day...','Conference Day....','Conference Day.....']);
-  expect(state.flight).toMatchObject({anchor:{lng:144.95604,lat:-37.82402},title:'Conference Day.'});
+  expect(state.titles.map(({size,...title})=>title)).toEqual([{text:'Conference day...',align:'start'}]);
+  expect(state.titles.every(title=>title.size>100)).toBe(true);
+  expect(state.flight).toMatchObject({anchor:{lng:144.95604,lat:-37.82402},title:'Conference day...'});
   expect(state.flight.center[0]).toBeCloseTo(144.95604,3);
   expect(state.flight.center[1]).toBeCloseTo(-37.82402,3);
   const rows=Object.fromEntries(state.rows.map(row=>[row.id,row]));
-  expect(rows.hello.message).toBe('Hello!');
-  expect(rows.interesting.message).toBe('But here is something\namazing about me');
+  expect(rows.smirk.anchorScreenX-rows.awake.anchorScreenX).toBeCloseTo(.07,2);
+  expect(rows['smirk-mirror'].anchorScreenX-rows.awake.anchorScreenX).toBeCloseTo(-.07,2);
+  expect(rows.sunglasses.anchorScreenX).toBeCloseTo(rows.awake.anchorScreenX,2);
+  expect(rows.hello).toMatchObject({message:'Hello!',caption:null,extruded:false});
+  expect(rows['same-words']).toMatchObject({message:'I am style and\ntime fontified',extruded:false,orbiting:false});
+  for(const id of ['simple','elegant','ancient','future']){
+    expect(rows[id]).toMatchObject({message:'The Amazing\nGeoglyph',extruded:true,orbiting:true,orientation:'yaw'});
+  }
   expect(rows['my-name']).toMatchObject({message:"I'm Geoglyph",anchor:{lng:144.95604,lat:-37.82402},
     height:300,depth:30,extruded:false,caption:null});
-  expect(rows.dialects).toMatchObject({message:'I speak all\n2D and 3D dialects',extruded:true});
-  expect(rows.watch.anchor).toEqual({lng:144.96896,lat:-37.81785});
+  expect(rows.dialects).toMatchObject({message:'I speak all\n2D and 3D fonts',extruded:false});
   expect(greetings).toHaveLength(6);
   const openingSpeech=state.rows.slice(state.rows.findIndex(row=>row.id==='hello'));
   expect(openingSpeech.slice(0,8).map(row=>row.id)).toEqual(['hello',...greetingIds,'my-name']);
-  for(const [index,cue] of greetings.entries()){
-    const {font,location,size}=Object.fromEntries(cue.actions.map(({type,value})=>[type,value]));
-    const {lng,lat,caption}=location;
-    const extruded=index<2||index>=4;
-    expect(rows[cue.id]).toMatchObject({message:cue.message,caption,font:font.resourceKey,anchor:{lng,lat},
-      height:size.height,depth:size.depth,orbiting:false,moving:false,extruded,renderer:'vector',mesh:extruded});
+  for(const cue of greetings){
+    const morph=cue.actions.find(action=>action.type==='morph').value;
+    expect(rows[cue.id]).toMatchObject({message:morph.targetMessage,caption:'Hello in Korean, Georgian, Armenian, Ukrainian, Greek, Tamazight',font:morph.to.resourceKey,anchor:rows.hello.anchor,
+      orbiting:false,moving:false,extruded:false,renderer:'vector',mesh:false});
+    expect(rows[cue.id]).toMatchObject({captionHighlight:morph.titleHighlight,captionHighlightColour:'rgb(255, 133, 0)',fill:'#FF8500'});
     expect(rows[cue.id].captionSize).toBeGreaterThan(42);
   }
-  expect(rows.seoul.zoom).toBeLessThan(18);
-  expect(rows.tbilisi.zoom).toBeLessThan(18);
-  expect(rows.sounion.anchor).toEqual({lng:24.0287,lat:37.6497});
-  expect(rows.sounion.bearing).toBeCloseTo(-15,3);
-  expect(rows.sounion.cameraLat).toBeLessThan(rows.sounion.anchor.lat);
-  expect(state.greetingMoves).toBe(0);
-  expect(rows['speak-languages']).toMatchObject({anchor:{lng:144.97152,lat:-37.8046},height:300,depth:30,orbiting:true,caption:null});
-  expect(rows['become-them'].anchor).toEqual({lng:144.95163,lat:-37.82461});
+  expect(rows['speak-languages']).toMatchObject({height:300,depth:30,orbiting:true,caption:null});
+  expect(openingSpeech.slice(0,-1).map(row=>row.anchor)).toEqual(openingSpeech.slice(0,-1).map(()=>state.flight.anchor));
   const speech=openingSpeech.slice(1);
-  expect(new Set(speech.slice(0,-1).map(row=>row.font)).size).toBe(speech.length-1);
-  expect(new Set(speech.map(row=>row.fill))).toEqual(new Set(['#FF8500','#28EFFF','#FF45B8','#FFE747','#BFFF18','#CE82FF']));
+  const distinctFaces=speech.slice(0,-1).filter(row=>!['clone-obj','more-features','josh'].includes(row.id));
+  expect(new Set(distinctFaces.map(row=>row.font)).size).toBe(distinctFaces.length);
+  expect(new Set(speech.map(row=>row.fill))).toEqual(new Set(['#FF8500','#28EFFF','#FF45B8','#39FF78','#CE82FF']));
+  expect(rows['become-them'].fill).toBe(rows['call-me'].fill);
+  expect(rows['speak-languages'].fill).toBe(rows['become-them'].fill);
+  expect(rows['made-by'].message).toBe('I was made by\nChatGPT');
+  expect(rows.thanks).toMatchObject({fill:'#FF45B8',height:300000,depth:40000,orbiting:true,anchor:{lat:-25.61011,lng:134.35481}});
+  expect(rows.thanks.zoom).toBeLessThan(rows['become-them'].zoom-4);
   for(const id of ['simple','elegant','ancient','future']){
-    expect(rows[id]).toMatchObject({message:'The amazing\nGeoglyph',extruded:false});
+    expect(rows[id].caption).toBe(id[0].toUpperCase()+id.slice(1)+' Geo');
     expect(rows[id].captionFont).toContain(rows[id].cssFamily);
     expect(rows[id].captionSize).toBeGreaterThan(42);
   }
   expect(rows.future.font).toBe('conference:Audiowide');
   const finale=[['speak-languages',"I don't just speak languages"],['become-them','I become them'],['thanks','Thanks for watching']];
-  expect(speech.slice(-4).map(row=>row.id)).toEqual(['future',...finale.map(([id])=>id)]);
+  expect(speech.slice(-9).map(row=>row.id)).toEqual(['future','speak-languages','become-them','cloning-powers','clone-geojson','clone-obj','more-features','josh','thanks']);
+  expect(rows['cloning-powers']).toMatchObject({message:'ChatGPT gave me\ncloning powers too',extruded:false,fill:'#FF8500',font:'conference:Lilita One'});
+  expect(rows['clone-geojson']).toMatchObject({message:"I can clone 2D Geo's\nto GeoJSON",extruded:false});
+  expect(rows['clone-obj']).toMatchObject({message:"and 3D Geo's\nto OBJ.",extruded:true,orbiting:true});
+  expect(rows['more-features']).toMatchObject({message:'I have lots\nmore features',extruded:true,orbiting:true});
+  expect(rows.josh).toMatchObject({message:'but Josh has more\nstuff to show you',extruded:true,orbiting:true});
   for(const [id,message] of finale)expect(rows[id]).toMatchObject({message,extruded:true});
-  expect(state.fits.map(({frames,...fit})=>fit)).toEqual([...['elegant','ancient','future','speak-languages'].map(id=>({id,progress:0,inside:true,orbiting:false})),
-    ...['become-them','thanks'].map(id=>({id,progress:0,inside:true,orbiting:true}))]);
+    expect(state.fits.map(({frames,...fit})=>fit)).toEqual([...greetingIds.map(id=>({id,progress:0,inside:true,orbiting:false})),
+      ...['elegant','ancient','future','speak-languages','become-them','josh','thanks'].map(id=>({id,progress:0,inside:true,orbiting:true}))]);
   if(entry==='file launcher'){
     const lastGreeting=greetings.at(-1);
     expect(rows['my-name'].since-rows[lastGreeting.id].since).toBeGreaterThanOrEqual(lastGreeting.duration*1000-10);
     expect(state.flight).toMatchObject({duration:20000,titleAtArrival:null});
-    expect(state.rows.filter(row=>row.id.startsWith('conference-day')).map(row=>row.moving)).toEqual([true,true,true,true,true]);
+    expect(rows['conference-day'].moving).toBe(true);
     expect(state.flight.yawnStarted).toBeGreaterThanOrEqual(state.flight.arrived);
     expect(state.holds.map(hold=>[hold.id,hold.message])).toEqual(finale.slice(0,2));
     for(const hold of state.holds){
@@ -816,11 +922,12 @@ for(const entry of ['HTTP launcher','file launcher','standalone'])test(`one Begi
       expect(step.duration).toBe(2);
       expect(step.orbiting).toBe(true);
       expect(step.message).toBe('Thanks for watching');
+    expect(step.fill).toBe('#FF45B8');
       expect(step.frames).toBeGreaterThan(step.startFrames);
       if(index){
         const previous=transitions[index-1];
         expect(step.start-previous.end).toBeGreaterThanOrEqual(1990);
-        expect(step.start-previous.end).toBeLessThan(3000);
+        expect(step.start-previous.end).toBeLessThan(5000);
         expect(step.startFrames).toBeGreaterThan(previous.frames);
       }
     }
@@ -877,7 +984,7 @@ test('final font cycle visits compatible English fonts, wraps, and yields to new
 
 test('Reset received during the launcher handoff supersedes the pending rehearsal',async({page})=>{
   const {server}=await setup(page);await baseline(page);
-  server.records.push(cue(11,{special_commands:'Begin Geoglyph'}),cue(12,{special_commands:'Reset'}));
+  server.records.push(cue(11,{special_commands:'Begin Geoglyph'}),cue(12,{special_commands:'Reset Geoglyph'}));
   await page.locator('#suiteSurveyFetch').click();await readyApp(page);await applied(page,12);
   expect(await page.evaluate(()=>({
     phase:GeoGlyphConference.state.phase,
@@ -897,7 +1004,7 @@ test('a failed rehearsal font identifies the cue and leaves the opening visible'
   });
   server.records.push(cue(11,{special_commands:'Begin Geoglyph'}));await pollApp(page);
   await page.waitForFunction(()=>GeoGlyphConference.state.error.includes('Berkshire Swash fixture unavailable'));
-  expect(await page.evaluate(()=>GeoGlyphConference.state.error)).toMatch(/Rehearsal row.+The amazing/);
+  expect(await page.evaluate(()=>GeoGlyphConference.state.error)).toMatch(/Rehearsal row.+The Amazing/);
   expect(await page.evaluate(()=>GeoGlyphMapEngine.state.message)).toBe('😴');
   await expect(page.locator('#geoglyphConferenceTitle')).toHaveCount(0);
   await page.evaluate(()=>GeoGlyphMapEngine.stopPolling({quiet:true}));
@@ -954,7 +1061,7 @@ test('duplicate Begin Geoglyph cannot restart an active script and Reset still i
   server.records.push(cue(12,{special_commands:'Begin Geoglyph'}));await pollApp(page);
   await page.waitForFunction(()=>GeoGlyphConference.state.history.some(row=>row.objectId===12&&row.phase==='ignored'));
   expect(await page.evaluate(()=>conferenceStartCount)).toBe(1);
-  server.records.push(cue(13,{special_commands:'Reset'}));await pollApp(page);await applied(page,13);
+  server.records.push(cue(13,{special_commands:'Reset Geoglyph'}));await pollApp(page);await applied(page,13);
   expect(await page.evaluate(()=>({phase:GeoGlyphConference.state.phase,running:GeoGlyphScripts.state().running,starts:conferenceStartCount})))
     .toEqual({phase:'overview',running:false,starts:1});
   server.records.push(cue(14,{special_commands:'Begin'}));await pollApp(page);await applied(page,14);

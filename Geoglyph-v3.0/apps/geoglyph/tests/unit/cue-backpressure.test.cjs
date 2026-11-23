@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
 const { create } = require('../../src/scripts/survey-results.js');
+const { command } = require('../../src/scripts/conference-cues.js');
 const layer = { url:'https://example.invalid/FeatureServer/0', field:'message', objectIdField:'objectid', pageSize:25 };
 function transport(extra = {}) {
   const requests=[];
@@ -35,7 +36,7 @@ function conferenceHarness() {
   const engine={state:{previewActive:true,mode:'arcgis',extrusionEnabled:false},async applyConferenceCue(patch){applied.push(patch.objectId);if(patch.objectId===1)await gate;return{};},async drawConferenceOpening(){},setConnectionStatus(){},cancelConferenceWork(){},showConferenceOverview(){}};
   const client={latestCue:async()=>null,afterCues:async(_layer,cursor,opts)=>{calls.push({cursor,limit:opts.maxRows});return Array.from({length:opts.maxRows},(_,i)=>({objectId:cursor+i+1,attributes:{}}));}};
   const ctx=vm.createContext({window:{GeoGlyphConferenceConfig:{enabled:true},GeoGlyphSurveyResults:{create:()=>client},GeoGlyphMapEngine:engine,
-    GeoGlyphConferenceCues:{command:raw=>raw.attributes?.special_commands,resolve:raw=>({objectId:raw.objectId,command:raw.attributes?.special_commands,font:'font',kind:'text',message:'same',nextContent:{kind:'text',message:'same'},warnings:[]})}},
+    GeoGlyphConferenceCues:{command,resolve:raw=>({objectId:raw.objectId,command:command(raw),font:'font',kind:'text',message:'same',nextContent:{kind:'text',message:'same'},warnings:[]})}},
     document:doc,retryStartup(){},setTimeout,clearTimeout,console});
   vm.runInContext(source.slice(0,source.indexOf('  async function conferenceFonts('))+'})();',ctx);
   return {api:ctx.window.GeoGlyphConference,client,calls,applied,doc,listeners,release};
@@ -64,7 +65,7 @@ test('Stop lets the accepted cue finish and Resume drains its bounded queue once
 });
 test('a Reset fetched after a full batch cancels older queued work without applying it',async()=>{
   const h=conferenceHarness();await h.api.poll(layer);await h.api.poll(layer);h.api.state.ready=true;h.api.resume();await flush();
-  h.client.afterCues=async(_layer,cursor,opts)=>{assert.equal(cursor,100);assert.equal(opts.maxRows,1);return[{objectId:101,attributes:{special_commands:'reset'}}];};
+  h.client.afterCues=async(_layer,cursor,opts)=>{assert.equal(cursor,100);assert.equal(opts.maxRows,1);return[{objectId:101,attributes:{special_commands:'Reset Geoglyph'}}];};
   await h.api.poll(layer);await flush();h.release();await flush();
   assert.deepEqual(h.applied,[1]);assert.equal(h.api.state.lastAppliedId,101);assert.equal(h.api.state.queue.length,0);assert.equal(h.api.state.phase,'overview');
 });

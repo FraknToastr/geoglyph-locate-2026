@@ -1,0 +1,306 @@
+@import url("styles.css") layer(player-layout);
+@import url("vendor/ambientcss-3.1.0/ambient.css");
+
+/* Lighting values follow the Day, Night, Sci-Fi and Fun presets at ambientcss.com. */
+:root {
+  color-scheme: light;
+  --amb-light-x: -.7;
+  --amb-light-y: -.7;
+  --amb-key-light-intensity: .9;
+  --amb-fill-light-intensity: .7;
+  --amb-light-hue: 234;
+  --amb-light-saturation: 5%;
+  --amb-lume-hue: 16;
+  --amb-albedo: #eaeaea;
+  --panel-fallback: #dce0e5;
+  --control-albedo: #ededee;
+  --accent-albedo: #b8e6ea;
+  --selected-albedo: #b0d1df;
+  --recess-albedo: #d0d4db;
+  --ink: #172a3b;
+  --soft-ink: #43556a;
+  --rim: #8291a2;
+  --focus: #176587;
+  --blank-map: #d8dde5;
+}
+
+:root:not([data-lighting="day"]) {
+  color-scheme: dark;
+  --ink: #f4f7ff;
+  --soft-ink: #c5cfdf;
+  --rim: #7c8ba2;
+  --focus: #acdef2;
+  --control-albedo: #c1c5d3;
+  --selected-albedo: #b0d1df;
+  --recess-albedo: #858b9c;
+}
+
+:root[data-lighting="night"] {
+  --amb-light-x: .7;
+  --amb-light-y: -.7;
+  --amb-key-light-intensity: .125;
+  --amb-fill-light-intensity: 0;
+  --amb-light-hue: 250;
+  --amb-light-saturation: 30%;
+  --amb-albedo: #bac7e3;
+  --panel-fallback: #202638;
+  --blank-map: #596174;
+}
+
+:root[data-lighting="sci-fi"] {
+  --amb-light-x: 0;
+  --amb-light-y: -.9;
+  --amb-key-light-intensity: .2;
+  --amb-fill-light-intensity: .05;
+  --amb-light-hue: 190;
+  --amb-light-saturation: 50%;
+  --amb-lume-hue: 180;
+  --amb-albedo: #9dcad0;
+  --panel-fallback: #173641;
+  --blank-map: #52727a;
+}
+
+:root[data-lighting="fun"] {
+  --amb-light-x: 0;
+  --amb-light-y: -1;
+  --amb-key-light-intensity: .55;
+  --amb-fill-light-intensity: 0;
+  --amb-light-hue: 0;
+  --amb-light-saturation: 100%;
+  --amb-lume-hue: 0;
+  --amb-albedo: #784651;
+  --panel-fallback: #42212f;
+  --control-albedo: #94636d;
+  --selected-albedo: #a66e7b;
+  --recess-albedo: #784651;
+  --blank-map: #9a7380;
+}
+
+body, .sidebar, .timeline-card { color: var(--ink); }
+.sidebar, .timeline-card {
+  background-image: none;
+  background-color: var(--panel-fallback);
+  background-color: var(--amb-lit);
+  border-color: var(--rim);
+}
+.brand, .panel-section, .stat-row {
+  border-color: color-mix(in srgb, var(--rim), transparent 55%);
+}
+.sidebar :is(.section-label, .section-label span, .brand-text small, .version,
+  .date-top label, .control-label, .value-label, .value-label output, .muted-help, .dataset-tag, .stat-row span),
+.timeline-card :is(.timeline-caption-sub, .speed-control > span, .scrub-row span, .timeline-foot, .timeline-foot i) {
+  color: var(--soft-ink);
+}
+.main-view {
+  --panel-inset-inline: 25px;
+  --panel-inset-block: 22px;
+  --panel-gap: 20px;
+  --sidebar-width: 360px;
+  --sidebar-clearance: calc(var(--sidebar-width) + var(--panel-gap));
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  column-gap: var(--panel-gap);
+  padding: var(--panel-inset-block) var(--panel-inset-inline) 36px;
+  background-color: var(--panel-fallback);
+}
+#map { position: absolute; inset: 0; }
+.sidebar {
+  grid-area: 1 / 1 / 3 / 2;
+  position: relative;
+  inset: auto;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  overflow: hidden auto;
+  scrollbar-width: thin;
+  border: 1px solid var(--rim);
+  border-radius: 12px;
+}
+.sidebar-body { flex: none; overflow: visible; }
+.timeline-card {
+  grid-area: 2 / 2 / 3 / 3;
+  position: relative;
+  inset: auto;
+  min-width: 0;
+}
+body.panel-hidden .main-view { --sidebar-clearance: 0px; }
+body.panel-hidden .timeline-card { grid-column: 1 / -1; }
+.empty-state { left: calc(var(--sidebar-clearance) + clamp(42px, 6vw, 112px)); }
+.map-topbar { justify-content: flex-end; }
+#map .maplibregl-ctrl-top-left {
+  left: calc(var(--sidebar-clearance) + var(--panel-inset-inline));
+  top: var(--panel-inset-block);
+}
+#map .maplibregl-ctrl-top-left .maplibregl-ctrl-group { display: flex; margin: 0; }
+#map .maplibregl-ctrl-top-left .maplibregl-ctrl-group button + button {
+  border-top: 0;
+  border-inline-start: 1px solid #ddd;
+}
+#map .maplibregl-ctrl-bottom-right { right: var(--panel-inset-inline); bottom: 0; }
+.toast { z-index: 13; }
+
+@media (max-width: 1000px) {
+  body:not(.panel-hidden) .timeline-top { flex-wrap: wrap; }
+  body:not(.panel-hidden) .speed-control { width: 100%; justify-content: space-between; }
+  .main-view:has(.empty-state:not([hidden])) .map-meta { visibility: hidden; }
+  .empty-state:not([hidden]) {
+    position: relative;
+    grid-area: 1 / 2;
+    inset: auto;
+    margin: 56px 0 12px 20px;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: safe center;
+    overflow: auto;
+  }
+  body.panel-hidden .empty-state { grid-column: 1 / -1; }
+  .empty-state > * { flex: none; }
+  .empty-state .shadow-orb { margin-bottom: 14px; }
+  .empty-state h1 { margin-block: 10px; }
+  .empty-state p { margin-block: 10px 14px; }
+}
+@media (max-width: 800px) {
+  .main-view {
+    --panel-inset-inline: 12px;
+    --panel-inset-block: 12px;
+    --sidebar-clearance: 0px;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 12px;
+    padding-top: 63px;
+  }
+  .sidebar { grid-area: 1 / 1 / 2 / 2; width: min(var(--sidebar-width), 100%); }
+  .timeline-card { grid-column: 1; }
+  .empty-state:not([hidden]) { grid-area: 1 / 1; margin: 0 12px 12px; }
+  body:not(.panel-hidden) .empty-state { visibility: hidden; }
+}
+@media (min-width: 680px) and (max-width: 800px) and (max-height: 550px) {
+  .main-view { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
+  .sidebar { grid-area: 1 / 1 / 3 / 2; }
+  .timeline-card { grid-column: 2; }
+  body:not(.panel-hidden) .empty-state { grid-column: 2; visibility: visible; }
+}
+
+.main-view[data-basemap="none"] { background-color: var(--blank-map); }
+:root[data-lighting="day"] .main-view[data-basemap="none"] :is(.map-meta, .map-meta span, .map-meta strong, .hero-date,
+  .empty-state h1, .empty-state p, .empty-state em, .empty-state .eyebrow) { color: var(--ink); }
+.main-view[data-basemap="dark"] { --map-ink: #f4f7ff; --map-soft-ink: #c5cfdf; }
+.main-view[data-basemap="light"] { --map-ink: #172a3b; --map-soft-ink: #2a3c50; }
+.main-view:is([data-basemap="dark"], [data-basemap="light"]) :is(.empty-state, .empty-state em, .map-meta, .map-meta strong) {
+  color: var(--map-ink);
+}
+.main-view:is([data-basemap="dark"], [data-basemap="light"]) :is(.empty-state .eyebrow, .empty-state p, .meta-kicker, .hero-date, .sun-metrics span) {
+  color: var(--map-soft-ink);
+}
+:root:not([data-lighting="day"]) .umbramatic-control:is(.primary-button, .secondary-button, .play-button) {
+  color: var(--ink);
+}
+
+.umbramatic-control {
+  --amb-albedo: var(--control-albedo);
+  color: var(--ink);
+  border: 1px solid var(--rim);
+}
+
+.umbramatic-control:is(.primary-button, .secondary-button, .play-button) {
+  --amb-albedo: var(--accent-albedo);
+  color: #102235;
+  border-color: #8dc0ce;
+}
+
+.umbramatic-control[aria-pressed="true"] {
+  --amb-albedo: var(--selected-albedo);
+  --amb-shade: .85;
+  border-color: var(--focus);
+}
+
+.umbramatic-control.text-action {
+  padding: 6px 9px;
+  border-radius: 5px;
+}
+
+
+.umbramatic-control.transport-small { border-radius: 6px; }
+
+.umbramatic-control.amb-groove { --amb-albedo: var(--recess-albedo); }
+.umbramatic-control#dateInput { color-scheme: inherit; }
+.umbramatic-control.range {
+  border-radius: 999px;
+  min-width: 0;
+  padding-inline: 4px;
+  accent-color: var(--focus);
+}
+
+.umbramatic-control:hover:not(:disabled) { --amb-shade: 1.16; }
+.umbramatic-control:active:not(:disabled) { --amb-elevation: 0; }
+.umbramatic-control:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.ambient-button-group { isolation: isolate; }
+.ambient-button-group > .umbramatic-control:has(> .control-drop-shadow) {
+  position: relative;
+  z-index: auto;
+  backdrop-filter: none;
+  /* In AmbientCSS 3.1.0, this gain controls the cast shadow independently of the inset bevel. */
+  --_amb-sh-gain: 0;
+}
+.control-drop-shadow {
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  --amb-chamfer: 0;
+  --amb-fillet: 0;
+  --_amb-sh-gain: 1;
+}
+.umbramatic-control:active:not(:disabled) > .control-drop-shadow { --amb-elevation: 0; }
+
+.lighting-controls {
+  --amb-albedo: var(--recess-albedo);
+  margin-bottom: 20px;
+  padding: 12px;
+  border: 1px solid var(--rim);
+  border-radius: 8px;
+}
+.light-axes {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 12px;
+  color: var(--soft-ink);
+  font-size: 11px;
+}
+.light-axes input { margin: 0; }
+.light-follow {
+  width: 100%;
+  min-height: 34px;
+  margin-top: 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.light-follow[aria-pressed="true"] { font-weight: 700; }
+.light-axes:has(input:disabled) { opacity: .6; }
+
+.control-tooltip {
+  position: fixed;
+  z-index: 20;
+  width: max-content;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  padding: 8px 11px;
+  border: 1px solid var(--rim);
+  border-radius: 7px;
+  background: var(--panel-fallback);
+  color: var(--ink);
+  box-shadow: 0 4px 12px #0003;
+  font-size: 13px;
+  line-height: 1.4;
+}

@@ -4,21 +4,43 @@
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
+  const buttonSkin = 'ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control';
+  const lightingRoot = document.documentElement;
+  const compactLayout = window.matchMedia('(max-width: 800px)');
+  const blankBackground = () => getComputedStyle(lightingRoot).getPropertyValue('--blank-map').trim() || '#d8dde5';
   const state = {
     map: null, mapReady: false, manifest: null, frames: [], allFrames: [], selected: 0,
     playing: false, speed: 1, playbackMode: 'loop', direction: 1, opacity: 1,
-    basemap: 'dark', timer: null, renderToken: 0, tileSources: new Set(),
+    basemap: 'none', timer: null, renderToken: 0, tileSources: new Set(),
     localFiles: null, rootUrl: null, memoryCache: new Map(), cacheLimit: 32,
-    focusedDate: '', loading: false, demoUrls: [], defaultFitted: false,
+    focusedDate: '', loading: false, defaultFitted: false,
   };
   const mapEmpty = {version:8, sources:{}, layers:[
-    {id:'background',type:'background',paint:{'background-color':'#0c1d2d'}}
+    {id:'background',type:'background',paint:{'background-color':blankBackground()}}
   ]};
-  const tileMaps = {
-    dark: {url:'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', attribution:'© OpenStreetMap contributors · © CARTO'},
-    street: {url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attribution:'© OpenStreetMap contributors'},
-    aerial: {url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution:'Imagery © Esri and contributors'},
+  const esriServices = 'https://server.arcgisonline.com/ArcGIS/rest/services';
+  const canvasAttribution = 'Esri, HERE, Garmin, © OpenStreetMap contributors, and the GIS user community';
+  const novaStyleUrl = 'https://cdn.arcgis.com/sharing/rest/content/items/1237385e55d9487489fe2a21766b43bb/resources/styles/root.json';
+  const esriRaster = (service, maxzoom, attribution) => ({
+    type:'raster', tiles:[`${esriServices}/${service}/MapServer/tile/{z}/{y}/{x}`], tileSize:256, maxzoom, attribution,
+  });
+  const rasterBasemap = sources => ({
+    sources,
+    layers:Object.keys(sources).map(id=>({id,type:'raster',source:id,paint:{'raster-opacity':1,'raster-fade-duration':0}})),
+  });
+  const rasterBasemaps = {
+    none: rasterBasemap({}),
+    light: rasterBasemap({
+      'light-gray-base':esriRaster('Canvas/World_Light_Gray_Base',23,canvasAttribution),
+      'light-gray-labels':esriRaster('Canvas/World_Light_Gray_Reference',23,canvasAttribution),
+    }),
+    aerial: rasterBasemap({'base-tiles':esriRaster('World_Imagery',19,'Imagery © Esri and contributors')}),
   };
+  const basemapBackgrounds = {dark:'#011222',light:'#f2f2f2',aerial:'#0c1d2d'};
+  let displayedBasemap = rasterBasemaps.none;
+  let requestedBasemap = 'none';
+  let basemapRequest = 0;
+  let novaStyleRequest;
   const formatLong = (iso) => {
     if (!iso) return 'UNKNOWN DATE';
     const parts = iso.split('-');
@@ -54,9 +76,9 @@
     try {
       state.map = new maplibregl.Map({container:'map',style:mapEmpty,center:[138.6007,-34.9286],zoom:12,
         maxZoom:22,attributionControl:true,fadeDuration:0,preserveDrawingBuffer:false});
-      state.map.addControl(new maplibregl.NavigationControl({showCompass:true,visualizePitch:false}),'bottom-right');
+      state.map.addControl(new maplibregl.NavigationControl({showCompass:true,visualizePitch:false}),'top-left');
       state.map.on('load',()=>{
-        state.mapReady=true; applyBasemap();
+        state.mapReady=true; void applyBasemap(requestedBasemap);
         if(state.frames.length) showFrame(state.selected,true);
       });
       state.map.on('error',e=>{
@@ -65,19 +87,72 @@
       });
     }catch(e){status('Unable to initialize MapLibre: '+e.message,true);}
   }
-  function applyBasemap(){
+  function loadNovaBasemap(){
+    novaStyleRequest ??= fetch(novaStyleUrl,{signal:AbortSignal.timeout(12_000)}).then(async response=>{
+      if(!response.ok)throw new Error(`HTTP ${response.status}`);
+      const {version,sprite,glyphs,sources,layers} = await response.json();
+      if(version!==8 || !sprite || !glyphs || !sources || !Array.isArray(layers) || !layers.length){
+        throw new Error('ArcGIS did not return the Nova vector style.');
+      }
+      return {
+        sprite:new URL(sprite,novaStyleUrl).href,
+        glyphs:new URL(glyphs,novaStyleUrl).href.replace(/%7B(fontstack|range)%7D/g,'{$1}'),
+        sources:Object.fromEntries(Object.entries(sources).map(([id,{url,...source}])=>{
+          const service = new URL(url,novaStyleUrl).href.replace(/\/$/,'');
+          return [`nova-${id}`,{...source,tiles:[`${service}/tile/{z}/{y}/{x}.pbf`],maxzoom:22,
+            attribution:'Esri, TomTom, Garmin, FAO, NOAA, USGS, © OpenStreetMap contributors, and the GIS User Community'}];
+        })),
+        layers:layers.map(({id,source,...layer})=>({
+          ...layer,id:`nova-${id}`,...(source && {source:`nova-${source}`}),
+        })),
+      };
+    }).catch(error=>{
+      novaStyleRequest=undefined;
+      throw error;
+    });
+    return novaStyleRequest;
+  }
+  function removeBasemap(basemap){
+    const map = state.map;
+    for(const {id} of basemap.layers)if(map.getLayer(id))map.removeLayer(id);
+    for(const id of Object.keys(basemap.sources))if(map.getSource(id))map.removeSource(id);
+  }
+  async function applyBasemap(choice){
+    requestedBasemap=choice;
     if(!state.mapReady)return;
-    const map=state.map;
-    if(map.getLayer('base-tiles'))map.removeLayer('base-tiles');
-    if(map.getSource('base-tiles'))map.removeSource('base-tiles');
-    if(state.basemap!=='none'){
-      const base=tileMaps[state.basemap];
-      map.addSource('base-tiles',{type:'raster',tiles:[base.url],tileSize:256,attribution:base.attribution,maxzoom:19});
-      // Place the basemap *below* all shadow image layers.
-      map.addLayer({id:'base-tiles',type:'raster',source:'base-tiles',paint:{'raster-opacity':1,'raster-fade-duration':0}},
-        state.tileSources.size ? mapLayerId([...state.tileSources][0]) : undefined);
+    const request = ++basemapRequest;
+    if(choice===state.basemap){updateMapBackground();return;}
+    const map = state.map;
+    let next;
+    try{
+      next = choice==='dark' ? await loadNovaBasemap() : rasterBasemaps[choice];
+      if(request!==basemapRequest)return;
+      if(next.glyphs && map.getGlyphs()!==next.glyphs)map.setGlyphs(next.glyphs);
+      if(next.sprite && !map.getSprite().length)map.setSprite(next.sprite);
+      for(const [id,source] of Object.entries(next.sources))map.addSource(id,source);
+      // Insert under the capture images so a basemap switch leaves playback running.
+      const firstTile = state.tileSources.values().next().value;
+      const before = firstTile === undefined ? undefined : mapLayerId(firstTile);
+      for(const layer of next.layers){
+        map.addLayer(layer,before);
+        if(!map.getLayer(layer.id))throw new Error(`Could not add ${layer.id}.`);
+      }
+    }catch(error){
+      if(request!==basemapRequest)return;
+      if(next)removeBasemap(next);
+      const label = choice==='dark' ? 'Nova' : choice==='light' ? 'Light Gray Canvas' : 'the basemap';
+      toast(`Unable to load ${label} · ${error.message}`,true);
+      return;
     }
-    map.setPaintProperty('background','background-color',state.basemap==='none'?'#102235':'#0c1d2d');
+    removeBasemap(displayedBasemap);
+    displayedBasemap=next;
+    state.basemap=choice;
+    document.querySelector('.main-view').dataset.basemap=choice;
+    document.querySelectorAll('button[data-basemap]').forEach(button=>selectButton(button,button.dataset.basemap===choice));
+    updateMapBackground();
+  }
+  function updateMapBackground(){
+    if(state.mapReady)state.map.setPaintProperty('background','background-color',basemapBackgrounds[state.basemap]??blankBackground());
   }
   function applyOpacity(){
     if(!state.mapReady)return;
@@ -99,8 +174,6 @@
       if(entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
     }
     state.memoryCache.clear();
-    for(const url of state.demoUrls)URL.revokeObjectURL(url);
-    state.demoUrls=[];
   }
   async function resolveImage(tile){
     if(tile.direct_url)return tile.direct_url;
@@ -201,7 +274,18 @@
   function fit(){
     if(!state.mapReady)return;
     const bounds=allCorners();
-    if(bounds)state.map.fitBounds(bounds,{padding:{top:105,bottom:242,left:50,right:50},maxZoom:18,duration:500});
+    if(!bounds)return;
+    const panel = $('controlsPanel').getBoundingClientRect();
+    const player = document.querySelector('.timeline-card').getBoundingClientRect();
+    const left = 50 + (panel.right<=player.left ? panel.right : 0);
+    state.map.fitBounds(bounds,{padding:{top:105,bottom:242,left,right:50},maxZoom:18,duration:500});
+  }
+  function setPanelHidden(hidden){
+    const restoreFocus = hidden && $('controlsPanel').contains(document.activeElement);
+    const toggle = $('togglePanel');
+    document.body.classList.toggle('panel-hidden',hidden);
+    toggle.setAttribute('aria-expanded',String(!hidden));
+    if(restoreFocus)toggle.focus({preventScroll:true});
   }
   function updateFrameUI(){
     const frame=state.frames[state.selected];
@@ -238,7 +322,7 @@
     }
   }
   function stopTimer(){if(state.timer!==null){clearTimeout(state.timer);state.timer=null;}}
-  function pause(){state.playing=false;stopTimer();$('playPause').textContent='▶';$('playPause').setAttribute('aria-label','Play');}
+  function pause(){state.playing=false;stopTimer();$('playPauseGlyph').textContent='▶';$('playPause').setAttribute('aria-label','Play');}
   function nextIndex(){
     let i=state.selected+state.direction;
     if(i>=state.frames.length||i<0){
@@ -261,22 +345,197 @@
     if(!state.frames.length){toast('Open an export folder or load the demo first.');return;}
     if(state.playing){pause();return;}
     if(state.frames.length===1){toast('The selected date has only one capture.');return;}
-    state.playing=true;$('playPause').textContent='❚❚';$('playPause').setAttribute('aria-label','Pause');
+    state.playing=true;$('playPauseGlyph').textContent='❚❚';$('playPause').setAttribute('aria-label','Pause');
     stopTimer();state.timer=setTimeout(tick,Math.round(650/state.speed));
   }
   function step(direction){pause();state.direction=1;let i=state.selected+direction;
     if(i<0)i=state.frames.length-1;if(i>=state.frames.length)i=0;
     showFrame(i);
   }
+  function selectButton(button, selected){
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  }
+  function addControlShadow(control){
+    const shadow=document.createElement('span');
+    shadow.className='ambient amb-thickness-1 amb-elevation-1 control-drop-shadow';
+    shadow.setAttribute('aria-hidden','true');
+    control.prepend(shadow);
+  }
+  function bindTooltips(){
+    const tooltip = $('controlTooltip');
+    const app = document.querySelector('.app-shell');
+    let trigger = null;
+    let previousDescription = null;
+    let pointer = null;
+    let hoveredControl = null;
+    let positionFrame = 0;
+
+    function hideTooltip(){
+      if(!trigger)return;
+      tooltip.hidden=true;
+      if(previousDescription===null)trigger.removeAttribute('aria-describedby');
+      else trigger.setAttribute('aria-describedby',previousDescription);
+      trigger=null;
+      pointer=null;
+      cancelAnimationFrame(positionFrame);
+      positionFrame=0;
+    }
+    function positionTooltip(){
+      const viewport = window.visualViewport;
+      const margin = 8;
+      const left = (viewport?.offsetLeft ?? 0) + margin;
+      const top = (viewport?.offsetTop ?? 0) + margin;
+      const right = left + (viewport?.width ?? innerWidth) - 2*margin;
+      const bottom = top + (viewport?.height ?? innerHeight) - 2*margin;
+      const anchor = trigger.getBoundingClientRect();
+      const scroller = trigger.closest('.sidebar, .empty-state')?.getBoundingClientRect();
+      if(!anchor.width || !anchor.height || anchor.bottom<=top || anchor.top>=bottom ||
+        (scroller && (anchor.bottom<=scroller.top || anchor.top>=scroller.bottom))){
+        hideTooltip();
+        return;
+      }
+
+      tooltip.style.maxWidth=`${Math.min(272,right-left)}px`;
+      tooltip.style.maxHeight=`${bottom-top}px`;
+      const { width, height } = tooltip.getBoundingClientRect();
+      const gap = pointer ? 42 : 8;
+      let x = pointer ? pointer.clientX + gap : anchor.left;
+      let y = (pointer?.clientY ?? anchor.bottom) + gap;
+      if(pointer && x+width>right)x=pointer.clientX-width-gap;
+      if(y+height>bottom)y=(pointer?.clientY ?? anchor.top)-height-gap;
+      tooltip.style.left=`${Math.max(left,Math.min(x,right-width))}px`;
+      tooltip.style.top=`${Math.max(top,Math.min(y,bottom-height))}px`;
+    }
+    function schedulePosition(){
+      if(!trigger || positionFrame)return;
+      positionFrame=requestAnimationFrame(()=>{
+        positionFrame=0;
+        positionTooltip();
+      });
+    }
+    function showTooltip(control, point = null){
+      if(!control.dataset.tooltip)return;
+      hideTooltip();
+      trigger=control;
+      pointer=point;
+      previousDescription=control.getAttribute('aria-describedby');
+      tooltip.textContent=control.dataset.tooltip;
+      tooltip.hidden=false;
+      control.setAttribute('aria-describedby',[previousDescription,tooltip.id].filter(Boolean).join(' '));
+      positionTooltip();
+    }
+
+    // MapLibre creates its toolbar and attribution controls after the page starts.
+    const observer = new MutationObserver(()=>{
+      if(trigger && (!trigger.isConnected || !trigger.getClientRects().length || getComputedStyle(trigger).visibility==='hidden'))hideTooltip();
+      for(const control of app.querySelectorAll('[title]')){
+        if(!control.dataset.tooltip)control.dataset.tooltip=control.getAttribute('title');
+        control.removeAttribute('title');
+      }
+    });
+    observer.observe(app,{childList:true,subtree:true,attributes:true,attributeFilter:['title','hidden']});
+    observer.observe(document.body,{attributes:true,attributeFilter:['class']});
+
+    document.addEventListener('pointerout',event=>{
+      if(hoveredControl?.contains(event.target) && !hoveredControl.contains(event.relatedTarget))hoveredControl=null;
+      if(trigger?.contains(event.target) && !trigger.contains(event.relatedTarget))hideTooltip();
+    });
+    document.addEventListener('pointermove',event=>{
+      if(event.pointerType==='touch')return;
+      const control = event.target.closest('[data-tooltip]');
+      if(control!==hoveredControl){
+        hoveredControl=control;
+        if(control)showTooltip(control,event);
+        else if(pointer)hideTooltip();
+      }else if(pointer){
+        pointer=event;
+        schedulePosition();
+      }
+    },{passive:true});
+    document.addEventListener('focusin',event=>{
+      if(event.target.matches('[data-tooltip]:focus-visible'))showTooltip(event.target);
+    });
+    document.addEventListener('focusout',event=>{
+      if(trigger===event.target)hideTooltip();
+    });
+    document.addEventListener('pointerdown',hideTooltip,{capture:true,passive:true});
+    document.addEventListener('pointercancel',hideTooltip);
+    document.addEventListener('keydown',event=>{if(event.key==='Escape')hideTooltip();});
+    document.addEventListener('scroll',()=>{
+      if(pointer && !trigger.contains(document.elementFromPoint(pointer.clientX,pointer.clientY)))hideTooltip();
+      else schedulePosition();
+    },{capture:true,passive:true});
+    document.addEventListener('visibilitychange',hideTooltip);
+    window.addEventListener('blur',hideTooltip);
+    window.addEventListener('resize',hideTooltip);
+    window.visualViewport?.addEventListener('scroll',hideTooltip);
+    window.visualViewport?.addEventListener('resize',hideTooltip);
+  }
+  function bindLighting(){
+    const presets = [...document.querySelectorAll('[data-lighting-preset]')];
+    const axes = [[$('lightX'),'--amb-light-x'],[$('lightY'),'--amb-light-y']];
+    const follow = $('lightFollow');
+    let following = false;
+    let pointer = null;
+    let lightFrame = 0;
+    function updatePointerLight(){
+      if(!following || !pointer || lightFrame)return;
+      lightFrame=requestAnimationFrame(()=>{
+        lightFrame=0;
+        const direction=(position,size)=>Math.max(-1,Math.min(1,2*position/Math.max(1,size)-1));
+        lightingRoot.style.setProperty('--amb-light-x',direction(pointer.clientX,innerWidth).toFixed(3));
+        lightingRoot.style.setProperty('--amb-light-y',direction(pointer.clientY,innerHeight).toFixed(3));
+      });
+    }
+    function setFollowing(enabled){
+      following=enabled;
+      selectButton(follow,following);
+      for(const [input,property] of axes){
+        input.disabled=following;
+        if(!following)lightingRoot.style.setProperty(property,String(input.valueAsNumber/100));
+      }
+      if(!following){
+        cancelAnimationFrame(lightFrame);
+        lightFrame=0;
+      }
+      updatePointerLight();
+    }
+    setFollowing(follow.getAttribute('aria-pressed')==='true');
+    follow.addEventListener('click',()=>setFollowing(!following));
+    window.addEventListener('pointermove',event=>{
+      if(event.pointerType!=='mouse')return;
+      pointer=event;
+      updatePointerLight();
+    },{passive:true});
+    for(const button of presets)button.addEventListener('click',()=>{
+      lightingRoot.dataset.lighting=button.dataset.lightingPreset;
+      presets.forEach(preset=>selectButton(preset,preset===button));
+      axes.forEach(([,property])=>lightingRoot.style.removeProperty(property));
+      const lighting=getComputedStyle(lightingRoot);
+      axes.forEach(([input,property])=>{input.value=Math.round(Number(lighting.getPropertyValue(property))*100);});
+      updatePointerLight();
+      if(state.basemap==='none')updateMapBackground();
+    });
+    for(const [input,property] of axes)input.addEventListener('input',()=>{
+      lightingRoot.style.setProperty(property,String(input.valueAsNumber/100));
+    });
+  }
   function dateChips(){
     const container=$('dateChips');container.replaceChildren();
     const dates=[...new Set(state.allFrames.map(f=>f.date))];
-    const all=document.createElement('button');all.type='button';all.className='chip'+(!state.focusedDate?' active':'');all.textContent=`All (${state.allFrames.length})`;
+    const all=document.createElement('button');all.type='button';all.className=`chip ${buttonSkin}`;all.textContent=`All (${state.allFrames.length})`;
+    all.dataset.tooltip='Show captures from all dates.';
+    addControlShadow(all);
+    selectButton(all,!state.focusedDate);
     all.addEventListener('click',()=>setDate(''));container.append(all);
     for(const date of dates){
       const button=document.createElement('button');button.type='button';
-      button.className='chip'+(state.focusedDate===date?' active':'');
-      button.textContent=date.slice(5).replace('-','/');button.title=formatLong(date);
+      button.className=`chip ${buttonSkin}`;
+      selectButton(button,state.focusedDate===date);
+      button.textContent=date.slice(5).replace('-','/');
+      button.dataset.tooltip=formatLong(date);
+      addControlShadow(button);
       button.addEventListener('click',()=>setDate(date));container.append(button);
     }
   }
@@ -314,7 +573,6 @@
     $('dateInput').value='';
     $('datasetInfo').hidden=false;
     $('datasetTitle').textContent=data.title||'Shadow capture series';
-    $('mapTitle').textContent=String(data.title||'SHADOW CAPTURES').toUpperCase();
     $('frameCount').textContent=frames.length.toLocaleString('en-AU');
     $('formatLabel').textContent=(data.encoding?.format||'image').toUpperCase();
     const size=data.grid?.native_cell_x;
@@ -324,9 +582,9 @@
     $('opacityValue').textContent=`${Math.round(state.opacity*100)}%`;
     dateChips();updateFrameUI();applyOpacity();
     $('emptyState').hidden=true;
+    if(compactLayout.matches)setPanelHidden(true);
     await showFrame(0,true);
     toast(`${frames.length} captures loaded · ${data.encoding?.format?.toUpperCase()||'images'}`,false,3400);
-    if(innerWidth<801)document.body.classList.add('panel-hidden');
   }
   async function openExportFolder(files){
     if(!files || !files.length)return;
@@ -359,63 +617,34 @@
       }catch(err){console.debug('No auto-load export at',relative,err.message);}
     }
   }
-  async function demoDataset(){
-    if(!state.mapReady){toast('MapLibre must load before the demo can display.',true);return;}
-    const frames=[];const urls=[];
-    const coordinates=[[138.5899,-34.9236],[138.6085,-34.9236],[138.6085,-34.9404],[138.5899,-34.9404]];
-    for(let i=0;i<14;i++){
-      const canvas=document.createElement('canvas');canvas.width=720;canvas.height=720;
-      const g=canvas.getContext('2d');
-      const ratio=i/13;const angle=(-0.92+ratio*1.84);
-      const length=(.52+Math.abs(i-6.5)/13)*130;
-      const blocks=[[145,157,70,82],[358,142,90,48],[535,280,56,116],[244,378,94,82],[410,490,135,78],[89,505,49,86]];
-      for(const [x,y,w,h] of blocks){
-        g.save();g.translate(x+w/2,y+h/2);g.rotate(angle);
-        g.fillStyle='rgba(18,34,57,.73)';
-        g.fillRect(-w/2,-h/2,w,h+length);
-        g.restore();
-      }
-      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-      const url=URL.createObjectURL(blob);urls.push(url);
-      const dt=`2026-12-21T${String(7+Math.floor(i/2)).padStart(2,'0')}:${i%2?'30':'00'}`;
-      frames.push({index:i+1,id:'demo-'+i,local_datetime:dt,date:'2026-12-21',time:dt.slice(11,16),
-        solar_azimuth_deg:(95+i*12).toFixed(1),solar_altitude_deg:(14+52*Math.sin(Math.PI*i/13)).toFixed(1),
-        tiles:[{direct_url:url,coordinates,row:0,column:0,width:720,height:720}]});
-    }
-    const data={schema:'uos-shadow-player-v1',title:'SYNTHETIC SHADOW DEMO',source_kind:'demonstration',
-      encoding:{format:'png',transparent_sunlit:true},grid:{native_cell_x:2},frames};
-    // Preserve URLs against the old dataset cleanup performed by activateDataset.
-    await activateDataset(data);state.demoUrls=urls;
-    toast('Synthetic demonstration only — not derived from LiDAR.',false,6500);
-  }
-
   function wireControls(){
     $('openFolder').addEventListener('click',()=>$('folderInput').click());
     $('emptyOpen').addEventListener('click',()=>$('folderInput').click());
     $('folderInput').addEventListener('change',async e=>{
       await openExportFolder(e.target.files);e.target.value='';
     });
-    $('demoButton').addEventListener('click',demoDataset);
     $('playPause').addEventListener('click',play);
     $('stepBack').addEventListener('click',()=>{if(state.frames.length)step(-1);});
     $('stepForward').addEventListener('click',()=>{if(state.frames.length)step(1);});
     $('scrubber').addEventListener('input',e=>{if(state.frames.length){pause();showFrame(Number(e.target.value));}});
-    $('speedOptions').querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
-      state.speed=Number(btn.dataset.speed);
-      $('speedOptions').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===btn));
-      updateFrameUI();
-      if(state.playing){stopTimer();state.timer=setTimeout(tick,Math.round(650/state.speed));}
-    }));
+    const speedButtons = $('speedOptions').querySelectorAll('button');
+    speedButtons.forEach(button=>{
+      button.dataset.tooltip=`Play at ${button.dataset.speed}× speed.`;
+      button.addEventListener('click',()=>{
+        state.speed=Number(button.dataset.speed);
+        speedButtons.forEach(speed=>selectButton(speed,speed===button));
+        updateFrameUI();
+        if(state.playing){stopTimer();state.timer=setTimeout(tick,Math.round(650/state.speed));}
+      });
+    });
     $('clearDate').addEventListener('click',()=>setDate(''));
     $('dateInput').addEventListener('change',e=>setDate(e.target.value));
-    document.querySelectorAll('[data-basemap]').forEach(btn=>btn.addEventListener('click',()=>{
-      state.basemap=btn.dataset.basemap;
-      document.querySelectorAll('[data-basemap]').forEach(x=>x.classList.toggle('active',x===btn));
-      applyBasemap();
+    document.querySelectorAll('button[data-basemap]').forEach(button=>button.addEventListener('click',()=>{
+      void applyBasemap(button.dataset.basemap);
     }));
     document.querySelectorAll('[data-loop]').forEach(btn=>btn.addEventListener('click',()=>{
       state.playbackMode=btn.dataset.loop;state.direction=1;
-      document.querySelectorAll('[data-loop]').forEach(x=>x.classList.toggle('active',x===btn));
+      document.querySelectorAll('[data-loop]').forEach(x=>selectButton(x,x===btn));
     }));
     $('opacity').addEventListener('input',e=>{
       state.opacity=Number(e.target.value)/100;
@@ -423,19 +652,17 @@
       applyOpacity();
     });
     $('fitBounds').addEventListener('click',fit);
-    $('togglePanel').addEventListener('click',()=>{
-      document.body.classList.toggle('panel-hidden');
-      setTimeout(()=>state.map?.resize(),250);
-    });
+    $('togglePanel').addEventListener('click',()=>setPanelHidden(!document.body.classList.contains('panel-hidden')));
     window.addEventListener('keydown',e=>{
-      if(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if(e.target instanceof Element && e.target.closest('input, textarea, select, button, a, [contenteditable]')) return;
       if(e.code==='Space'){e.preventDefault();play();}
       else if(e.key==='ArrowRight' && state.frames.length){e.preventDefault();step(1);}
       else if(e.key==='ArrowLeft' && state.frames.length){e.preventDefault();step(-1);}
       else if(e.key.toLowerCase()==='f'){fit();}
     });
   }
-  wireControls();initMap();autoLoadHosted();
+  document.querySelectorAll('.ambient-button-group > .umbramatic-control').forEach(addControlShadow);
+  wireControls();bindLighting();bindTooltips();initMap();autoLoadHosted();
   // Smoke-test aid; immutable public diagnostics, no hidden app mutation.
   window.shadowPlayerDiagnostics=()=>({mapReady:state.mapReady,frames:state.frames.length,
     allFrames:state.allFrames.length,selected:state.selected,playing:state.playing,

@@ -2061,6 +2061,10 @@
     const keys = ['mode','message','arcgisMessage','selectedFontId','nativeColor','emojiFallbackFontId','extrusionEnabled','mirrorX','orientationMode','fill','outline','outlineWidth','opacity','bearing','tracking','lineHeight','quality','relativeSize','extrusionTilt','extrusionSolid','anchor','anchorInitialised','anchorPinned','baseHeightMeters','extrusionDepthMeters','lastLocalModel','lastGeoJSON','lastDecal','lastRenderMode','lastMetrics','displayedFontId','committedSelection'];
     const previous = Object.fromEntries(keys.map(key => [key, mapState[key]]));
     const anchorChanged = Boolean(patch.anchor && (patch.anchor.lng !== previous.anchor?.lng || patch.anchor.lat !== previous.anchor?.lat));
+    const previousHeight = previous.baseHeightMeters * previous.relativeSize / 100;
+    const nextHeight = (patch.height ?? previous.baseHeightMeters) * (patch.relativeSize ?? previous.relativeSize) / 100;
+    const zoomOutBeforeBuild = nextHeight >= previousHeight * 10 && patch.extrusionEnabled &&
+      window.GeoGlyph3D?.stats().animation.orbiting;
     cancelRandomSearch();
     const choice = ++mapState.fontChoiceVersion;
     const current = () => mapState.fontChoiceVersion === choice && mapState.previewActive && (!options.isCurrent || options.isCurrent());
@@ -2100,10 +2104,12 @@
         mapState.anchorPinned = patch.anchorPinned === true;
         updateAnchorStats();
         // Start the camera move before an orbit frame can jump to the new anchor.
-        if (anchorChanged && options.preserveOrbit && window.GeoGlyph3D?.stats().animation.orbiting) {
+        if (anchorChanged && !zoomOutBeforeBuild && options.preserveOrbit && window.GeoGlyph3D?.stats().animation.orbiting) {
           window.GeoGlyph3D.fitCurrent({preserveOrbit:true});
         }
       }
+      // Frame the larger model before publishing its map geometry at the old zoom.
+      if (zoomOutBeforeBuild) window.GeoGlyph3D.fitCurrent({preserveOrbit:true,duration:0});
       mapState.conferenceRenderSuspended = false;
       mapState.pendingBuild = false; mapState.pendingFit = false; mapState.explicitFitPending = false;
       syncUiFromState(); window.GeoGlyph3D?.refreshControls();

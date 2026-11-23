@@ -260,8 +260,8 @@
     let rows = baseline
       ? [await client.latestCue(layer, { signal })].filter(Boolean)
       : capacity > 0 ? await client.afterCues(layer, state.lastQueuedId, { signal, maxRows:capacity }) : [];
-    if (!baseline && client.latestResetCue && (capacity <= 0 || rows.length >= Math.min(capacity, layer.pageSize * 4))) {
-      const priority = await client.latestResetCue(layer, state.lastQueuedId, { signal });
+    if (!baseline && client.latestInterruptCue && (capacity <= 0 || rows.length >= Math.min(capacity, layer.pageSize * 4))) {
+      const priority = await client.latestInterruptCue(layer, state.lastQueuedId, { signal });
       if (priority && !rows.some(row => row.objectId === priority.objectId)) {
         rows.push(priority); rows.sort((a,b) => a.objectId-b.objectId);
       }
@@ -275,12 +275,25 @@
       state.baselined = true;
       return 'Ready · Australia overview';
     }
-    const reset = rows.findLast(row => patchCommand(row) === 'reset');
-    if (reset) {
+    const control = rows.findLast(row => ['reset','return'].includes(patchCommand(row)));
+    if (control && patchCommand(control)==='return') {
+      // Save the consumed command before navigation checkpoints the survey.
+      const previousCursor=processedSurveyId;
+      processedSurveyId=control.objectId;
+      try {
+        if(!window.GeoGlyphSuite)throw Error('The suite launcher is unavailable.');
+        await window.GeoGlyphSuite.navigate('launcher');
+      } catch(error) {
+        processedSurveyId=previousCursor;
+        throw error;
+      }
+      return 'Returning to Launcher';
+    }
+    if (control) {
       interrupt();
       state.queue.length = 0;
       returnToOverview();
-      rows = rows.filter(row => row.objectId >= reset.objectId);
+      rows = rows.filter(row => row.objectId >= control.objectId);
     }
     for (const row of rows) {
       if (state.lastQueuedId !== null && row.objectId <= state.lastQueuedId) continue;

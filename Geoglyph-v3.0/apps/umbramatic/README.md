@@ -109,11 +109,10 @@ To publish a permitted dataset beside the viewer, copy the export folder's **con
 | Speed | 0.25×, 0.5×, 1×, 2×, 4× and 8×; 1× waits about 650 ms between frames **after** each frame loads. |
 | Date filter | Choose a day using the date picker or visible date chips. All = full series. |
 | Loop / Ping-pong / Once | Repeat sequence, reverse at endpoints, or stop at the end. |
-| Dark / Street / Aerial / Blank | Basemap styles. Blank displays the georeferenced image against a dark background. |
+| Dark / Light / Aerial / Blank | Dark uses ArcGIS Nova. Light uses Esri Light Gray Canvas with place labels. Blank displays the shadows on a plain background. |
 | Opacity | Adjust the entire georeferenced shadow overlay. |
 | Fit map | Zoom to the dataset's overall bounds. |
 | Keyboard | Space = play/pause, Left/Right = step, F = fit. |
-| Explore synthetic demo | Built-in demonstration; **not real LiDAR data**. |
 
 `SampleExport/` in the ZIP is an additional 12-frame, two-date synthetic export with world files and a JSON manifest. It can be selected with **Open export folder** to test folder loading and date filtering before exporting real captures.
 

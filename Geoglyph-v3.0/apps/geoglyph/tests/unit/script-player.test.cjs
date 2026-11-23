@@ -29,57 +29,59 @@ test('rehearsal JSON is importable and preserves the written lines and both morp
   const expected=source.slice(first).trim().split(/\r?\n(?:\r?\n)+/u)
     .filter(line=>!line.startsWith('[')).map(line=>line.replaceAll('\r\n','\n'));
   const bundled=validateScript(JSON.parse(JSON.stringify(rehearsal)));
-  const opening=bundled.rows.slice(0,5);
-  assert.deepEqual(opening.map(row=>row.duration),[2,2,2,2,2]);
-  assert.deepEqual(opening.map(row=>row.actions.find(action=>action.type==='title')?.value),
-    Array.from({length:5},(_,index)=>'Conference Day'+'.'.repeat(index+1)));
-  assert.equal(opening[0].actions.find(action=>action.type==='camera')?.value,'opening-and-fly');
-  assert.deepEqual(bundled.rows[5].actions,[{type:'title',value:''},{type:'camera',value:'wait-for-opening-flight'}]);
+  const [opening,approach]=bundled.rows;
+  assert.equal(opening.duration,10);
+  assert.deepEqual(opening.actions,[{type:'camera',value:'opening-and-fly'},{type:'title',value:'Conference day...'}]);
+  assert.deepEqual(approach.actions,[{type:'title',value:''},{type:'camera',value:'wait-for-opening-flight'}]);
   const speech=bundled.rows.slice(bundled.rows.findIndex(row=>row.id==='hello'));
-  const showcase='The amazing\nGeoglyph';
+  const showcase='The Amazing\nGeoglyph';
   const spoken=speech.flatMap(row=>{
     const title=row.actions.find(action=>action.type==='title')?.value;
-    const target=row.actions.find(action=>action.type==='morph')?.value.targetMessage;
-    return [title,row.message,target].filter(message=>message&&message!==showcase);
+    const morph=row.actions.find(action=>action.type==='morph')?.value;
+    return [morph?.titleAfter?null:title,row.message,morph?.targetMessage].filter(message=>message&&message!==showcase);
   });
   assert.deepEqual(spoken,expected);
   const morphs=bundled.rows.flatMap(row=>row.actions.filter(action=>action.type==='morph').map(action=>action.value));
-  assert.deepEqual(morphs.slice(0,3).map(value=>value.targetMessage),[showcase,showcase,showcase]);
-  assert.deepEqual(morphs.slice(3).map(value=>[value.from.resourceKey,value.targetMessage]),[
+  assert.deepEqual(morphs.slice(6,9).map(value=>value.targetMessage),[showcase,showcase,showcase]);
+  assert.deepEqual(morphs.slice(9).map(value=>[value.from.resourceKey,value.targetMessage]),[
     ['conference:Audiowide',"I don't just speak languages"],['conference:Bree Serif','I become them'],
-    ['conference:Bungee','Thanks for watching']
+    ['conference:Bungee','but Josh has more\nstuff to show you'],['conference:Bungee','Thanks for watching']
   ]);
   assert.ok(morphs.every(value=>value.duration===2));
-  const faces=speech.slice(1,-1).map(row=>row.actions.find(a=>a.type==='font')?.value.resourceKey||
+  const faces=speech.slice(1,-1).filter(row=>!['clone-obj','more-features','josh'].includes(row.id)).map(row=>row.actions.find(a=>a.type==='font')?.value.resourceKey||
     row.actions.find(a=>a.type==='morph')?.value.to.resourceKey);
   assert.ok(faces.every(Boolean));
   assert.equal(new Set(faces).size,faces.length);
-  assert.equal(morphs[2].to.resourceKey,'conference:Audiowide');
+  assert.equal(morphs[8].to.resourceKey,'conference:Audiowide');
   assert.ok(!JSON.stringify(bundled).includes('Magneto'));
-  assert.ok(speech.filter(row=>row.actions.some(a=>a.type==='morph')).every(row=>row.actions.some(a=>a.type==='location'||a.type==='fit'&&a.value)));
-  const greetingIds=['seoul','tbilisi','yerevan','kyiv','sounion','marrakesh'];
-  assert.deepEqual(speech.slice(0,12).map(row=>row.id),['hello',...greetingIds,'my-name','call-me','made-by','dialects','interesting']);
+  assert.ok(speech.filter(row=>row.actions.some(a=>a.type==='morph')).every(row=>row.actions.some(a=>a.type==='location'||a.type==='fit'&&a.value)||
+    row.actions.some(a=>a.type==='mode'&&a.value==='3d')&&row.actions.some(a=>a.type==='animation'&&a.value!=='none')));
+  const greetingIds=['korean','georgian','armenian','ukrainian','greek','tamazight'];
+  assert.deepEqual(speech.slice(0,12).map(row=>row.id),['hello',...greetingIds,'my-name','call-me','made-by','dialects','same-words']);
   const dialects=speech.find(row=>row.id==='dialects');
-  assert.equal(dialects.message,'I speak all\n2D and 3D dialects');
-  assert.ok(dialects.actions.some(action=>action.type==='mode'&&action.value==='3d'));
+  assert.equal(dialects.message,'I speak all\n2D and 3D fonts');
+  assert.ok(dialects.actions.some(action=>action.type==='mode'&&action.value==='2d'));
+  assert.deepEqual(speech.slice(0,7).map(row=>row.duration),[1,1,1,1,1,1,2]);
+  assert.equal(speech.find(row=>row.id==='same-words').duration,4);
   const stops=speech.filter(row=>row.actions.some(a=>a.type==='location'));
-  assert.deepEqual(stops.map(row=>row.id),[...greetingIds,'my-name','watch','speak-languages','become-them']);
-  const greetings=stops.slice(0,greetingIds.length).map(row=>Object.fromEntries(row.actions.map(({type,value})=>[type,value])));
-  assert.deepEqual(greetings.map(({location})=>location.caption),[
-    'Hello in Korean · Seoul, South Korea','Hello in Georgian · Tbilisi, Georgia','Hello in Armenian · Yerevan, Armenia',
-    'Hello in Ukrainian · Kyiv, Ukraine','Hello in Greek · Cape Sounion, Greece','Hello in Tamazight · Marrakesh, Morocco'
-  ]);
-  assert.deepEqual(greetings.map(({size})=>size.height),[72,95,75,180,120,1500]);
-  assert.equal(greetings[4].location.cameraBearing,345);
-  assert.ok(greetings.every(({location})=>location.maxZoom===undefined));
-  assert.ok(greetings.every(({location,animation})=>location.instant&&animation===undefined));
-  assert.deepEqual(speech.slice(-4).map(row=>row.id),['future','speak-languages','become-them','thanks']);
-  assert.equal(speech.at(-3).duration,5);
-  assert.equal(speech.at(-2).duration,3);
+  assert.deepEqual(stops.map(row=>row.id),['thanks']);
+  const greetings=speech.slice(1,7).map(row=>Object.fromEntries(row.actions.map(({type,value})=>[type,value])));
+  assert.deepEqual(greetings.map(({title})=>title).filter(Boolean),['Hello in Korean, Georgian, Armenian, Ukrainian, Greek, Tamazight']);
+  assert.equal(greetings[0].title,'Hello in Korean, Georgian, Armenian, Ukrainian, Greek, Tamazight');
+  assert.equal(greetings[0].morph.titleAfter,true);
+  assert.deepEqual(greetings.map(({morph})=>morph.titleHighlight),['Korean','Georgian','Armenian','Ukrainian','Greek','Tamazight']);
+  assert.ok(greetings.every(({mode,animation})=>mode===undefined&&animation===undefined));
+  assert.deepEqual(morphs.slice(0,6).map(value=>value.from.resourceKey),['conference:Gill Sans',...morphs.slice(0,5).map(value=>value.to.resourceKey)]);
+  assert.deepEqual(speech.slice(-9).map(row=>row.id),['future','speak-languages','become-them','cloning-powers','clone-geojson','clone-obj','more-features','josh','thanks']);
+  assert.deepEqual(speech.slice(-6,-3).map(row=>row.actions.find(action=>action.type==='mode')?.value),['2d','2d','3d']);
+  assert.equal(speech.at(-8).duration,5);
+  assert.equal(speech.at(-7).duration,3);
   assert.equal(speech.at(-1).duration,0);
+  assert.deepEqual(speech.at(-1).actions.find(action=>action.type==='size')?.value,{height:300000,depth:40000});
+  assert.deepEqual(speech.at(-1).actions.find(action=>action.type==='location')?.value,{lat:-25.61011,lng:134.35481});
   assert.deepEqual(bundled.fontCycle,{duration:2,hold:2});
   assert.throws(()=>validateAction({type:'morph',value:{...morphs[0],targetMessage:' '}}),/visible target message/);
-  const {targetMessage,...sameText}=morphs[0];
+  const {targetMessage,...sameText}=morphs[6];
   assert.deepEqual(validateAction({type:'morph',value:sameText}).value,sameText);
 });
 test('invalid imports reject excess/duplicate actions, bad values, unsupported versions and conflicting 2D orbit',()=>{
