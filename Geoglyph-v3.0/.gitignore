@@ -5,3 +5,4 @@ coverage/
 .env
 .env.*
 /apps/umbramatic/Shadow Capture Output Folder/
+shadow_player_previews/

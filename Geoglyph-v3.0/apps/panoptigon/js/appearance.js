@@ -1,5 +1,7 @@
+export const DEFAULT_OBJ_LINE_COLOR='#ffffff';
+
 export function defaultAppearance(){return {
-obj:{point:{color:'#ffff00',transparency:0},line:{color:'#203e34',transparency:0},fill:{color:'#8c9d62',transparency:76}},
+  obj:{point:{color:'#ffff00',transparency:0},line:{color:DEFAULT_OBJ_LINE_COLOR,transparency:0},fill:{color:'#8c9d62',transparency:76}},
 shape:{point:{color:'#ffff00',transparency:0},line:{color:'#f50083',transparency:2},fill:{color:'#ed0c73',transparency:91}}
 };}
 const KEY='uos.vistas.appearance.v1';
@@ -7,6 +9,10 @@ export function loadAppearance(){
   const result=defaultAppearance();
   try {
     const saved=JSON.parse(localStorage.getItem(KEY));
+    // Earlier releases saved the default appearance on startup.
+    if(saved?.version!==2 && /^#203e34$/i.test(saved?.obj?.line?.color)){
+      saved.obj.line.color=DEFAULT_OBJ_LINE_COLOR;
+    }
 for(const group of ['obj','shape'])for(const part of ['point','line','fill']){
 const value=saved?.[group]?.[part]??(part==='point'?{transparency:saved?.[group]?.fill?.pointTransparency}:null);
       if(/^#[0-9a-f]{6}$/i.test(value?.color))result[group][part].color=value.color;
@@ -15,7 +21,7 @@ const value=saved?.[group]?.[part]??(part==='point'?{transparency:saved?.[group]
   }catch{/* Storage is optional. */}
   return result;
 }
-export function saveAppearance(value){try{localStorage.setItem(KEY,JSON.stringify(value));}catch{/* Storage is optional. */}}
+export function saveAppearance(value){try{localStorage.setItem(KEY,JSON.stringify({...value,version:2}));}catch{/* Storage is optional. */}}
 export function applyShapeAppearance(map,value){
   const opacity=part=>1-value[part].transparency/100;
   const set=(id,key,v)=>{if(map?.getLayer(id))map.setPaintProperty(id,key,v);};

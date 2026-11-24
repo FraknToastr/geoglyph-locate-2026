@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
 import {CRS,classifyObj,normalisePath,parseFirstObjVertex,getObjCoordinateFrame,projectedVertex,rebaseObjForMap} from './core.js';
 import {createObjProjection} from './geo.js';
+import {DEFAULT_OBJ_LINE_COLOR} from './appearance.js';
 
 const COLOURS={Points:0x346b53,Viewsheds:0x8c9d62,Frustums:0xb0823c,Other:0x6d7e83};
 const MAX_INTERVALS=32;
@@ -275,14 +276,14 @@ material.opacity=1-value.transparency/100;
             for(const old of [child.material].flat())if(old)oldMaterials.add(old);
             if(child.isMesh){child.material=material;meshes.push(child);}
             else if(child.isPoints)child.material=new THREE.PointsMaterial({color:COLOURS[type],size:3,sizeAttenuation:false,transparent,opacity,depthWrite:!transparent});
-            else if(child.isLine)child.material=new THREE.LineBasicMaterial({color:COLOURS[type],transparent,opacity,depthWrite:!transparent});
+            else if(child.isLine)child.material=new THREE.LineBasicMaterial({color:DEFAULT_OBJ_LINE_COLOR,transparent,opacity,depthWrite:!transparent});
             child.frustumCulled=true;
           }
           for(const old of oldMaterials)old.dispose();
           oldMaterials.clear();
           if(!meshes.length)material.dispose();
           for(const mesh of meshes){
-            const edges=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry,25),new THREE.LineBasicMaterial({color:0x203e34,depthWrite:false}));
+            const edges=new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry,25),new THREE.LineBasicMaterial({color:DEFAULT_OBJ_LINE_COLOR,depthWrite:false}));
             edges.renderOrder=1;mesh.add(edges);
           }
           if(type==='Viewsheds'&&meshes.length){

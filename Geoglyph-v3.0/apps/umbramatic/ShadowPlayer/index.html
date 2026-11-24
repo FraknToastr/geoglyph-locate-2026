@@ -97,45 +97,47 @@
           </a>
         </div>
       </div>
-      <dialog class="solar-console ambient amb-surface amb-chamfer-2 amb-elevation-3" id="solarConsole" aria-labelledby="solarTitle">
-        <header class="solar-console-heading">
-          <h2 id="solarTitle">Sun Dome</h2>
-          <div class="solar-head-actions ambient-button-group">
-            <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="resetDome" type="button" aria-label="Reset dome rotation" data-tooltip="Reset the sun dome's rotation." disabled>⟲</button>
-            <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="minimiseDome" type="button" aria-label="Minimise Sun Dome" data-tooltip="Minimise the sun dome." autofocus>
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
-            </button>
+      <div class="solar-panels">
+        <section class="map-meta ambient amb-surface amb-chamfer-2 amb-elevation-3" id="mapMeta" aria-labelledby="snapshotTitle">
+          <h2 class="meta-kicker" id="snapshotTitle">Current Solar Snapshot</h2>
+          <div class="hero-time" id="heroTime">--:--</div>
+          <div class="hero-date" id="heroDate">NO DATASET LOADED</div>
+          <div class="sun-metrics">
+            <div><span>AZIMUTH</span><strong id="solarAz">—</strong></div>
+            <div><span>ALTITUDE</span><strong id="solarAlt">—</strong></div>
+            <div><span>CAPTURE</span><strong id="captureIndex">0 / 0</strong></div>
           </div>
-        </header>
-        <p id="solarEmpty">Open an export folder to see the sun path and select captures.</p>
-        <div id="solarData" hidden>
-          <div class="solar-observatory">
-            <div class="solar-observatory-bar"><strong id="solarCapture"></strong><span id="domeDirection"></span></div>
-            <svg id="solarDome" class="solar-dome" viewBox="0 0 340 260" tabindex="0" role="group" aria-label="Sun path and capture markers" aria-describedby="solarHelp"></svg>
-            <div class="solar-dome-footer">
-              <div class="solar-legend"><span>Sun</span><span>Captures</span></div>
-              <small id="solarHelp">Drag or use arrow keys to rotate.</small>
+        </section>
+        <dialog class="solar-console ambient amb-surface amb-chamfer-2 amb-elevation-3" id="solarConsole" aria-labelledby="solarTitle">
+          <header class="solar-console-heading">
+            <h2 id="solarTitle">Sun Dome</h2>
+            <div class="solar-head-actions ambient-button-group">
+              <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="resetDome" type="button" aria-label="Reset dome rotation" data-tooltip="Reset the sun dome's rotation." disabled>⟲</button>
+              <button class="icon-button ambient amb-surface amb-chamfer amb-elevation-1 umbramatic-control" id="minimiseDome" type="button" aria-label="Minimise Sun Dome" data-tooltip="Minimise the sun dome." autofocus>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+              </button>
             </div>
+          </header>
+          <p id="solarEmpty">Open an export folder to see the sun path and select captures.</p>
+          <div id="solarData" hidden>
+            <div class="solar-observatory">
+              <div class="solar-observatory-bar"><strong id="solarCapture"></strong><span id="domeDirection"></span></div>
+              <svg id="solarDome" class="solar-dome" viewBox="0 0 340 260" tabindex="0" role="group" aria-label="Sun path and capture markers" aria-describedby="solarHelp"></svg>
+              <div class="solar-dome-footer">
+                <div class="solar-legend"><span>Sun</span><span>Captures</span></div>
+                <small id="solarHelp">Drag or use arrow keys to rotate.</small>
+              </div>
+            </div>
+            <label class="solar-seasons"><input id="showSeasons" type="checkbox"> Compare seasonal paths</label>
+            <ul class="solar-season-key" id="solarSeasonKey" hidden><li>December solstice</li><li>March equinox</li><li>June solstice</li></ul>
+            <dl class="solar-readouts">
+              <div><dt>Azimuth</dt><dd id="domeAzimuth">—</dd></div>
+              <div><dt>Altitude</dt><dd id="domeAltitude">—</dd></div>
+            </dl>
+            <p id="solarPositionSource" class="solar-source"></p>
           </div>
-          <label class="solar-seasons"><input id="showSeasons" type="checkbox"> Compare seasonal paths</label>
-          <ul class="solar-season-key" id="solarSeasonKey" hidden><li>December solstice</li><li>March equinox</li><li>June solstice</li></ul>
-          <dl class="solar-readouts">
-            <div><dt>Azimuth</dt><dd id="domeAzimuth">—</dd></div>
-            <div><dt>Altitude</dt><dd id="domeAltitude">—</dd></div>
-          </dl>
-          <p id="solarPositionSource" class="solar-source"></p>
-        </div>
-      </dialog>
-      <section class="map-meta ambient amb-surface amb-chamfer-2 amb-elevation-3" id="mapMeta" aria-labelledby="snapshotTitle">
-        <h2 class="meta-kicker" id="snapshotTitle">Current Solar Snapshot</h2>
-        <div class="hero-time" id="heroTime">--:--</div>
-        <div class="hero-date" id="heroDate">NO DATASET LOADED</div>
-        <div class="sun-metrics">
-          <div><span>AZIMUTH</span><strong id="solarAz">—</strong></div>
-          <div><span>ALTITUDE</span><strong id="solarAlt">—</strong></div>
-          <div><span>CAPTURE</span><strong id="captureIndex">0 / 0</strong></div>
-        </div>
-      </section>
+        </dialog>
+      </div>
       <div id="emptyState" class="empty-state">
         <div class="shadow-orb" aria-hidden="true"></div>
         <span class="eyebrow">TEMPORAL GEOSPATIAL PLAYER</span>

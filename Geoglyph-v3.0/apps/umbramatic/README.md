@@ -93,9 +93,21 @@ For JPEG, files end in `.jpg`, `.jgw`, `.prj`; for PNG, `.png`, `.pgw`, `.prj`; 
 
 **Alternative local launcher without BAT:** Run `python launch_player.py` inside `ShadowPlayer`. It creates a localhost server using Python's standard library and opens the viewer. This can be useful for serving a `data/` subfolder.
 
+### Optional playback previews
+
+From `apps/umbramatic`, run the command with Python 3.8 or later and a Pillow build with WebP support. Pass the folder that contains `shadow_player_manifest.json`.
+
+```sh
+python ShadowPlayer/build_previews.py "/path/to/web-export"
+```
+
+The command adds `shadow_player_previews/` inside the export and reuses previews for identical source tiles. Run it again after re-exporting or replacing tiles. The previews use half the width and height of each tile, with lossless WebP encoding and the original geographic corners.
+
+Open the export folder as usual. Playback uses previews when it finds a complete set for a snapshot. Pause, seek, and step open the full-resolution snapshot while keeping the current one visible during loading. When preview files are missing or unreadable, the player uses the original tiles.
+
 ### Hosted / GitHub Pages
 
-To publish a permitted dataset beside the viewer, copy the export folder's **contents** into `ShadowPlayer/data/` so the expected paths include `ShadowPlayer/data/shadow_player_manifest.json` and `ShadowPlayer/data/frames/...`. The player automatically attempts to load `data/shadow_player_manifest.json` when served over HTTP(S). No build system is required.
+To publish a permitted dataset beside the viewer, copy the export folder's **contents** into `ShadowPlayer/data/` so the expected paths include `ShadowPlayer/data/shadow_player_manifest.json` and `ShadowPlayer/data/frames/...`. Include `shadow_player_previews/` to enable previews for the hosted copy. Git ignores generated preview directories in this workspace. The player automatically attempts to load `data/shadow_player_manifest.json` when served over HTTP(S). No build system is required.
 
 **Check data-sharing/licensing before making municipal LiDAR-derived outputs public.** Publishing a GitHub repository (or Pages branch) may expose the underlying image archive, not just the visual map.
 

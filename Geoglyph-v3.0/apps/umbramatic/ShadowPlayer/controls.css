@@ -125,6 +125,26 @@ body, .sidebar, .timeline-card { color: var(--ink); }
   inset: auto;
   min-width: 0;
 }
+.solar-panels {
+  grid-area: 1 / 2;
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+  width: min(370px, 100%);
+  min-height: 0;
+  margin-block: 52px 18px;
+  padding-inline-end: 4px;
+  z-index: 3;
+  pointer-events: none;
+}
+.solar-panels:has(> .solar-console[open]) {
+  z-index: 12;
+  overflow: hidden auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+}
 body.panel-hidden .main-view { --sidebar-clearance: 0px; }
 body.panel-hidden .timeline-card { grid-column: 1 / -1; }
 #mediaPlayer[hidden] { display: none; }
@@ -146,7 +166,7 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
 @media (max-width: 1000px) {
   body:not(.panel-hidden) .timeline-top { flex-wrap: wrap; }
   body:not(.panel-hidden) .speed-control { width: 100%; justify-content: space-between; }
-  .main-view:has(.empty-state:not([hidden])) .map-meta { visibility: hidden; }
+  .main-view:has(.empty-state:not([hidden])) .solar-panels:not(:has(.solar-console[open])) .map-meta { visibility: hidden; }
   .empty-state:not([hidden]) {
     position: relative;
     grid-area: 1 / 2;
@@ -176,6 +196,7 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
   }
   .sidebar { grid-area: 1 / 1 / 2 / 2; width: min(var(--sidebar-width), 100%); }
   .timeline-card { grid-column: 1; }
+  .solar-panels { grid-column: 1; margin-block: 0 8px; }
   .empty-state:not([hidden]) { grid-area: 1 / 1; margin: 0 12px 12px; }
   body:not(.panel-hidden) .empty-state { visibility: hidden; }
 }
@@ -188,9 +209,9 @@ body.panel-hidden .timeline-card { grid-column: 1 / -1; }
 
 .main-view[data-basemap="none"] { background-color: var(--blank-map); }
 .map-meta {
-  top: calc(var(--panel-inset-block) + 52px);
-  right: var(--panel-inset-inline);
-  max-width: calc(100% - 2 * var(--panel-inset-inline));
+  position: static;
+  flex: none;
+  max-width: 100%;
   width: 266px;
   padding: 13px 15px;
   border: 1px solid var(--rim);

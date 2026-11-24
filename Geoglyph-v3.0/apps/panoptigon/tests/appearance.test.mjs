@@ -10,8 +10,12 @@ test('appearance survives storage and rejects invalid colour values',()=>{
 stored=JSON.stringify({shape:{fill:{color:'#123456',transparency:90,pointTransparency:35}}});
 assert.deepEqual(loadAppearance().shape.point,{color:'#ffff00',transparency:35});
   stored=JSON.stringify({obj:{line:{color:'bad',transparency:200}}});
-  assert.equal(loadAppearance().obj.line.color,'#203e34');
+  assert.equal(loadAppearance().obj.line.color,'#ffffff');
   assert.equal(loadAppearance().obj.line.transparency,100);
+  stored=JSON.stringify({obj:{line:{color:'#203e34',transparency:30}}});
+  assert.deepEqual(loadAppearance().obj.line,{color:'#ffffff',transparency:30});
+  saveAppearance({...value,obj:{...value.obj,line:{color:'#203e34',transparency:30}}});
+  assert.deepEqual(loadAppearance().obj.line,{color:'#203e34',transparency:30});
   stored='invalid';assert.deepEqual(loadAppearance(),defaultAppearance());
   delete globalThis.localStorage;
 });

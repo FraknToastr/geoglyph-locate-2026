@@ -9,11 +9,14 @@
   const compactLayout = window.matchMedia('(max-width: 800px)');
   const blankBackground = () => getComputedStyle(lightingRoot).getPropertyValue('--blank-map').trim() || '#d8dde5';
   const rasterImages = ShadowRasterImages.create();
+  const previewDirectory = 'shadow_player_previews/';
   const state = {
     map: null, mapReady: false, manifest: null, frames: [], allFrames: [], selected: 0,
     playing: false, speed: 1, playbackMode: 'loop', direction: 1, opacity: 1,
     basemap: 'none', timer: null, frameJob: null, tileSources: new Map(),
     localFiles: null, rootUrl: null, importVersion: 0,
+    previewPaths: new Map(), failedPreviews: new WeakSet(),
+    displayedFrame: null, displayedPreview: false,
     shadowColour: null, jpegMask: false,
     focusedDate: '', loading: false, defaultFitted: false,
   };
@@ -76,6 +79,7 @@
   const frameTileKey = (tile) => `r${tile.row??0}_c${tile.column??0}`;
   const mapLayerId = (key) => `shadow-layer-${key}`;
   const mapSourceId = (key) => `shadow-source-${key}`;
+  let mapFrameId = 0;
 
   function initMap(){
     if (!window.maplibregl) {
@@ -157,8 +161,7 @@
       if(next.sprite && !map.getSprite().length)map.setSprite(next.sprite);
       for(const [id,source] of Object.entries(next.sources))map.addSource(id,source);
       // Insert under the capture images so a basemap switch leaves playback running.
-      const firstTile = state.tileSources.keys().next().value;
-      const before = firstTile === undefined ? undefined : mapLayerId(firstTile);
+      const before = state.tileSources.values().next().value?.layerId;
       for(const layer of next.layers){
         map.addLayer(layer,before);
         if(!map.getLayer(layer.id))throw new Error(`Could not add ${layer.id}.`);
@@ -184,24 +187,16 @@
   }
   function applyOpacity(){
     if(!state.mapReady)return;
-    for(const key of state.tileSources.keys()){
-      const layer=mapLayerId(key);
-      if(state.map.getLayer(layer))state.map.setPaintProperty(layer,'raster-opacity',state.opacity);
+    for(const {layerId} of state.tileSources.values()){
+      if(state.map.getLayer(layerId))state.map.setPaintProperty(layerId,'raster-opacity',state.opacity);
     }
   }
-  function removeMapTile(key){
-    if(state.map.getLayer(mapLayerId(key)))state.map.removeLayer(mapLayerId(key));
-    if(state.map.getSource(mapSourceId(key)))state.map.removeSource(mapSourceId(key));
-    const url = state.tileSources.get(key);
-    if(url) URL.revokeObjectURL(url);
-    state.tileSources.delete(key);
+  function removeMapTile({layerId, sourceId, objectUrl}){
+    if(state.map.getLayer(layerId))state.map.removeLayer(layerId);
+    if(state.map.getSource(sourceId))state.map.removeSource(sourceId);
+    if(objectUrl) URL.revokeObjectURL(objectUrl);
   }
-  function tileInput(tile){
-    if(tile.direct_url){
-      const url = new URL(tile.direct_url, document.baseURI).href;
-      return [url,url];
-    }
-    const key=normalPath(tile.path);
+  function tileInput(key){
     if(state.localFiles){
       const file=state.localFiles.get(key);
       if(!file)throw new Error(`Image not found in selected folder: ${key}`);
@@ -210,51 +205,143 @@
     if(!state.rootUrl)throw new Error('No loaded image folder or hosted URL.');
     return [key,new URL(key,state.rootUrl).href];
   }
-
-  async function mapImages(tiles, signal){
+  function originalTileInput(tile){
+    if(!tile.direct_url)return tileInput(normalPath(tile.path));
+    const url = new URL(tile.direct_url,document.baseURI).href;
+    return [url,url];
+  }
+  function previewInputs(frame){
+    if(!state.playing || !state.previewPaths.size || state.failedPreviews.has(frame))return null;
+    const paths = frame.tiles.map(tile=>!tile.direct_url && state.previewPaths.get(normalPath(tile.path)));
+    return paths.every(Boolean) ? paths.map(tileInput) : null;
+  }
+  async function prepareImages(inputs, signal, validateOriginal){
     const finish = { colour: state.shadowColour, jpegMask: state.jpegMask };
-    const images = new Array(tiles.length);
-    const parallel = Math.min(finish.colour ? 4 : 8, tiles.length);
+    if(!finish.colour && !validateOriginal)return inputs.map(([,image])=>image);
+    const images = new Array(inputs.length);
+    const parallel = Math.min(finish.colour ? 4 : 8, inputs.length);
     let next = 0;
     async function prepareTiles(){
-      while(next < tiles.length){
+      while(next < inputs.length){
         signal.throwIfAborted();
         const index = next++;
-        const [key,image] = tileInput(tiles[index]);
+        const [key,image] = inputs[index];
         images[index] = await rasterImages.read(key, image, finish, signal);
       }
     }
     await Promise.all(Array.from({length:parallel},prepareTiles));
-    signal.throwIfAborted();
+    return images;
+  }
 
+  function mapTile(key, coordinates, image){
+    // MapLibre 5.13 needs a URL. Each source owns its object URL until removal.
+    const objectUrl = typeof image === 'string' ? null : URL.createObjectURL(image);
+    return {sourceId:mapSourceId(key),layerId:mapLayerId(key),objectUrl,url:objectUrl??image,coordinates};
+  }
+  function addTileSource({sourceId,url,coordinates}){
+    state.map.addSource(sourceId,{type:'image',url,coordinates});
+    if(!state.map.getSource(sourceId))throw new Error('Could not add a shadow image source.');
+  }
+  function addTileLayer({layerId,sourceId}){
+    state.map.addLayer({id:layerId,type:'raster',source:sourceId,
+      paint:{'raster-opacity':state.opacity,'raster-fade-duration':0}});
+    if(!state.map.getLayer(layerId))throw new Error('Could not add a shadow raster layer.');
+  }
+  function updateMapImages(tiles,images){
     const active = new Set();
     for(const [index,tile] of tiles.entries()){
-      const key = frameTileKey(tile), sid = mapSourceId(key), lid = mapLayerId(key);
-      const source = state.map.getSource(sid);
-      const image = images[index];
-      const objectUrl = typeof image === 'string' ? null : URL.createObjectURL(image);
-      const url = objectUrl ?? image;
+      const key = frameTileKey(tile);
+      const next = mapTile(key,tile.coordinates,images[index]);
+      const source = state.map.getSource(next.sourceId);
       try {
-        // MapLibre 5.13 expects a URL. Keep displayed URLs alive independently of cache eviction.
-        if(source) source.updateImage({url,coordinates:tile.coordinates});
+        if(source)source.updateImage({url:next.url,coordinates:tile.coordinates});
         else {
-          if(state.map.getLayer(lid))state.map.removeLayer(lid);
-          state.map.addSource(sid,{type:'image',url,coordinates:tile.coordinates});
-          state.map.addLayer({id:lid,type:'raster',source:sid,
-            paint:{'raster-opacity':state.opacity,'raster-fade-duration':0}});
+          addTileSource(next);
+          addTileLayer(next);
         }
       } catch(error) {
-        if(objectUrl) URL.revokeObjectURL(objectUrl);
+        if(!source)removeMapTile(next);
+        else if(next.objectUrl)URL.revokeObjectURL(next.objectUrl);
         throw error;
       }
-      const previousUrl = state.tileSources.get(key);
+      const previousUrl = state.tileSources.get(key)?.objectUrl;
       if(previousUrl) URL.revokeObjectURL(previousUrl);
-      state.tileSources.set(key,objectUrl);
+      state.tileSources.set(key,next);
       active.add(key);
     }
-    for(const key of state.tileSources.keys()){
-      if(!active.has(key)) removeMapTile(key);
+    for(const [key,tile] of state.tileSources){
+      if(active.has(key))continue;
+      removeMapTile(tile);
+      state.tileSources.delete(key);
     }
+  }
+  async function replaceMapImages(tiles,images,signal){
+    const map = state.map;
+    const staged = new Map();
+    const frameId = ++mapFrameId;
+    let stopWatching;
+    try {
+      for(const [index,tile] of tiles.entries()){
+        const key = `${frameTileKey(tile)}-${frameId}-${index}`;
+        staged.set(key,mapTile(key,tile.coordinates,images[index]));
+      }
+      await new Promise((resolve,reject)=>{
+        const pending = new Set(Array.from(staged.values(),tile=>tile.sourceId));
+        const ready = ({sourceId,sourceDataType})=>{
+          if(sourceDataType==='metadata' && pending.delete(sourceId) && !pending.size)resolve();
+        };
+        const fail = event=>{
+          if(pending.has(event.sourceId))reject(event.error ?? new Error('Could not decode a shadow tile.'));
+        };
+        const abort = ()=>reject(signal.reason);
+        map.on('sourcedata',ready);
+        map.on('error',fail);
+        signal.addEventListener('abort',abort,{once:true});
+        stopWatching = ()=>{
+          map.off('sourcedata',ready);
+          map.off('error',fail);
+          signal.removeEventListener('abort',abort);
+        };
+        // Each image source decodes before its layer joins the map.
+        for(const tile of staged.values())addTileSource(tile);
+      });
+      signal.throwIfAborted();
+      for(const tile of staged.values())addTileLayer(tile);
+    } catch(error) {
+      for(const tile of staged.values())removeMapTile(tile);
+      throw error;
+    } finally {
+      stopWatching?.();
+    }
+    for(const tile of state.tileSources.values())removeMapTile(tile);
+    state.tileSources = staged;
+  }
+  async function mapImages(frame,inputs,signal){
+    const replace = state.previewPaths.size > 0;
+    const images = await prepareImages(inputs,signal,!replace);
+    signal.throwIfAborted();
+    if(replace)await replaceMapImages(frame.tiles,images,signal);
+    else updateMapImages(frame.tiles,images);
+  }
+  async function renderFrame(frame,signal){
+    const previews = previewInputs(frame);
+    if(previews){
+      const previewJob = new AbortController();
+      const abort = ()=>previewJob.abort(signal.reason);
+      signal.addEventListener('abort',abort,{once:true});
+      try {
+        await mapImages(frame,previews,previewJob.signal);
+        return true;
+      } catch {
+        abort();
+        signal.throwIfAborted();
+        state.failedPreviews.add(frame);
+      } finally {
+        signal.removeEventListener('abort',abort);
+      }
+    }
+    await mapImages(frame,frame.tiles.map(originalTileInput),signal);
+    return false;
   }
 
   function allCorners(){
@@ -334,8 +421,10 @@
     state.frameJob = job;
     const frame=state.frames[state.selected];
     try{
-      await mapImages(frame.tiles,job.signal);
+      const preview = await renderFrame(frame,job.signal);
       if(job.signal.aborted)return false;
+      state.displayedFrame = frame;
+      state.displayedPreview = preview;
       $('emptyState').hidden=true;
       if(initial || !state.defaultFitted){fit();state.defaultFitted=true;}
       return true;
@@ -361,10 +450,17 @@
     }
   }
   function pause(){state.playing=false;stopTimer();$('playPauseGlyph').textContent='▶';$('playPause').setAttribute('aria-label','Play');}
+  function pauseForInspection(){
+    pause();
+    if(state.previewPaths.size && (state.displayedPreview || state.frameJob)){
+      const displayed = state.frames.indexOf(state.displayedFrame);
+      void showFrame(displayed < 0 ? state.selected : displayed);
+    }
+  }
   function nextIndex(){
     let i=state.selected+state.direction;
     if(i>=state.frames.length||i<0){
-      if(state.playbackMode==='once'){pause();return null;}
+      if(state.playbackMode==='once')return null;
       if(state.playbackMode==='bounce'){
         state.direction*=-1;
         i=state.selected+state.direction;
@@ -376,11 +472,12 @@
     state.timer = null;
     if(!state.playing)return;
     const index=nextIndex();
-    if(index!=null)void showFrame(index);
+    if(index==null)pauseForInspection();
+    else void showFrame(index);
   }
   function play(){
     if(!state.frames.length){toast('Open an export folder or load the demo first.');return;}
-    if(state.playing){pause();return;}
+    if(state.playing){pauseForInspection();return;}
     if(state.frames.length===1){toast('The selected date has only one capture.');return;}
     state.playing=true;$('playPauseGlyph').textContent='❚❚';$('playPause').setAttribute('aria-label','Pause');
     schedulePlayback();
@@ -426,9 +523,11 @@
       const right = left + (viewport?.width ?? innerWidth) - 2*margin;
       const bottom = top + (viewport?.height ?? innerHeight) - 2*margin;
       const anchor = trigger.getBoundingClientRect();
-      const scroller = trigger.closest('.sidebar, .empty-state, dialog')?.getBoundingClientRect();
-      if(!anchor.width || !anchor.height || anchor.bottom<=top || anchor.top>=bottom ||
-        (scroller && (anchor.bottom<=scroller.top || anchor.top>=scroller.bottom))){
+      const clipped = ['.sidebar, .empty-state, dialog','.solar-panels'].some(selector=>{
+        const scroller = trigger.closest(selector)?.getBoundingClientRect();
+        return scroller && (anchor.bottom<=scroller.top || anchor.top>=scroller.bottom);
+      });
+      if(!anchor.width || !anchor.height || anchor.bottom<=top || anchor.top>=bottom || clipped){
         hideTooltip();
         return;
       }
@@ -457,7 +556,6 @@
       trigger=control;
       pointer=point;
       previousDescription=control.getAttribute('aria-describedby');
-      (control.closest('dialog[open]') || document.body).append(tooltip);
       tooltip.textContent=control.dataset.tooltip;
       tooltip.hidden=false;
       control.setAttribute('aria-describedby',[previousDescription,tooltip.id].filter(Boolean).join(' '));
@@ -600,17 +698,49 @@
     if(!frames.length)throw new Error('No frames were found in the export.');
     return frames;
   }
-  async function activateDataset(data,{fileMap=null,rootUrl=null}={}){
+  async function loadPreviewPaths(data,fileMap,rootUrl){
+    const indexPath = previewDirectory+'index.json';
+    const paths = new Map();
+    try {
+      let index;
+      if(fileMap){
+        const file = fileMap.get(indexPath);
+        if(!file)return paths;
+        index = JSON.parse(await file.text());
+      }else{
+        const response = await fetch(new URL(indexPath,rootUrl),{signal:AbortSignal.timeout(5000),cache:'no-cache'});
+        if(!response.ok)return paths;
+        index = await response.json();
+      }
+      if(index?.schema!=='uos-shadow-player-previews-v1' || index.export_generated_at_utc!==(data.generated_at_utc??null)){
+        return paths;
+      }
+      for(const [original,name] of Object.entries(index.tiles??{})){
+        if(typeof name!=='string' || !/^[a-f0-9]{64}\.webp$/.test(name))continue;
+        const path = previewDirectory+name;
+        if(!fileMap || fileMap.has(path))paths.set(original,path);
+      }
+    } catch {
+      // The native export remains usable if the optional index is unavailable.
+    }
+    return paths;
+  }
+  async function activateDataset(data,{fileMap=null,rootUrl=null,previewPaths=new Map()}={}){
     const frames=validateManifest(data);
     pause();
     state.frameJob?.abort();
     state.frameJob = null;
-    for(const key of state.tileSources.keys()) removeMapTile(key);
+    for(const tile of state.tileSources.values())removeMapTile(tile);
+    state.tileSources.clear();
     rasterImages.clear();
     state.manifest=data;state.allFrames=frames;state.frames=frames.slice();state.selected=0;
     state.focusedDate='';state.direction=1;state.defaultFitted=false;
     state.localFiles=fileMap;state.rootUrl=rootUrl;
-    if(frames[0].tiles.length>80)toast('Large tiled animation: performance may improve by exporting with downsample 2 or 4.',false,7500);
+    state.previewPaths=previewPaths;
+    state.failedPreviews=new WeakSet();
+    state.displayedFrame=null;
+    state.displayedPreview=false;
+    if(!previewPaths.size && frames[0].tiles.length>80)toast('Large tiled animation: performance may improve by exporting with downsample 2 or 4.',false,7500);
     $('dateInput').value='';
     $('datasetInfo').hidden=false;
     $('datasetTitle').textContent=data.title||'Shadow capture series';
@@ -629,8 +759,8 @@
     dateChips();updateFrameUI();applyOpacity();
     $('emptyState').hidden=true;
     if(compactLayout.matches)setPanelHidden(true);
-    await showFrame(0,true);
-    if(state.manifest===data)toast(`${frames.length} captures loaded · ${data.encoding?.format?.toUpperCase()||'images'}`,false,3400);
+    const displayed = await showFrame(0,true);
+    if(displayed && state.manifest===data)toast(`${frames.length} captures loaded · ${data.encoding?.format?.toUpperCase()||'images'}`,false,3400);
   }
   async function openExportFolder(files){
     if(!files || !files.length)return;
@@ -648,7 +778,8 @@
     }
     try{
       const data=JSON.parse(await manifestFile.text());
-      if(version===state.importVersion)await activateDataset(data,{fileMap:local});
+      const previewPaths=await loadPreviewPaths(data,local);
+      if(version===state.importVersion)await activateDataset(data,{fileMap:local,previewPaths});
     }catch(e){if(version===state.importVersion)status('Unable to open export: '+e.message,true);}
   }
   async function autoLoadHosted(){
@@ -660,7 +791,10 @@
         const response=await fetch(url,{cache:'no-store'});
         if(!response.ok)continue;
         const data=await response.json();
-        if(!state.importVersion)await activateDataset(data,{rootUrl:new URL('.',url).href});
+        const rootUrl=new URL('.',url).href;
+        if(state.importVersion)return;
+        const previewPaths=await loadPreviewPaths(data,null,rootUrl);
+        if(!state.importVersion)await activateDataset(data,{rootUrl,previewPaths});
         return;
       }catch(err){console.debug('No auto-load export at',relative,err.message);}
     }
@@ -716,19 +850,29 @@
     $('togglePanel').addEventListener('click',()=>setPanelHidden(!document.body.classList.contains('panel-hidden')));
     $('togglePlayer').addEventListener('click',()=>setPlayerHidden(!$('mediaPlayer').hidden));
     const solarToggle = $('toggleSolar');
+    const updateSolarToggle = ()=>{
+      solarToggle.setAttribute('aria-expanded',String(solarDialog.open));
+      solarToggle.dataset.tooltip = solarDialog.open ? 'Minimise the Sun Dome.' : 'Open the Sun Dome.';
+    };
+    const closeSolar = ()=>{
+      const focused = document.activeElement;
+      const focusTarget = solarDialog.contains(focused) ? solarToggle : focused;
+      solarDialog.close();
+      updateSolarToggle();
+      if(document.activeElement!==focusTarget)focusTarget?.focus({preventScroll:true});
+    };
     solarToggle.addEventListener('click',()=>{
-      solarDialog.showModal();
-      solarToggle.setAttribute('aria-expanded','true');
+      if(solarDialog.open){closeSolar();return;}
+      solarDialog.show();
+      updateSolarToggle();
       solar.render(state.frames, state.selected);
     });
-    $('minimiseDome').addEventListener('click',()=>solarDialog.close());
-    solarDialog.addEventListener('close',()=>{
-      if(solarDialog.open) return;
-      solarToggle.setAttribute('aria-expanded','false');
-      solarToggle.focus({preventScroll:true});
-    });
+    $('minimiseDome').addEventListener('click',closeSolar);
+    solarDialog.addEventListener('close',updateSolarToggle);
     window.addEventListener('keydown',e=>{
-      if(solarDialog.open)return;
+      if(e.defaultPrevented)return;
+      if(e.key==='Escape' && solarDialog.open){e.preventDefault();closeSolar();return;}
+      if(e.target instanceof Element && solarDialog.contains(e.target))return;
       if(e.target instanceof Element && e.target.closest('input, textarea, select, button, a, [contenteditable]')) return;
       if(e.code==='Space'){e.preventDefault();play();}
       else if(e.key==='ArrowRight' && state.frames.length){e.preventDefault();step(1);}
@@ -742,5 +886,6 @@
   window.shadowPlayerDiagnostics=()=>({mapReady:state.mapReady,frames:state.frames.length,
     allFrames:state.allFrames.length,selected:state.selected,playing:state.playing,
     localFileCount:state.localFiles?.size||0,activeTiles:state.tileSources.size,
+    displayed:state.frames.indexOf(state.displayedFrame),displayedPreview:state.displayedPreview,
     ...rasterImages.stats(),sourceKind:state.manifest?.source_kind||null});
 })();
